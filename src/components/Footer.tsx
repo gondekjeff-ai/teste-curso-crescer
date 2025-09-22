@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import optiStratLogo from "@/assets/optistrat-logo-full.png";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
@@ -59,28 +60,28 @@ const Footer = () => {
   };
 
   return (
-    <footer id="contact" className="bg-black text-white pt-16 pb-8 w-full">
+    <footer id="contact" className="bg-gradient-to-r from-primary to-secondary text-white pt-16 pb-8 w-full">
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 pb-10 border-b border-gray-700">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 pb-10 border-b border-white/20">
           <div className="lg:col-span-2">
             <img 
-              src="/lovable-uploads/7d120ee6-3614-4b75-9c35-716d54490d67.png" 
-              alt="WRLDS Technologies Logo" 
-              className="h-10 w-auto mb-6 invert" // Added invert to make logo white
+              src={optiStratLogo} 
+              alt="OptiStrat IT Management" 
+              className="h-10 w-auto mb-6 brightness-0 invert"
             />
-            <p className="text-gray-300 mb-6">
-              WRLDS Technologies provides an end-to-end platform for the creation and deployment of AI-powered smart sensor devices, giving customers 100% ownership while handling the complete technological development.
+            <p className="text-white/90 mb-6">
+              OptiStrat delivers comprehensive IT management solutions that transform your technology infrastructure into a competitive advantage, helping businesses optimize performance, enhance security, and drive growth.
             </p>
-            <p className="text-gray-300 mb-6">
-              Hornsgatan 110<br />
-              117 26, Stockholm Sweden
+            <p className="text-white/90 mb-6">
+              123 Tech Boulevard<br />
+              Silicon Valley, CA 94000 USA
             </p>
             <div className="flex space-x-4">
               <a 
-                href="https://www.linkedin.com/company/wrldstechnologies/" 
+                href="https://www.linkedin.com/company/optistrat/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/70 transition-colors hover:bg-white/20 hover:text-white"
               >
                 <Linkedin size={20} />
               </a>
@@ -103,7 +104,7 @@ const Footer = () => {
                 <input 
                   type="email" 
                   placeholder="Your email" 
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-600 text-white placeholder-gray-400"
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-white/30 text-white placeholder-white/60"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting}
@@ -111,7 +112,7 @@ const Footer = () => {
               </div>
               <button 
                 type="submit" 
-                className="w-full px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 bg-white/10 text-white rounded-md hover:bg-white/20 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Subscribing..." : (
@@ -126,11 +127,11 @@ const Footer = () => {
         </div>
         
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            © {new Date().getFullYear()} WRLDS Technologies. All rights reserved.
+          <p className="text-white/60 text-sm mb-4 md:mb-0">
+            © {new Date().getFullYear()} OptiStrat IT Management. All rights reserved.
           </p>
           <div className="flex space-x-6">
-            <Link to="/privacy-policy" className="text-sm text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/privacy-policy" className="text-sm text-white/60 hover:text-white transition-colors">Privacy Policy</Link>
           </div>
         </div>
       </div>

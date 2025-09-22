@@ -5,6 +5,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from 'react-router-dom';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
+import optiStratLogo from "@/assets/optistrat-logo-full.png";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,7 +38,7 @@ const Navbar = () => {
   };
 
   return (
-    <motion.nav className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-300 w-full", isScrolled ? "bg-white shadow-sm" : "bg-black")} initial={{
+    <motion.nav className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-300 w-full", isScrolled ? "bg-white shadow-sm" : "bg-gradient-to-r from-primary to-secondary")} initial={{
       opacity: 1,
       y: 0
     }} animate={{
@@ -74,39 +75,33 @@ const Navbar = () => {
                 
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className={cn(isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                    Customer Cases
+                    IT Services
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid gap-3 p-4 w-[400px]">
                       <li>
-                        <Link to="/projects/firecat" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">FireCat 6th SENSE</div>
-                          <p className="text-sm text-gray-500">Smart textiles for firefighter safety</p>
-                        </Link>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
+                          <div className="font-medium">Cloud Infrastructure</div>
+                          <p className="text-sm text-gray-500">Comprehensive cloud migration and management</p>
+                        </button>
                       </li>
                       <li>
-                        <Link to="/projects/sport-retail" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Sports Performance</div>
-                          <p className="text-sm text-gray-500">Advanced tracking for athletes</p>
-                        </Link>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
+                          <div className="font-medium">Cybersecurity</div>
+                          <p className="text-sm text-gray-500">Advanced threat detection and protection</p>
+                        </button>
                       </li>
                       <li>
-                        <Link to="/projects/workwear" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Workwear Climate Control</div>
-                          <p className="text-sm text-gray-500">Temperature regulation for extreme environments</p>
-                        </Link>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
+                          <div className="font-medium">Network Management</div>
+                          <p className="text-sm text-gray-500">24/7 monitoring and optimization</p>
+                        </button>
                       </li>
                       <li>
-                        <Link to="/projects/hockey" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Ice Hockey Elite Tracker</div>
-                          <p className="text-sm text-gray-500">Performance tracking for ice hockey</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/projects/pet-tracker" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Pet Activity Counter</div>
-                          <p className="text-sm text-gray-500">Smart collars for pet activity monitoring</p>
-                        </Link>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
+                          <div className="font-medium">Data Management</div>
+                          <p className="text-sm text-gray-500">Secure backup and recovery solutions</p>
+                        </button>
                       </li>
                     </ul>
                   </NavigationMenuContent>
@@ -114,24 +109,21 @@ const Navbar = () => {
                 
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className={cn(isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                    Learn More
+                    Solutions
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid gap-3 p-4 w-[400px]">
                       <li>
                         <Link to="/tech-details" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Technology Details</div>
-                          <p className="text-sm text-gray-500">How our smart textile platform works</p>
+                          <div className="font-medium">IT Consultation</div>
+                          <p className="text-sm text-gray-500">Strategic IT planning and assessment</p>
                         </Link>
                       </li>
                       <li>
                         <Link to="/development-process" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Development Process</div>
-                          <p className="text-sm text-gray-500">Our approach to creating custom solutions</p>
+                          <div className="font-medium">Implementation Process</div>
+                          <p className="text-sm text-gray-500">Our proven methodology for IT transformation</p>
                         </Link>
-                      </li>
-                      <li>
-                        
                       </li>
                     </ul>
                   </NavigationMenuContent>
@@ -154,8 +146,8 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <button onClick={() => scrollToSection('contact')} className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-gray-200 text-gray-700 hover:bg-gray-300" : "bg-gray-700 text-white hover:bg-gray-600")}>
-                    Contact Us
+                  <button onClick={() => scrollToSection('contact')} className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
+                    Get Started
                   </button>
                 </NavigationMenuItem>
               </NavigationMenuList>
@@ -173,53 +165,48 @@ const Navbar = () => {
 
       {/* Mobile Navigation Menu - Reduced height and simplified */}
       <div className={cn("md:hidden transition-all duration-300 overflow-hidden w-full", isMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0")}>
-        <div className={cn("px-3 pt-2 pb-3 space-y-1 shadow-sm overflow-y-auto max-h-80", isScrolled ? "bg-white" : "bg-black")}>
-          <Link to="/" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-gray-900")} onClick={() => {
+        <div className={cn("px-3 pt-2 pb-3 space-y-1 shadow-sm overflow-y-auto max-h-80", isScrolled ? "bg-white" : "bg-gradient-to-r from-primary to-secondary")}>
+          <Link to="/" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
             Home
           </Link>
           
-          <Link to="/about" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-gray-900")} onClick={() => {
+          <Link to="/about" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
             About Us
           </Link>
           
-          {/* Simplified Customer Cases - no dropdown */}
-          <Link to="/projects/firecat" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-gray-900")} onClick={() => {
+          <button onClick={() => scrollToSection('features')} className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")}>
+            IT Services
+          </button>
+          
+          <Link to="/tech-details" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
-            Customer Cases
+            Solutions
           </Link>
           
-          {/* Simplified Learn More - no dropdown */}
-          <Link to="/tech-details" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-gray-900")} onClick={() => {
-            setIsMenuOpen(false);
-            window.scrollTo(0, 0);
-          }}>
-            Learn More
-          </Link>
-          
-          <Link to="/blog" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-gray-900")} onClick={() => {
+          <Link to="/blog" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
             News
           </Link>
           
-          <Link to="/careers" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-gray-900")} onClick={() => {
+          <Link to="/careers" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
             Careers
           </Link>
           
-          <button onClick={() => scrollToSection('contact')} className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 bg-gray-200 hover:bg-gray-300" : "text-white bg-gray-700 hover:bg-gray-600")}>
-            Contact Us
+          <button onClick={() => scrollToSection('contact')} className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-white bg-primary hover:bg-primary/90" : "text-white bg-white/10 hover:bg-white/20")}>
+            Get Started
           </button>
         </div>
       </div>
