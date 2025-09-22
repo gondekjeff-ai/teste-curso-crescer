@@ -3,7 +3,7 @@ import { ArrowRight, Linkedin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import emailjs from 'emailjs-com';
+import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
@@ -25,25 +25,18 @@ const Footer = () => {
     setIsSubmitting(true);
     
     try {
-      // EmailJS configuration
-      const EMAILJS_SERVICE_ID = "service_i3h66xg";
-      const EMAILJS_TEMPLATE_ID = "template_fgq53nh";
-      const EMAILJS_PUBLIC_KEY = "wQmcZvoOqTAhGnRZ3";
-      
-      const templateParams = {
-        from_name: "Website Subscriber",
-        from_email: email,
-        message: `New subscription request from the website footer.`,
-        to_name: 'WRLDS Team',
-        reply_to: email
-      };
-      
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        templateParams,
-        EMAILJS_PUBLIC_KEY
-      );
+      const response = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: "Website Subscriber",
+          email: email,
+          message: "",
+          type: 'subscription'
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to subscribe');
+      }
       
       toast({
         title: "Success!",
@@ -52,12 +45,12 @@ const Footer = () => {
       });
       
       setEmail("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending subscription:", error);
       
       toast({
         title: "Error",
-        description: "There was a problem subscribing. Please try again later.",
+        description: error.message || "There was a problem subscribing. Please try again later.",
         variant: "destructive"
       });
     } finally {

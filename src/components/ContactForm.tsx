@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import emailjs from 'emailjs-com';
+import { supabase } from "@/integrations/supabase/client";
 
 // Updated schema with honeypot field validation
 const formSchema = z.object({
@@ -20,11 +20,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-// EmailJS configuration - Updated with correct template ID
-const EMAILJS_SERVICE_ID = "service_i3h66xg";
-const EMAILJS_TEMPLATE_ID = "template_fgq53nh"; // Updated to the correct template ID
-const EMAILJS_PUBLIC_KEY = "wQmcZvoOqTAhGnRZ3";
 
 const ContactForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,30 +69,18 @@ const ContactForm = () => {
       
       console.log('Form submitted:', data);
       
-      // Remove honeypot and timestamp fields before sending
-      const { honeypot, timestamp, ...emailData } = data;
-      
-      // Using parameters exactly as expected by EmailJS templates
-      const templateParams = {
-        from_name: emailData.name,
-        from_email: emailData.email,
-        message: emailData.message,
-        to_name: 'WRLDS Team', // Adding recipient name parameter
-        reply_to: emailData.email // Keeping reply_to for compatibility
-      };
-      
-      console.log('Sending email with params:', templateParams);
-      console.log('Using service:', EMAILJS_SERVICE_ID);
-      console.log('Using template:', EMAILJS_TEMPLATE_ID);
-      console.log('Using public key:', EMAILJS_PUBLIC_KEY);
-      
-      // Send email directly without initializing, as it's not needed with the send method that includes the key
-      const response = await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        templateParams,
-        EMAILJS_PUBLIC_KEY // Re-adding the public key parameter
-      );
+      const response = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: data.name,
+          email: data.email,
+          message: data.message,
+          type: 'contact'
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to send message');
+      }
       
       console.log('Email sent successfully:', response);
       
@@ -114,17 +97,12 @@ const ContactForm = () => {
         honeypot: '',
         timestamp: Date.now()
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending email:', error);
-      
-      // More detailed error logging
-      if (error && typeof error === 'object' && 'text' in error) {
-        console.error('Error details:', (error as any).text);
-      }
       
       toast({
         title: "Error",
-        description: "There was a problem sending your message. Please try again later.",
+        description: error.message || "There was a problem sending your message. Please try again later.",
         variant: "destructive"
       });
     } finally {
