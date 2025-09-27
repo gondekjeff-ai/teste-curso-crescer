@@ -47,11 +47,11 @@ const Navbar = () => {
     }}>
       <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between h-16">
-          <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center">
-              <img src="/lovable-uploads/7d120ee6-3614-4b75-9c35-716d54490d67.png" alt="WRLDS Technologies Logo" className={cn("h-8 w-auto", isScrolled ? "" : "brightness-0 invert")} />
-            </Link>
-          </div>
+        <div className="flex-shrink-0">
+          <Link to="/" className="flex items-center">
+            <img src={optiStratLogo} alt="OptiStrat" className={cn("h-8 w-auto", isScrolled ? "" : "brightness-0 invert")} />
+          </Link>
+        </div>
           
           {/* Desktop Navigation */}
           <div className="hidden md:block">
@@ -59,48 +59,48 @@ const Navbar = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <Link to="/">
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                      Home
-                    </NavigationMenuLink>
+                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                       Início
+                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
                   <Link to="/about">
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                      About Us
-                    </NavigationMenuLink>
+                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                       Sobre Nós
+                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={cn(isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                    IT Services
+                  <NavigationMenuTrigger className={cn(isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                    Serviços de TI
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid gap-3 p-4 w-[400px]">
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Cloud Infrastructure</div>
-                          <p className="text-sm text-gray-500">Comprehensive cloud migration and management</p>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                          <div className="font-medium">Infraestrutura em Nuvem</div>
+                          <p className="text-sm text-muted-foreground">Migração e gerenciamento abrangente em nuvem</p>
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Cybersecurity</div>
-                          <p className="text-sm text-gray-500">Advanced threat detection and protection</p>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                          <div className="font-medium">Cibersegurança</div>
+                          <p className="text-sm text-muted-foreground">Detecção e proteção avançada contra ameaças</p>
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Network Management</div>
-                          <p className="text-sm text-gray-500">24/7 monitoring and optimization</p>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                          <div className="font-medium">Gerenciamento de Rede</div>
+                          <p className="text-sm text-muted-foreground">Monitoramento e otimização 24/7</p>
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Data Management</div>
-                          <p className="text-sm text-gray-500">Secure backup and recovery solutions</p>
+                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                          <div className="font-medium">Gestão de Dados</div>
+                          <p className="text-sm text-muted-foreground">Backup seguro e soluções de recuperação</p>
                         </button>
                       </li>
                     </ul>
@@ -108,21 +108,21 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={cn(isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                    Solutions
+                  <NavigationMenuTrigger className={cn(isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                    Soluções
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid gap-3 p-4 w-[400px]">
                       <li>
-                        <Link to="/tech-details" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">IT Consultation</div>
-                          <p className="text-sm text-gray-500">Strategic IT planning and assessment</p>
+                        <Link to="/tech-details" className="block p-3 space-y-1 rounded-md hover:bg-accent">
+                          <div className="font-medium">Consultoria de TI</div>
+                          <p className="text-sm text-muted-foreground">Planejamento estratégico e avaliação de TI</p>
                         </Link>
                       </li>
                       <li>
-                        <Link to="/development-process" className="block p-3 space-y-1 rounded-md hover:bg-gray-100">
-                          <div className="font-medium">Implementation Process</div>
-                          <p className="text-sm text-gray-500">Our proven methodology for IT transformation</p>
+                        <Link to="/development-process" className="block p-3 space-y-1 rounded-md hover:bg-accent">
+                          <div className="font-medium">Processo de Implementação</div>
+                          <p className="text-sm text-muted-foreground">Nossa metodologia comprovada para transformação de TI</p>
                         </Link>
                       </li>
                     </ul>
@@ -131,23 +131,23 @@ const Navbar = () => {
                 
                 <NavigationMenuItem>
                   <Link to="/blog">
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                      News
-                    </NavigationMenuLink>
+                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                       Notícias
+                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
                   <Link to="/careers">
-                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-gray-700 hover:text-gray-900" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                      Careers
-                    </NavigationMenuLink>
+                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                       Carreiras
+                     </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
                   <button onClick={() => scrollToSection('contact')} className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
-                    Get Started
+                    Começar
                   </button>
                 </NavigationMenuItem>
               </NavigationMenuList>
@@ -166,11 +166,11 @@ const Navbar = () => {
       {/* Mobile Navigation Menu - Reduced height and simplified */}
       <div className={cn("md:hidden transition-all duration-300 overflow-hidden w-full", isMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0")}>
         <div className={cn("px-3 pt-2 pb-3 space-y-1 shadow-sm overflow-y-auto max-h-80", isScrolled ? "bg-white" : "bg-gradient-to-r from-primary to-secondary")}>
-          <Link to="/" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
+          <Link to="/" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-foreground hover:bg-accent" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
-            Home
+            Início
           </Link>
           
           <Link to="/about" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {

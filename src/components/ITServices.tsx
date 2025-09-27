@@ -16,26 +16,26 @@ const ITServices = () => {
   const services = [
     {
       icon: <Cloud className="w-10 h-10 text-white transition-transform duration-300 transform" />,
-      title: "Cloud Infrastructure",
-      description: "Comprehensive cloud migration and management services with AWS, Azure, and Google Cloud platforms for scalable business solutions.",
+      title: "Infraestrutura em Nuvem",
+      description: "Serviços abrangentes de migração e gerenciamento em nuvem com plataformas AWS, Azure e Google Cloud para soluções empresariais escaláveis.",
       image: "/lovable-uploads/48e540e5-6a25-44e4-b3f7-80f3bfc2777a.png"
     },
     {
       icon: <Shield className="w-10 h-10 text-white transition-transform duration-300 transform" />,
-      title: "Cybersecurity",
-      description: "Advanced threat detection, incident response, and comprehensive security audits to protect your digital assets and business data.",
+      title: "Cibersegurança",
+      description: "Detecção avançada de ameaças, resposta a incidentes e auditorias de segurança abrangentes para proteger seus ativos digitais e dados empresariais.",
       image: "/lovable-uploads/48ecf6e2-5a98-4a9d-af6f-ae2265cd4098.png"
     },
     {
       icon: <Server className="w-10 h-10 text-white transition-transform duration-300 transform" />,
-      title: "Network Management",
-      description: "24/7 network monitoring, optimization, and troubleshooting to ensure reliable connectivity and peak performance.",
+      title: "Gerenciamento de Rede",
+      description: "Monitoramento de rede 24/7, otimização e solução de problemas para garantir conectividade confiável e desempenho máximo.",
       image: "/lovable-uploads/cf8966e3-de0d-445f-9fbd-ee6c48daa7ff.png"
     },
     {
       icon: <Database className="w-10 h-10 text-white transition-transform duration-300 transform" />,
-      title: "Data Management",
-      description: "Secure data backup, recovery solutions, and database optimization to protect and organize your critical business information.",
+      title: "Gestão de Dados",
+      description: "Backup seguro de dados, soluções de recuperação e otimização de banco de dados para proteger e organizar suas informações críticas de negócios.",
       image: "/lovable-uploads/6739bd63-bf19-4abd-bb23-0b613bbf7ac8.png"
     }
   ];
@@ -78,46 +78,46 @@ const ITServices = () => {
 
   const caseStudies = [{
     image: "/lovable-uploads/843446fe-638e-4efb-b885-ed3cd505325a.png",
-    title: "Enterprise Cloud Migration",
-    description: "Successfully migrated 500+ employee company to AWS, reducing IT costs by 40% while improving system reliability and performance."
+    title: "Migração Empresarial para Nuvem",
+    description: "Migração bem-sucedida de empresa com 500+ funcionários para AWS, reduzindo custos de TI em 40% enquanto melhora a confiabilidade e desempenho do sistema."
   }, {
     image: "/lovable-uploads/5463c9c5-0946-4280-a14b-17636ff69a98.png",
-    title: "Security Infrastructure Overhaul",
-    description: "Implemented comprehensive cybersecurity framework for financial services company, achieving 99.9% threat prevention rate."
+    title: "Revisão de Infraestrutura de Segurança",
+    description: "Implementação de framework abrangente de cibersegurança para empresa de serviços financeiros, alcançando 99,9% de taxa de prevenção de ameaças."
   }, {
     image: "/lovable-uploads/c5f8ee24-9815-4ebe-b65d-6f3d449feb8b.png",
-    title: "Network Optimization",
-    description: "Redesigned network infrastructure for manufacturing company, improving data transfer speeds by 300% and eliminating downtime."
+    title: "Otimização de Rede",
+    description: "Redesenho da infraestrutura de rede para empresa de manufatura, melhorando as velocidades de transferência de dados em 300% e eliminando tempo de inatividade."
   }];
 
   const processSteps = [{
     icon: <Users className="h-10 w-10 text-primary" />,
-    title: "Consultation & Assessment",
-    description: "Comprehensive analysis of your current IT infrastructure and business requirements"
+    title: "Consulta e Avaliação",
+    description: "Análise abrangente da sua infraestrutura atual de TI e requisitos empresariais"
   }, {
     icon: <Settings className="h-10 w-10 text-primary" />,
-    title: "Strategic Planning",
-    description: "Custom IT roadmap aligned with your business goals and growth objectives"
+    title: "Planejamento Estratégico",
+    description: "Roadmap personalizado de TI alinhado com seus objetivos e metas de crescimento empresarial"
   }, {
     icon: <Code className="h-10 w-10 text-primary" />,
-    title: "Implementation",
-    description: "Expert deployment with minimal disruption to your daily operations"
+    title: "Implementação",
+    description: "Implantação especializada com interrupção mínima às suas operações diárias"
   }, {
     icon: <Monitor className="h-10 w-10 text-primary" />,
-    title: "Ongoing Support",
-    description: "24/7 monitoring and maintenance to ensure optimal performance"
+    title: "Suporte Contínuo",
+    description: "Monitoramento e manutenção 24/7 para garantir desempenho otimizado"
   }];
 
   return <>
-      <section id="features" className="relative bg-white overflow-hidden py-10 md:py-[50px] w-full">
+      <section id="features" className="relative bg-background overflow-hidden py-10 md:py-[50px] w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8" ref={servicesRef}> 
           <div className="text-center mb-10 max-w-3xl mx-auto service-item">
             <div className="inline-block mb-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-              IT Management Services
+              Serviços de Gestão de TI
             </div>
-            <h2 className="text-3xl font-bold mb-4">Complete IT Solutions</h2>
-            <p className="text-gray-600 mt-4">
-              OptiStrat delivers comprehensive IT management services that transform your technology infrastructure into a competitive advantage for your business.
+            <h2 className="text-3xl font-bold mb-4 text-foreground">Soluções Completas de TI</h2>
+            <p className="text-muted-foreground mt-4">
+              A OptiStrat oferece serviços abrangentes de gestão de TI que transformam sua infraestrutura tecnológica em uma vantagem competitiva para seu negócio.
             </p>
           </div>
           
@@ -211,7 +211,7 @@ const ITServices = () => {
                   ))}
                 </div>
                 <p className="text-sm opacity-70">
-                  {isMobile ? "Swipe" : "Scroll"} to continue • Press ESC to exit
+                  {isMobile ? "Deslize" : "Role"} para continuar • Pressione ESC para sair
                 </p>
               </div>
             )}
@@ -220,20 +220,20 @@ const ITServices = () => {
           <div className="mt-16 mb-8 service-item">
             <div className="text-center mb-8">
               <div className="inline-block mb-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                Success Stories
+                Histórias de Sucesso
               </div>
-              <h3 className="text-2xl font-bold">Real Results for Real Businesses</h3>
-              <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
-                Discover how OptiStrat has transformed IT operations for companies across various industries.
-                <span className="block text-sm mt-1 text-primary">Scroll horizontally to see more case studies →</span>
+              <h3 className="text-2xl font-bold text-foreground">Resultados Reais para Negócios Reais</h3>
+              <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
+                Descubra como a OptiStrat transformou operações de TI para empresas de diversos setores.
+                <span className="block text-sm mt-1 text-primary">Role horizontalmente para ver mais estudos de caso →</span>
               </p>
             </div>
             
-            <div className="rounded-xl overflow-hidden bg-white p-4 service-item">
+            <div className="rounded-xl overflow-hidden bg-card border-border p-4 service-item">
               <Carousel className="w-full max-w-7xl mx-auto">
                 <CarouselContent className="flex">
                   {caseStudies.map((study, index) => <CarouselItem key={index} className="md:basis-1/3 flex-shrink-0">
-                      <Card className="border border-gray-100 shadow-md">
+                      <Card className="border border-border shadow-md bg-card">
                         <CardContent className="p-0">
                           <div className="w-full h-48 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
                             <div className="text-primary text-6xl font-bold opacity-20">
@@ -241,74 +241,74 @@ const ITServices = () => {
                             </div>
                           </div>
                           <div className="p-4">
-                            <h4 className="font-semibold text-lg">{study.title}</h4>
-                            <p className="text-sm text-gray-600 mt-2">{study.description}</p>
+                            <h4 className="font-semibold text-lg text-card-foreground">{study.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-2">{study.description}</p>
                           </div>
                         </CardContent>
                       </Card>
                     </CarouselItem>)}
                 </CarouselContent>
                 <div className="flex justify-center mt-6 gap-2">
-                  <CarouselPrevious className="relative static left-auto translate-y-0 hover:bg-gray-100" />
-                  <CarouselNext className="relative static right-auto translate-y-0 hover:bg-gray-100" />
+                  <CarouselPrevious className="relative static left-auto translate-y-0 hover:bg-accent" />
+                  <CarouselNext className="relative static right-auto translate-y-0 hover:bg-accent" />
                 </div>
               </Carousel>
-              <div className="text-center mt-6 text-sm text-gray-600">
-                <p className="font-medium">These examples showcase how OptiStrat delivers measurable business value through expert IT management</p>
+              <div className="text-center mt-6 text-sm text-muted-foreground">
+                <p className="font-medium">Estes exemplos mostram como a OptiStrat entrega valor empresarial mensurável através da gestão especializada de TI</p>
               </div>
             </div>
           </div>
         </div>
         <div className="text-center mt-12 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-          <Button onClick={scrollToContact} className="inline-flex items-center px-4 sm:px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
-            Ready to Transform Your IT?
+          <Button onClick={scrollToContact} className="inline-flex items-center px-4 sm:px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
+            Pronto para Transformar sua TI?
             <MessageSquare className="ml-2 w-4 h-4 group-hover:animate-pulse" />
           </Button>
           
-          <Button onClick={() => window.scrollTo(0, 0)} className="inline-flex items-center px-4 sm:px-6 py-3 bg-white text-primary rounded-lg border border-primary hover:bg-primary/5 hover:shadow-md transition-all group w-full sm:w-auto">
-            Learn About Our Process
+          <Button onClick={() => window.scrollTo(0, 0)} className="inline-flex items-center px-4 sm:px-6 py-3 bg-background text-primary rounded-lg border border-primary hover:bg-primary/5 hover:shadow-md transition-all group w-full sm:w-auto">
+            Conheça Nosso Processo
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
       </section>
       
-      <section id="process" className="bg-gray-50 py-10 md:py-16">
+      <section id="process" className="bg-secondary py-10 md:py-16">
         <div className="w-full px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-block mb-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-              Our Methodology
+              Nossa Metodologia
             </div>
-            <h2 className="text-3xl font-bold mb-4">How OptiStrat Works</h2>
-            <p className="text-gray-600 max-w-3xl mx-auto">
-              Our proven methodology ensures seamless IT transformation with minimal disruption to your business operations, 
-              delivering measurable results every step of the way.
+            <h2 className="text-3xl font-bold mb-4 text-foreground">Como a OptiStrat Funciona</h2>
+            <p className="text-muted-foreground max-w-3xl mx-auto">
+              Nossa metodologia comprovada garante uma transformação de TI perfeita com interrupção mínima às suas operações empresariais, 
+              entregando resultados mensuráveis a cada passo.
             </p>
           </div>
           
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 mb-10 transition-all duration-300 hover:shadow-xl">
+          <div className="bg-card rounded-xl shadow-lg border border-border p-8 mb-10 transition-all duration-300 hover:shadow-xl">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {processSteps.map((step, index) => (
                 <div key={index} className="text-center">
                   <div className="bg-primary/10 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                     {step.icon}
                   </div>
-                  <div className="text-sm text-primary font-semibold mb-2">STEP {index + 1}</div>
-                  <h3 className="text-lg font-bold mb-2">{step.title}</h3>
-                  <p className="text-sm text-gray-600">{step.description}</p>
+                  <div className="text-sm text-primary font-semibold mb-2">PASSO {index + 1}</div>
+                  <h3 className="text-lg font-bold mb-2 text-card-foreground">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground">{step.description}</p>
                 </div>
               ))}
             </div>
             
             <div className="mt-10 text-center">
-              <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
+              <div className="inline-flex items-center space-x-2 text-sm text-muted-foreground">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Free consultation and assessment</span>
-                <span className="text-gray-300">•</span>
+                <span>Consulta e avaliação gratuitas</span>
+                <span className="text-muted-foreground/50">•</span>
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>No hidden fees or surprises</span>
-                <span className="text-gray-300">•</span>
+                <span>Sem taxas ocultas ou surpresas</span>
+                <span className="text-muted-foreground/50">•</span>
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Guaranteed results</span>
+                <span>Resultados garantidos</span>
               </div>
             </div>
           </div>

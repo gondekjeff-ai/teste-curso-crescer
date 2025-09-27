@@ -55,9 +55,9 @@ const Hero = () => {
               <motion.div className="mb-6" variants={itemVariants}>
                 <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-16 mx-auto mb-4" />
               </motion.div>
-              <motion.h1 className="banner-title text-white" variants={itemVariants}>Streamline Your IT Infrastructure</motion.h1>
+              <motion.h1 className="banner-title text-white" variants={itemVariants}>Otimize sua Infraestrutura de TI</motion.h1>
               <motion.p className="banner-subtitle text-primary-foreground/90 mt-4 sm:mt-6" variants={itemVariants}>
-                Expert IT management solutions that optimize performance, enhance security, and drive business growth.
+                Soluções especializadas em gestão de TI que otimizam desempenho, reforçam a segurança e impulsionam o crescimento empresarial.
               </motion.p>
               <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 justify-center items-center" variants={itemVariants}>
                 {/* Styled as a button but using an anchor tag for project navigation */}
@@ -73,7 +73,7 @@ const Hero = () => {
                     }
                   }}
                 >
-                  Our Services
+                  Nossos Serviços
                   <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
                 
@@ -81,7 +81,7 @@ const Hero = () => {
                   className="w-full sm:w-auto min-h-[44px] px-6 sm:px-8 py-3 bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md hover:bg-white/20 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10 flex items-center justify-center group text-sm sm:text-base font-medium"
                   onClick={scrollToContact}
                 >
-                  Get Free Consultation
+                  Consulta Gratuita
                   <MessageSquare className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
                 </button>
               </motion.div>
@@ -94,28 +94,28 @@ const Hero = () => {
         <motion.div className="mt-6 md:mt-8 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4" variants={containerVariants} initial="hidden" animate="visible" transition={{
         delay: 0.6
       }}>
-          <motion.div className="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-gray-100 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md" variants={itemVariants}>
+          <motion.div className="bg-card border-border p-4 md:p-5 rounded-xl shadow-sm transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md" variants={itemVariants}>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 flex items-center justify-center rounded-lg text-primary mb-2 md:mb-3">
               <Cloud className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <h3 className="text-base md:text-lg font-semibold mb-1 md:mb-2 text-gray-800">Cloud Management</h3>
-            <p className="text-gray-600 text-xs md:text-sm">Seamless cloud infrastructure management and migration services for optimal performance.</p>
+            <h3 className="text-base md:text-lg font-semibold mb-1 md:mb-2 text-card-foreground">Gestão em Nuvem</h3>
+            <p className="text-muted-foreground text-xs md:text-sm">Gerenciamento perfeito de infraestrutura em nuvem e serviços de migração para desempenho otimizado.</p>
           </motion.div>
           
-          <motion.div className="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-gray-100 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md" variants={itemVariants}>
+          <motion.div className="bg-card border-border p-4 md:p-5 rounded-xl shadow-sm transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md" variants={itemVariants}>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 flex items-center justify-center rounded-lg text-primary mb-2 md:mb-3">
               <Shield className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <h3 className="text-base md:text-lg font-semibold mb-1 md:mb-2 text-gray-800">Security Solutions</h3>
-            <p className="text-gray-600 text-xs md:text-sm">Comprehensive cybersecurity strategies to protect your business from digital threats.</p>
+            <h3 className="text-base md:text-lg font-semibold mb-1 md:mb-2 text-card-foreground">Soluções de Segurança</h3>
+            <p className="text-muted-foreground text-xs md:text-sm">Estratégias abrangentes de cibersegurança para proteger seu negócio contra ameaças digitais.</p>
           </motion.div>
           
-          <motion.div className="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-gray-100 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md" variants={itemVariants}>
+          <motion.div className="bg-card border-border p-4 md:p-5 rounded-xl shadow-sm transform transition-all duration-300 hover:-translate-y-1 hover:shadow-md" variants={itemVariants}>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 flex items-center justify-center rounded-lg text-primary mb-2 md:mb-3">
               <Server className="w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <h3 className="text-base md:text-lg font-semibold mb-1 md:mb-2 text-gray-800">Infrastructure Support</h3>
-            <p className="text-gray-600 text-xs md:text-sm">24/7 monitoring and support for servers, networks, and critical business systems.</p>
+            <h3 className="text-base md:text-lg font-semibold mb-1 md:mb-2 text-card-foreground">Suporte de Infraestrutura</h3>
+            <p className="text-muted-foreground text-xs md:text-sm">Monitoramento e suporte 24/7 para servidores, redes e sistemas críticos de negócios.</p>
           </motion.div>
         </motion.div>
       </div>

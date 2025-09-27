@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -12,10 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Updated schema with honeypot field validation
 const formSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
-  honeypot: z.string().max(0, 'Bot detected'), // Honeypot field must be empty
+  name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
+  email: z.string().email('Por favor, insira um endereço de e-mail válido'),
+  message: z.string().min(10, 'A mensagem deve ter pelo menos 10 caracteres'),
+  honeypot: z.string().max(0, 'Bot detectado'), // Honeypot field must be empty
   timestamp: z.number() // To prevent automated quick submissions
 });
 
@@ -47,8 +46,8 @@ const ContactForm = () => {
       if (data.honeypot) {
         console.log('Bot detected via honeypot');
         toast({
-          title: "Error",
-          description: "There was a problem with your submission. Please try again.",
+          title: "Erro",
+          description: "Houve um problema com seu envio. Tente novamente.",
           variant: "destructive"
         });
         return;
@@ -59,8 +58,8 @@ const ContactForm = () => {
       if (timeDiff < 3000) {
         console.log(`Bot detected: Form submitted too quickly (${timeDiff}ms)`);
         toast({
-          title: "Error",
-          description: "Please take a moment to review your message before submitting.",
+          title: "Erro",
+          description: "Por favor, reserve um momento para revisar sua mensagem antes de enviar.",
           variant: "destructive"
         });
         setIsSubmitting(false);
@@ -79,14 +78,14 @@ const ContactForm = () => {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to send message');
+        throw new Error(response.error.message || 'Falha ao enviar mensagem');
       }
       
       console.log('Email sent successfully:', response);
       
       toast({
-        title: "Message sent!",
-        description: "We've received your message and will get back to you soon.",
+        title: "Mensagem enviada!",
+        description: "Recebemos sua mensagem e entraremos em contato em breve.",
         variant: "default"
       });
 
@@ -101,8 +100,8 @@ const ContactForm = () => {
       console.error('Error sending email:', error);
       
       toast({
-        title: "Error",
-        description: error.message || "There was a problem sending your message. Please try again later.",
+        title: "Erro",
+        description: error.message || "Houve um problema ao enviar sua mensagem. Tente novamente mais tarde.",
         variant: "destructive"
       });
     } finally {
@@ -110,32 +109,32 @@ const ContactForm = () => {
     }
   };
 
-  return <section id="contact" className="bg-gradient-to-b from-white to-black text-white relative py-[25px]">
+  return <section id="contact" className="bg-gradient-to-b from-background to-secondary text-foreground relative py-[25px]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <div className="inline-block mb-3 px-3 py-1 bg-white text-black rounded-full text-sm font-medium">
-            Get In Touch
+          <div className="inline-block mb-3 px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm font-medium">
+            Entre em Contato
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black">
-            Contact Us Today
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+            Fale Conosco Hoje
           </h2>
-          <p className="text-gray-700 text-lg max-w-2xl mx-auto">
-            Have questions about our AI-powered sensor solutions? Reach out to our team and let's discuss how we can help bring your ideas to life.
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Tem dúvidas sobre nossas soluções de gestão de TI? Entre em contato com nossa equipe e vamos discutir como podemos ajudar a transformar sua infraestrutura tecnológica.
           </p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="bg-white rounded-xl shadow-xl p-8 border border-gray-700 text-black">
+          <div className="bg-card rounded-xl shadow-xl p-8 border border-border">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField control={form.control} name="name" render={({
                 field
               }) => <FormItem>
-                      <FormLabel className="text-gray-700">Name</FormLabel>
+                      <FormLabel className="text-card-foreground">Nome</FormLabel>
                       <div className="relative">
-                        <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <FormControl>
-                          <Input placeholder="Your name" className="pl-10" {...field} />
+                          <Input placeholder="Seu nome" className="pl-10" {...field} />
                         </FormControl>
                       </div>
                       <FormMessage />
@@ -144,11 +143,11 @@ const ContactForm = () => {
                 <FormField control={form.control} name="email" render={({
                 field
               }) => <FormItem>
-                      <FormLabel className="text-gray-700">Email</FormLabel>
+                      <FormLabel className="text-card-foreground">E-mail</FormLabel>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <FormControl>
-                          <Input type="email" placeholder="your.email@example.com" className="pl-10" {...field} />
+                          <Input type="email" placeholder="seu.email@exemplo.com" className="pl-10" {...field} />
                         </FormControl>
                       </div>
                       <FormMessage />
@@ -157,11 +156,11 @@ const ContactForm = () => {
                 <FormField control={form.control} name="message" render={({
                 field
               }) => <FormItem>
-                      <FormLabel className="text-gray-700">Message</FormLabel>
+                      <FormLabel className="text-card-foreground">Mensagem</FormLabel>
                       <div className="relative">
-                        <MessageSquare className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                        <MessageSquare className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                         <FormControl>
-                          <Textarea placeholder="Tell us about your project or inquiry..." className="min-h-[120px] pl-10 resize-none" {...field} />
+                          <Textarea placeholder="Conte-nos sobre seu projeto ou consulta..." className="min-h-[120px] pl-10 resize-none" {...field} />
                         </FormControl>
                       </div>
                       <FormMessage />
@@ -171,7 +170,7 @@ const ContactForm = () => {
                 <FormField control={form.control} name="honeypot" render={({
                 field
               }) => <FormItem className="hidden">
-                      <FormLabel>Leave this empty</FormLabel>
+                      <FormLabel>Deixe isso vazio</FormLabel>
                       <FormControl>
                         <Input {...field} tabIndex={-1} />
                       </FormControl>
@@ -186,9 +185,9 @@ const ContactForm = () => {
                       </FormControl>
                     </FormItem>} />
                 
-                <button type="submit" disabled={isSubmitting} className="w-full bg-black hover:bg-gray-800 text-white py-3 px-6 rounded-md transition-colors flex items-center justify-center disabled:opacity-70">
-                  {isSubmitting ? "Sending..." : <>
-                      Send Message
+                <button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-6 rounded-md transition-colors flex items-center justify-center disabled:opacity-70">
+                  {isSubmitting ? "Enviando..." : <>
+                      Enviar Mensagem
                       <Send className="ml-2 h-4 w-4" />
                     </>}
                 </button>
@@ -197,14 +196,14 @@ const ContactForm = () => {
           </div>
           
           <div className="space-y-8">
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-700 text-black">
-              <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white mb-4">
+            <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground mb-4">
                 <Mail className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Email Us</h3>
-              <p className="text-gray-600 mb-2">For general inquiries:</p>
-              <a href="mailto:info@wrlds.com" className="text-blue-500 hover:underline">hello@wrlds.com</a>
-              <p className="text-gray-600 mt-2 mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Envie-nos um E-mail</h3>
+              <p className="text-muted-foreground mb-2">Para consultas gerais:</p>
+              <a href="mailto:contato@optistrat.com.br" className="text-primary hover:underline">contato@optistrat.com.br</a>
+              <p className="text-muted-foreground mt-2 mb-2">
             </p>
             </div>
           </div>

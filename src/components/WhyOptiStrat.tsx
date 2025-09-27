@@ -46,7 +46,7 @@ const AnimatedCounter = ({
       }
     };
   }, [end, duration, inView]);
-  return <span ref={countRef} className="font-bold tabular-nums">
+  return <span ref={countRef} className="font-bold tabular-nums text-foreground">
       {prefix}{count.toFixed(decimals)}{suffix}
     </span>;
 };
@@ -79,17 +79,17 @@ const WhyOptiStrat = () => {
       }
     }
   };
-  return <section id="why-optistrat" className="relative py-16 md:py-24 bg-white overflow-hidden">
+  return <section id="why-optistrat" className="relative py-16 md:py-24 bg-background overflow-hidden">
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="text-center mb-12 md:mb-16" initial="hidden" whileInView="visible" viewport={{
         once: true,
         margin: "-100px"
       }} variants={containerVariants}>
-          <motion.h2 variants={itemVariants} className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
-            Why Choose OptiStrat?
+          <motion.h2 variants={itemVariants} className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3">
+            Por que Escolher a OptiStrat?
           </motion.h2>
-          <motion.p variants={itemVariants} className="text-gray-600 text-lg max-w-3xl mx-auto">
-            In a world where IT complexity can make or break your business, OptiStrat simplifies technology management to drive your success
+          <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-3xl mx-auto">
+            Em um mundo onde a complexidade de TI pode fazer ou quebrar seu negócio, a OptiStrat simplifica o gerenciamento de tecnologia para impulsionar seu sucesso
           </motion.p>
         </motion.div>
         
@@ -101,21 +101,21 @@ const WhyOptiStrat = () => {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <TrendingUp className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-gray-900 text-2xl lg:text-3xl font-bold mb-3">
+            <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-3">
               <AnimatedCounter end={47} suffix="%" /> 
             </h3>
-            <p className="text-gray-700">Average increase in operational efficiency achieved by our clients within the first 6 months</p>
+            <p className="text-muted-foreground">Aumento médio na eficiência operacional alcançado por nossos clientes nos primeiros 6 meses</p>
           </motion.div>
           
           <motion.div variants={itemVariants} className="bg-gradient-to-br from-primary/5 to-secondary/10 p-6 rounded-xl border border-primary/20 text-center hover:shadow-lg transition-all">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Clock className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-gray-900 text-2xl lg:text-3xl font-bold mb-3">
+            <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-3">
               <AnimatedCounter end={24} suffix="/7" /> 
             </h3>
-            <p className="text-gray-700">
-              Round-the-clock monitoring and support to ensure your systems never sleep when your business needs them
+            <p className="text-muted-foreground">
+              Monitoramento e suporte 24 horas por dia para garantir que seus sistemas nunca durmam quando seu negócio precisa deles
             </p>
           </motion.div>
           
@@ -123,11 +123,11 @@ const WhyOptiStrat = () => {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Shield className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-gray-900 text-2xl lg:text-3xl font-bold mb-3">
+            <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-3">
               <AnimatedCounter end={99.9} decimals={1} suffix="%" />
             </h3>
-            <p className="text-gray-700">
-              System uptime guaranteed through proactive monitoring and rapid incident response protocols
+            <p className="text-muted-foreground">
+              Tempo de atividade do sistema garantido através de monitoramento proativo e protocolos de resposta rápida a incidentes
             </p>
           </motion.div>
         </motion.div>
@@ -137,11 +137,11 @@ const WhyOptiStrat = () => {
           margin: "-100px"
         }} variants={containerVariants}>
           <motion.div variants={itemVariants} className="text-center mb-8">
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-              What OptiStrat Delivers for Your Business
+            <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+              O que a OptiStrat Entrega para Seu Negócio
             </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              We transform your IT challenges into competitive advantages with measurable business outcomes
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Transformamos seus desafios de TI em vantagens competitivas com resultados empresariais mensuráveis
             </p>
           </motion.div>
           
@@ -152,8 +152,8 @@ const WhyOptiStrat = () => {
                   <TrendingUp className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">Reduced Operating Costs</h4>
-                  <p className="text-gray-700">Optimize IT spending while improving performance through strategic infrastructure management.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Custos Operacionais Reduzidos</h4>
+                  <p className="text-muted-foreground">Otimize gastos com TI enquanto melhora o desempenho através do gerenciamento estratégico de infraestrutura.</p>
                 </div>
               </div>
             </motion.div>
@@ -164,8 +164,8 @@ const WhyOptiStrat = () => {
                   <Zap className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">Enhanced Productivity</h4>
-                  <p className="text-gray-700">Eliminate downtime and streamline workflows with reliable, optimized IT systems.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Produtividade Aprimorada</h4>
+                  <p className="text-muted-foreground">Elimine tempo de inatividade e otimize fluxos de trabalho com sistemas de TI confiáveis e otimizados.</p>
                 </div>
               </div>
             </motion.div>
@@ -176,8 +176,8 @@ const WhyOptiStrat = () => {
                   <Shield className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">Bulletproof Security</h4>
-                  <p className="text-gray-700">Protect your business from cyber threats with enterprise-grade security solutions.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Segurança à Prova de Balas</h4>
+                  <p className="text-muted-foreground">Proteja seu negócio contra ameaças cibernéticas com soluções de segurança de nível empresarial.</p>
                 </div>
               </div>
             </motion.div>
@@ -188,8 +188,8 @@ const WhyOptiStrat = () => {
                   <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">Expert Partnership</h4>
-                  <p className="text-gray-700">Access to seasoned IT professionals without the overhead of hiring full-time staff.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Parceria Especializada</h4>
+                  <p className="text-muted-foreground">Acesso a profissionais experientes em TI sem as despesas gerais de contratar equipe em tempo integral.</p>
                 </div>
               </div>
             </motion.div>
@@ -199,9 +199,9 @@ const WhyOptiStrat = () => {
             <Link 
               to="/development-process" 
               onClick={() => window.scrollTo(0, 0)}
-              className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all group"
+              className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all group"
             >
-              Discover our proven IT transformation methodology
+              Descubra nossa metodologia comprovada de transformação de TI
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>
