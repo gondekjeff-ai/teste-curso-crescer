@@ -86,11 +86,11 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in ai-chatbot function:', error);
     
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error?.message || 'Erro interno do servidor',
       response: 'Desculpe, estou com dificuldades técnicas no momento. Para atendimento imediato, entre em contato pelo email comercial@optistrat.com.br ou pelo formulário de contato em nosso site.'
     }), {
       status: 200, // Return 200 so the frontend can show the fallback message

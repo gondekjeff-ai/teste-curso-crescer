@@ -1,7 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,6 +42,35 @@ const sanitizeInput = (input: string): string => {
     .trim();
 };
 
+const sendEmail = async (emailData: {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+}) => {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  
+  if (!resendApiKey) {
+    throw new Error("RESEND_API_KEY not found");
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(emailData),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Resend API error: ${error}`);
+  }
+
+  return await response.json();
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -65,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (isRateLimited(clientIP)) {
       console.log(`Rate limit exceeded for IP: ${clientIP}`);
       return new Response(
-        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        JSON.stringify({ error: "Muitas tentativas. Tente novamente mais tarde." }),
         {
           status: 429,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -78,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Input validation
     if (!name || !email || (!message && type === 'contact')) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Campos obrigatórios não preenchidos" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -90,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return new Response(
-        JSON.stringify({ error: "Invalid email format" }),
+        JSON.stringify({ error: "Formato de email inválido" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -107,61 +133,61 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (type === 'subscription') {
       // Handle newsletter subscription
-      emailResponse = await resend.emails.send({
-        from: "WRLDS Technologies <noreply@resend.dev>",
-        to: ["hello@wrlds.com"], // Replace with your actual email
-        subject: "New Newsletter Subscription",
+      emailResponse = await sendEmail({
+        from: "OptiStrat <noreply@resend.dev>",
+        to: ["comercial@optistrat.com.br"],
+        subject: "Nova Inscrição Newsletter",
         html: `
-          <h2>New Newsletter Subscription</h2>
+          <h2>Nova Inscrição Newsletter</h2>
           <p><strong>Email:</strong> ${sanitizedEmail}</p>
-          <p><strong>Name:</strong> ${sanitizedName}</p>
-          <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+          <p><strong>Nome:</strong> ${sanitizedName}</p>
+          <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
         `,
       });
 
       // Send confirmation email to subscriber
-      await resend.emails.send({
-        from: "WRLDS Technologies <noreply@resend.dev>",
+      await sendEmail({
+        from: "OptiStrat <noreply@resend.dev>",
         to: [sanitizedEmail],
-        subject: "Welcome to WRLDS Newsletter",
+        subject: "Bem-vindo à Newsletter OptiStrat",
         html: `
-          <h2>Thank you for subscribing!</h2>
-          <p>Hi ${sanitizedName},</p>
-          <p>Thank you for subscribing to our newsletter. We'll keep you updated with the latest news from WRLDS Technologies.</p>
-          <p>Best regards,<br>The WRLDS Team</p>
+          <h2>Obrigado por se inscrever!</h2>
+          <p>Olá ${sanitizedName},</p>
+          <p>Obrigado por se inscrever na nossa newsletter. Manteremos você atualizado com as últimas novidades da OptiStrat.</p>
+          <p>Atenciosamente,<br>Equipe OptiStrat</p>
         `,
       });
     } else {
       // Handle contact form
-      emailResponse = await resend.emails.send({
-        from: "WRLDS Contact Form <noreply@resend.dev>",
-        to: ["hello@wrlds.com"], // Replace with your actual email
-        subject: `New Contact Form Message from ${sanitizedName}`,
+      emailResponse = await sendEmail({
+        from: "OptiStrat Contato <noreply@resend.dev>",
+        to: ["comercial@optistrat.com.br"],
+        subject: `Nova Mensagem de Contato de ${sanitizedName}`,
         html: `
-          <h2>New Contact Form Submission</h2>
-          <p><strong>Name:</strong> ${sanitizedName}</p>
+          <h2>Nova Mensagem de Contato</h2>
+          <p><strong>Nome:</strong> ${sanitizedName}</p>
           <p><strong>Email:</strong> ${sanitizedEmail}</p>
-          <p><strong>Message:</strong></p>
+          <p><strong>Mensagem:</strong></p>
           <p>${sanitizedMessage.replace(/\n/g, '<br>')}</p>
-          <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+          <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
         `,
       });
 
       // Send confirmation email to sender
-      await resend.emails.send({
-        from: "WRLDS Technologies <noreply@resend.dev>",
+      await sendEmail({
+        from: "OptiStrat <noreply@resend.dev>",
         to: [sanitizedEmail],
-        subject: "We received your message",
+        subject: "Recebemos sua mensagem",
         html: `
-          <h2>Thank you for contacting us!</h2>
-          <p>Hi ${sanitizedName},</p>
-          <p>We have received your message and will get back to you as soon as possible.</p>
-          <p>Best regards,<br>The WRLDS Team</p>
+          <h2>Obrigado por entrar em contato!</h2>
+          <p>Olá ${sanitizedName},</p>
+          <p>Recebemos sua mensagem e entraremos em contato o mais breve possível.</p>
+          <p>Atenciosamente,<br>Equipe OptiStrat</p>
         `,
       });
     }
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Email enviado com sucesso:", emailResponse);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -171,9 +197,9 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-contact-email function:", error);
+    console.error("Erro na função send-contact-email:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to send email. Please try again later." }),
+      JSON.stringify({ error: "Falha ao enviar email. Tente novamente mais tarde." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
