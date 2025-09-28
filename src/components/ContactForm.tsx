@@ -68,6 +68,21 @@ const ContactForm = () => {
       
       console.log('Form submitted:', data);
       
+      // Save contact to database
+      const { error: dbError } = await supabase
+        .from('contacts')
+        .insert({
+          name: data.name,
+          email: data.email,
+          message: data.message
+        });
+
+      if (dbError) {
+        console.error('Error saving contact:', dbError);
+        // Continue with email sending even if database save fails
+      }
+
+      // Send email
       const response = await supabase.functions.invoke('send-contact-email', {
         body: {
           name: data.name,
