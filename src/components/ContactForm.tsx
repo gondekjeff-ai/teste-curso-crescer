@@ -217,7 +217,7 @@ const ContactForm = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2 text-card-foreground">Envie-nos um E-mail</h3>
               <p className="text-muted-foreground mb-2">Para consultas gerais:</p>
-              <a href="mailto:contato@optistrat.com.br" className="text-primary hover:underline">contato@optistrat.com.br</a>
+              <a href="mailto:comercial@optistrat.com.br" className="text-primary hover:underline">comercial@optistrat.com.br</a>
               <p className="text-muted-foreground mt-2 mb-2">
             </p>
             </div>

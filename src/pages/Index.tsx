@@ -5,6 +5,8 @@ import ITServices from '@/components/ITServices';
 import Projects from '@/components/Projects';
 import WhyOptiStrat from '@/components/WhyOptiStrat';
 import BlogPreview from '@/components/BlogPreview';
+import ProductPlatform from '@/components/ProductPlatform';
+import ChatBot from '@/components/ChatBot';
 import SEO from '@/components/SEO';
 import { useEffect } from 'react';
 
@@ -28,9 +30,11 @@ const Index = () => {
       />
       <Hero />
       <ITServices />
+      <ProductPlatform />
       <WhyOptiStrat />
       <Projects />
       <BlogPreview />
+      <ChatBot />
     </PageLayout>
   );
 };

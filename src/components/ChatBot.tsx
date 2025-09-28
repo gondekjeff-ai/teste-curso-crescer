@@ -95,6 +95,7 @@ const ChatBot = () => {
       <div className="fixed bottom-6 right-6 z-50">
         <Button
           onClick={() => setIsOpen(true)}
+          data-chatbot-trigger
           className={`w-16 h-16 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 ${
             isOpen ? 'scale-0' : 'scale-100'
           }`}

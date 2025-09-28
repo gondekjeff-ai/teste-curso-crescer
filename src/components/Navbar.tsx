@@ -80,25 +80,25 @@ const Navbar = () => {
                   <NavigationMenuContent>
                     <ul className="grid gap-3 p-4 w-[400px]">
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
                           <div className="font-medium">Infraestrutura em Nuvem</div>
                           <p className="text-sm text-muted-foreground">Migração e gerenciamento abrangente em nuvem</p>
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
                           <div className="font-medium">Cibersegurança</div>
                           <p className="text-sm text-muted-foreground">Detecção e proteção avançada contra ameaças</p>
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
                           <div className="font-medium">Gerenciamento de Rede</div>
                           <p className="text-sm text-muted-foreground">Monitoramento e otimização 24/7</p>
                         </button>
                       </li>
                       <li>
-                        <button onClick={() => scrollToSection('features')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
+                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
                           <div className="font-medium">Gestão de Dados</div>
                           <p className="text-sm text-muted-foreground">Backup seguro e soluções de recuperação</p>
                         </button>
@@ -130,11 +130,9 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <Link to="/blog">
-                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                       Notícias
-                     </NavigationMenuLink>
-                  </Link>
+                  <button onClick={() => scrollToSection('noticias')} className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary bg-transparent" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                    Notícias
+                  </button>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
