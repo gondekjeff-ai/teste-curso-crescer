@@ -49,7 +49,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center">
-            <img src={optiStratLogo} alt="OptiStrat" className={cn("h-8 w-auto", isScrolled ? "" : "brightness-0 invert")} />
+            <img src={optiStratLogo} alt="OptiStrat" className={cn("h-10 w-auto", isScrolled ? "" : "brightness-0 invert")} />
           </Link>
         </div>
           
@@ -130,7 +130,7 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <button onClick={() => scrollToSection('noticias')} className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary bg-transparent" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                  <button onClick={() => scrollToSection('noticias')} className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
                     Notícias
                   </button>
                 </NavigationMenuItem>
@@ -145,7 +145,7 @@ const Navbar = () => {
                 
                 <NavigationMenuItem>
                   <button onClick={() => scrollToSection('contact')} className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
-                    Começar
+                    Contatos
                   </button>
                 </NavigationMenuItem>
               </NavigationMenuList>

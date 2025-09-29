@@ -111,24 +111,24 @@ const MiniContactForm = () => {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border p-6 shadow-lg">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold text-card-foreground mb-2">Entre em Contato</h3>
-        <p className="text-muted-foreground text-sm">Deixe seus dados e entraremos em contato</p>
+    <div className="bg-card rounded-lg border border-border p-8 shadow-lg max-w-2xl mx-auto">
+      <div className="text-center mb-6">
+        <h3 className="text-2xl font-semibold text-card-foreground mb-3">Entre em Contato</h3>
+        <p className="text-muted-foreground">Deixe seus dados e entraremos em contato em breve</p>
       </div>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-card-foreground">Nome</FormLabel>
+                <FormLabel className="text-card-foreground text-base">Nome</FormLabel>
                 <div className="relative">
-                  <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <FormControl>
-                    <Input placeholder="Seu nome" className="pl-10" {...field} />
+                    <Input placeholder="Seu nome completo" className="pl-10 h-12 text-base" {...field} />
                   </FormControl>
                 </div>
                 <FormMessage />
@@ -141,11 +141,11 @@ const MiniContactForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-card-foreground">E-mail</FormLabel>
+                <FormLabel className="text-card-foreground text-base">E-mail</FormLabel>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <FormControl>
-                    <Input type="email" placeholder="seu.email@exemplo.com" className="pl-10" {...field} />
+                    <Input type="email" placeholder="seu.email@exemplo.com" className="pl-10 h-12 text-base" {...field} />
                   </FormControl>
                 </div>
                 <FormMessage />
@@ -183,12 +183,12 @@ const MiniContactForm = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-md transition-colors flex items-center justify-center disabled:opacity-70 text-sm"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-6 rounded-md transition-colors flex items-center justify-center disabled:opacity-70 text-base font-medium h-12"
           >
             {isSubmitting ? "Enviando..." : (
               <>
                 Enviar Contato
-                <Send className="ml-2 h-4 w-4" />
+                <Send className="ml-2 h-5 w-5" />
               </>
             )}
           </button>
