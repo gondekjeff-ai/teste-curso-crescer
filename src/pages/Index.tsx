@@ -7,6 +7,9 @@ import WhyOptiStrat from '@/components/WhyOptiStrat';
 import BlogPreview from '@/components/BlogPreview';
 import ProductPlatform from '@/components/ProductPlatform';
 import ChatBot from '@/components/ChatBot';
+import ContactForm from '@/components/ContactForm';
+import MiniContactForm from '@/components/MiniContactForm';
+import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
 import { useEffect } from 'react';
 
@@ -34,6 +37,19 @@ const Index = () => {
       <WhyOptiStrat />
       <Projects />
       <BlogPreview />
+      <div id="contact" className="bg-gradient-to-b from-background to-secondary py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <div>
+              <ContactForm />
+            </div>
+            <div className="flex justify-center lg:justify-end">
+              <MiniContactForm />
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
       <ChatBot />
     </PageLayout>
   );

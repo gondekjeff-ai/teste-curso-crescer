@@ -81,7 +81,7 @@ const Hero = () => {
                   className="w-full sm:w-auto min-h-[44px] px-6 sm:px-8 py-3 bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md hover:bg-white/20 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10 flex items-center justify-center group text-sm sm:text-base font-medium"
                   onClick={scrollToContact}
                 >
-                  Consulta Gratuita
+                  Contatos
                   <MessageSquare className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
                 </button>
               </motion.div>

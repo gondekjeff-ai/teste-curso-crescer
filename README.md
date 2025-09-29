@@ -60,10 +60,63 @@ This project is built with .
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Como fazer deploy deste projeto?
 
-Simply open [Lovable](https://lovable.dev/projects/ec1d4f1e-2506-4da5-a91b-34afa90cceb6) and click on Share -> Publish.
+Simplesmente abra [Lovable](https://lovable.dev/projects/ec1d4f1e-2506-4da5-a91b-34afa90cceb6) e clique em Share -> Publish.
 
-## I want to use a custom domain - is that possible?
+## Hospedar em servidor externo - Passo a passo
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### 1. Build do projeto
+```sh
+# Instalar dependências
+npm install
+
+# Gerar build de produção
+npm run build
+```
+
+### 2. Deploy no Netlify
+1. Acesse [netlify.com](https://www.netlify.com) e faça login
+2. Clique em "Add new site" -> "Deploy manually"
+3. Arraste a pasta `dist` gerada no build
+4. Configure as variáveis de ambiente necessárias:
+   - `VITE_SUPABASE_URL`: https://bsbwwgicxjmjshofxyop.supabase.co
+   - `VITE_SUPABASE_ANON_KEY`: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+### 3. Deploy no Vercel
+1. Acesse [vercel.com](https://vercel.com) e faça login
+2. Clique em "New Project"
+3. Conecte o repositório GitHub
+4. Configure as variáveis de ambiente na seção "Environment Variables"
+5. Clique em "Deploy"
+
+### 4. Deploy no Firebase Hosting
+```sh
+# Instalar Firebase CLI
+npm install -g firebase-tools
+
+# Login no Firebase
+firebase login
+
+# Inicializar projeto
+firebase init hosting
+
+# Configurar pasta public como 'dist'
+# Deploy
+firebase deploy
+```
+
+### 5. Deploy em servidor próprio (Apache/Nginx)
+1. Faça upload da pasta `dist` para o servidor
+2. Configure o servidor web para servir arquivos estáticos
+3. Configure redirecionamento para index.html para SPA
+4. Configure HTTPS com certificado SSL
+
+### Configurações importantes para SPA:
+- Configurar redirecionamento de todas as rotas para `/index.html`
+- Configurar headers de cache adequados
+- Configurar CORS se necessário para APIs externas
+
+## Quero usar um domínio personalizado - é possível?
+
+Não suportamos domínios personalizados (ainda). Se você quiser fazer deploy do seu projeto sob seu próprio domínio, recomendamos usar Netlify ou Vercel. Visite nossa documentação para mais detalhes: [Domínios personalizados](https://docs.lovable.dev/tips-tricks/custom-domain/)
