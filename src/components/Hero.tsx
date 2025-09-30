@@ -53,7 +53,7 @@ const Hero = () => {
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full">
             <motion.div className="w-full max-w-4xl text-center" variants={itemVariants}>
               <motion.div className="mb-6" variants={itemVariants}>
-                <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-48 md:h-56 lg:h-64 mx-auto mb-4" />
+                <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-32 md:h-40 mx-auto mb-4" />
               </motion.div>
               <motion.h1 className="banner-title text-white" variants={itemVariants}>Otimize sua Infraestrutura de TI</motion.h1>
               <motion.p className="banner-subtitle text-primary-foreground/90 mt-4 sm:mt-6" variants={itemVariants}>

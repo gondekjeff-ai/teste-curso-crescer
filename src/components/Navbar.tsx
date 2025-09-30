@@ -48,8 +48,8 @@ const Navbar = () => {
       <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between h-16">
         <div className="flex-shrink-0">
-          <Link to="/" className="flex items-center h-full py-2">
-            <img src={optiStratLogo} alt="OptiStrat" className={cn("h-12 w-auto", isScrolled ? "" : "brightness-0 invert")} />
+          <Link to="/" className="flex items-center">
+            <img src={optiStratLogo} alt="OptiStrat" className={cn("h-14 w-auto", isScrolled ? "" : "brightness-0 invert")} />
           </Link>
         </div>
           
