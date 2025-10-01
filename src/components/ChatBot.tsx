@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -16,7 +15,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Olá! Sou o assistente virtual da OptiStrat. Como posso ajudá-lo hoje?',
+      text: 'Olá! 👋 Sou o assistente virtual da OptiStrat. Como posso te ajudar hoje?',
       isBot: true,
       timestamp: new Date()
     }
@@ -47,31 +46,92 @@ const ChatBot = () => {
     setInputValue('');
     setIsLoading(true);
 
+    // Create a placeholder for the bot message
+    const botMessageId = (Date.now() + 1).toString();
+    const botMessage: Message = {
+      id: botMessageId,
+      text: '',
+      isBot: true,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, botMessage]);
+
     try {
-      // Call AI chatbot edge function
-      const { data, error } = await supabase.functions.invoke('ai-chatbot', {
-        body: { message: text.trim() }
-      });
+      // Call AI chatbot edge function with streaming
+      const response = await fetch(
+        `https://bsbwwgicxjmjshofxyop.supabase.co/functions/v1/ai-chatbot`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ message: text.trim() })
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to get response');
+      }
 
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: data.response || 'Desculpe, não consegui processar sua mensagem. Tente novamente.',
-        isBot: true,
-        timestamp: new Date()
-      };
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
 
-      setMessages(prev => [...prev, botMessage]);
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content;
+                
+                if (content) {
+                  accumulatedText += content;
+                  
+                  // Update the bot message with accumulated text
+                  setMessages(prev => prev.map(msg => 
+                    msg.id === botMessageId 
+                      ? { ...msg, text: accumulatedText }
+                      : msg
+                  ));
+                }
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
+
+      // If no text was accumulated, show fallback
+      if (!accumulatedText) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === botMessageId 
+            ? { ...msg, text: 'Desculpe, não consegui processar sua mensagem. Tente novamente.' }
+            : msg
+        ));
+      }
     } catch (error) {
       console.error('Error sending message:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: 'Desculpe, ocorreu um erro. Para um atendimento mais rápido, entre em contato pelo nosso formulário ou email comercial@optistrat.com.br',
-        isBot: true,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === botMessageId 
+          ? { 
+              ...msg, 
+              text: 'Ops! 😅 Parece que tive um problema aqui... Para um atendimento mais rápido, entre em contato pelo nosso formulário ou email comercial@optistrat.com.br' 
+            }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }

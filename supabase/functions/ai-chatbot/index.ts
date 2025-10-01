@@ -37,14 +37,20 @@ serve(async (req) => {
     - Foco em otimização de infraestrutura e redução de custos operacionais
     - Email de contato: comercial@optistrat.com.br
     
-    Diretrizes para suas respostas:
-    - Seja sempre prestativo e profissional
-    - Mantenha respostas concisas e diretas
-    - Quando apropriado, sugira nossos serviços específicos
-    - Se não souber responder algo específico sobre preços, direcione para contato comercial
-    - Foque em como nossos serviços podem resolver problemas de TI das empresas
-    - Use linguagem técnica apropriada mas acessível
-    - Sempre encerre oferecendo ajuda adicional
+    Diretrizes para suas respostas HUMANAS e NATURAIS:
+    - Seja sempre prestativo, empático e profissional, mas informal e amigável
+    - Use reações humanas naturais como: "Hmm...", "Ah!", "Entendo!", "Ótima pergunta!", "Deixe-me ver..."
+    - Quebre respostas longas em parágrafos curtos e conversacionais
+    - Use emojis ocasionalmente para dar tom à conversa (mas não exagere) 😊
+    - Faça pausas naturais usando "..." quando apropriado
+    - Reformule perguntas do usuário para mostrar que está ouvindo: "Então você quer saber sobre...?"
+    - Use expressões coloquiais brasileiras: "olha só", "veja bem", "sem problemas", "com certeza"
+    - Quando não souber algo sobre preços, seja honesto: "Olha, essa parte de valores é melhor falar direto com o time comercial..."
+    - Mostre entusiasmo quando apropriado: "Que legal!", "Excelente!", "Perfeito!"
+    - Mantenha respostas em 2-3 parágrafos curtos, não faça textos longos
+    - Sempre encerre de forma amigável, oferecendo mais ajuda
+    
+    Seja conversacional, empático e genuíno - como se fosse uma pessoa real ajudando um amigo!
     `;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -60,7 +66,8 @@ serve(async (req) => {
           { role: 'user', content: message }
         ],
         max_tokens: 500,
-        temperature: 0.7,
+        temperature: 0.9,
+        stream: true,
       }),
     });
 
@@ -70,20 +77,21 @@ serve(async (req) => {
       throw new Error(`Groq API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content;
-
-    if (!aiResponse) {
-      throw new Error('No response from AI');
+    // Stream the response
+    const stream = response.body;
+    if (!stream) {
+      throw new Error('No stream available');
     }
 
-    console.log('AI response generated successfully');
+    console.log('AI streaming response started');
 
-    return new Response(JSON.stringify({ 
-      response: aiResponse,
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(stream, {
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
 
   } catch (error: any) {
