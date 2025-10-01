@@ -2,7 +2,6 @@
 import PageLayout from '@/components/PageLayout';
 import Hero from '@/components/Hero';
 import ITServices from '@/components/ITServices';
-import Projects from '@/components/Projects';
 import WhyOptiStrat from '@/components/WhyOptiStrat';
 import BlogPreview from '@/components/BlogPreview';
 import ProductPlatform from '@/components/ProductPlatform';
@@ -34,7 +33,6 @@ const Index = () => {
       <ITServices />
       <ProductPlatform />
       <WhyOptiStrat />
-      <Projects />
       <BlogPreview />
       <div id="contact" className="bg-gradient-to-b from-background to-secondary py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
