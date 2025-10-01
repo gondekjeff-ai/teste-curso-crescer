@@ -44,7 +44,7 @@ const Hero = () => {
   };
   
   return <motion.div className="relative w-full" initial="hidden" animate="visible" variants={containerVariants}>
-      <div className="banner-container bg-gradient-to-br from-primary via-secondary to-primary/80 relative overflow-hidden h-[50vh] sm:h-[60vh] md:h-[500px] lg:h-[550px] xl:h-[600px] w-full">
+      <div className="banner-container bg-gradient-to-br from-primary via-secondary to-primary/80 relative overflow-hidden h-[65vh] sm:h-[70vh] md:h-[600px] lg:h-[700px] xl:h-[750px] w-full">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-secondary/80 to-primary w-full">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
         </div>
@@ -53,12 +53,12 @@ const Hero = () => {
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full">
             <motion.div className="w-full max-w-4xl text-center" variants={itemVariants}>
               <motion.div className="mb-6" variants={itemVariants}>
-                <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-48 md:h-56 lg:h-64 xl:h-72 mx-auto mb-4" />
+                <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-56 md:h-64 lg:h-72 xl:h-80 mx-auto mb-6" />
               </motion.div>
-              <motion.h1 className="banner-title text-white" variants={itemVariants}>
+              <motion.h1 className="banner-title text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold" variants={itemVariants}>
                 Otimize sua Infraestrutura de TI com Soluções Especializadas
               </motion.h1>
-              <motion.p className="banner-subtitle text-primary-foreground/90 mt-4 sm:mt-6 text-lg md:text-xl" variants={itemVariants}>
+              <motion.p className="banner-subtitle text-primary-foreground/90 mt-4 sm:mt-6 text-base md:text-lg lg:text-xl max-w-3xl mx-auto" variants={itemVariants}>
                 Gestão completa de TI que potencializa desempenho, fortalece segurança e acelera o crescimento do seu negócio.
               </motion.p>
               <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 justify-center items-center" variants={itemVariants}>
