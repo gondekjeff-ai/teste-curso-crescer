@@ -55,9 +55,11 @@ const Hero = () => {
               <motion.div className="mb-6" variants={itemVariants}>
                 <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-48 md:h-56 lg:h-64 xl:h-72 mx-auto mb-4" />
               </motion.div>
-              <motion.h1 className="banner-title text-white" variants={itemVariants}>Otimize sua Infraestrutura de TI</motion.h1>
-              <motion.p className="banner-subtitle text-primary-foreground/90 mt-4 sm:mt-6" variants={itemVariants}>
-                Soluções especializadas em gestão de TI que otimizam desempenho, reforçam a segurança e impulsionam o crescimento empresarial.
+              <motion.h1 className="banner-title text-white" variants={itemVariants}>
+                Otimize sua Infraestrutura de TI com Soluções Especializadas
+              </motion.h1>
+              <motion.p className="banner-subtitle text-primary-foreground/90 mt-4 sm:mt-6 text-lg md:text-xl" variants={itemVariants}>
+                Gestão completa de TI que potencializa desempenho, fortalece segurança e acelera o crescimento do seu negócio.
               </motion.p>
               <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 justify-center items-center" variants={itemVariants}>
                 {/* Styled as a button but using an anchor tag for project navigation */}
