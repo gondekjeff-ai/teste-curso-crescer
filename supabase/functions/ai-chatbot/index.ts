@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
@@ -7,6 +8,8 @@ const corsHeaders = {
 };
 
 const groqApiKey = Deno.env.get('GROQ_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -27,6 +30,36 @@ serve(async (req) => {
 
     console.log('Processing message:', message);
 
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch context data from Supabase for RAG
+    const [productsResult, newsResult] = await Promise.all([
+      supabase.from('products').select('name, description, category, price').eq('active', true).limit(10),
+      supabase.from('news').select('title, excerpt, content').eq('published', true).order('created_at', { ascending: false }).limit(5)
+    ]);
+
+    console.log('RAG data fetched - Products:', productsResult.data?.length, 'News:', newsResult.data?.length);
+
+    // Build context from database
+    let contextInfo = '';
+    
+    if (productsResult.data && productsResult.data.length > 0) {
+      contextInfo += '\n\nProdutos e Serviços Disponíveis:\n';
+      productsResult.data.forEach(product => {
+        contextInfo += `- ${product.name} (${product.category}): ${product.description}`;
+        if (product.price) contextInfo += ` - R$ ${product.price}`;
+        contextInfo += '\n';
+      });
+    }
+
+    if (newsResult.data && newsResult.data.length > 0) {
+      contextInfo += '\n\nNotícias e Atualizações Recentes:\n';
+      newsResult.data.forEach(news => {
+        contextInfo += `- ${news.title}: ${news.excerpt || news.content?.substring(0, 150)}\n`;
+      });
+    }
+
     const systemPrompt = `
     Você é um assistente virtual da OptiStrat, uma empresa especializada em soluções de TI.
     
@@ -36,6 +69,7 @@ serve(async (req) => {
     - Atendemos empresas de todos os portes com soluções personalizadas
     - Foco em otimização de infraestrutura e redução de custos operacionais
     - Email de contato: comercial@optistrat.com.br
+    ${contextInfo}
     
     Diretrizes para suas respostas HUMANAS e NATURAIS:
     - Seja sempre prestativo, empático e profissional, mas informal e amigável
@@ -45,10 +79,11 @@ serve(async (req) => {
     - Faça pausas naturais usando "..." quando apropriado
     - Reformule perguntas do usuário para mostrar que está ouvindo: "Então você quer saber sobre...?"
     - Use expressões coloquiais brasileiras: "olha só", "veja bem", "sem problemas", "com certeza"
-    - Quando não souber algo sobre preços, seja honesto: "Olha, essa parte de valores é melhor falar direto com o time comercial..."
+    - Quando não souber algo sobre preços específicos, seja honesto: "Olha, essa parte de valores é melhor falar direto com o time comercial..."
     - Mostre entusiasmo quando apropriado: "Que legal!", "Excelente!", "Perfeito!"
     - Mantenha respostas em 2-3 parágrafos curtos, não faça textos longos
     - Sempre encerre de forma amigável, oferecendo mais ajuda
+    - Use as informações de produtos e notícias acima quando relevante para a pergunta do usuário
     
     Seja conversacional, empático e genuíno - como se fosse uma pessoa real ajudando um amigo!
     `;
