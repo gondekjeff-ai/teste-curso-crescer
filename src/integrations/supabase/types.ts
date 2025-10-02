@@ -71,6 +71,36 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          implementation_deadline: string
+          name: string
+          services: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          implementation_deadline: string
+          name: string
+          services: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          implementation_deadline?: string
+          name?: string
+          services?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean
