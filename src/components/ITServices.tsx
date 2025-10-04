@@ -6,11 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from "@/components/ui/button";
 import { useScrollHijack } from '@/hooks/useScrollHijack';
+import OrcamentoDialog from '@/components/OrcamentoDialog';
 
 const ITServices = () => {
   const servicesRef = useRef<HTMLDivElement>(null);
   const hijackSectionRef = useRef<HTMLDivElement>(null);
   const [hoveredService, setHoveredService] = useState<number | null>(null);
+  const [orcamentoDialogOpen, setOrcamentoDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const services = [
@@ -42,14 +44,9 @@ const ITServices = () => {
 
   const { isHijacked, currentIndex } = useScrollHijack(hijackSectionRef, services.length);
 
-  const scrollToContact = (e: React.MouseEvent) => {
+  const handleOrcamentoClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const contactSection = document.getElementById('contact-info');
-    if (contactSection) {
-      contactSection.scrollIntoView({
-        behavior: 'smooth'
-      });
-    }
+    setOrcamentoDialogOpen(true);
   };
 
   useEffect(() => {
@@ -260,7 +257,7 @@ const ITServices = () => {
           </div>
         </div>
         <div className="text-center mt-12 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-          <Button onClick={scrollToContact} className="inline-flex items-center px-4 sm:px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
+          <Button onClick={handleOrcamentoClick} className="inline-flex items-center px-4 sm:px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md hover:shadow-lg transition-all group w-full sm:w-auto">
             Pronto para Transformar sua TI?
             <MessageSquare className="ml-2 w-4 h-4 group-hover:animate-pulse" />
           </Button>
@@ -270,6 +267,7 @@ const ITServices = () => {
             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
+        <OrcamentoDialog open={orcamentoDialogOpen} onOpenChange={setOrcamentoDialogOpen} />
       </section>
       
       <section id="process" className="bg-secondary py-10 md:py-16">
