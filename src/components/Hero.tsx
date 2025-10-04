@@ -76,7 +76,7 @@ const Hero = () => {
                       alt={`IT Services ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-secondary/60 to-primary/70"></div>
+                    <div className="absolute inset-0 bg-black/60"></div>
                   </div>
                 </CarouselItem>
               ))}
@@ -84,9 +84,9 @@ const Hero = () => {
           </Carousel>
         </div>
         
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 z-10"></div>
         
-        <div className="banner-overlay bg-transparent pt-20 sm:pt-24 md:pt-32 w-full">
+        <div className="banner-overlay bg-transparent pt-20 sm:pt-24 md:pt-32 w-full relative z-20">
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full">
             <motion.div className="w-full max-w-4xl text-center" variants={itemVariants}>
               <motion.div className="mb-6" variants={itemVariants}>
