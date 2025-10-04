@@ -1,11 +1,24 @@
 import { ArrowRight, Code, Server, Cloud, MessageSquare, Shield } from "lucide-react";
 import optiStratLogo from "@/assets/optistrat-logo-full.png";
+import carousel1 from "@/assets/carousel-1.jpg";
+import carousel2 from "@/assets/carousel-2.jpg";
+import carousel3 from "@/assets/carousel-3.jpg";
+import carousel4 from "@/assets/carousel-4.jpg";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import { useEffect, useRef } from "react";
 
 const Hero = () => {
   const isMobile = useIsMobile();
+  const plugin = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false })
+  );
+  
+  const carouselImages = [carousel1, carousel2, carousel3, carousel4];
+  
   const containerVariants = {
     hidden: {
       opacity: 0
@@ -45,15 +58,39 @@ const Hero = () => {
   
   return <motion.div className="relative w-full" initial="hidden" animate="visible" variants={containerVariants}>
       <div className="banner-container bg-gradient-to-br from-primary via-secondary to-primary/80 relative overflow-hidden h-[65vh] sm:h-[70vh] md:h-[600px] lg:h-[700px] xl:h-[750px] w-full">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-secondary/80 to-primary w-full">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
+        {/* Background Carousel */}
+        <div className="absolute inset-0 w-full h-full">
+          <Carousel
+            plugins={[plugin.current]}
+            className="w-full h-full"
+            opts={{
+              loop: true,
+            }}
+          >
+            <CarouselContent className="h-full">
+              {carouselImages.map((image, index) => (
+                <CarouselItem key={index} className="h-full">
+                  <div className="relative w-full h-full">
+                    <img 
+                      src={image} 
+                      alt={`IT Services ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-secondary/60 to-primary/70"></div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </div>
+        
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20"></div>
         
         <div className="banner-overlay bg-transparent pt-20 sm:pt-24 md:pt-32 w-full">
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full">
             <motion.div className="w-full max-w-4xl text-center" variants={itemVariants}>
               <motion.div className="mb-6" variants={itemVariants}>
-                <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-56 md:h-64 lg:h-72 xl:h-80 mx-auto mb-6" />
+                <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-72 md:h-96 lg:h-[32rem] xl:h-[36rem] mx-auto mb-6" />
               </motion.div>
               <motion.h1 className="banner-title text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold" variants={itemVariants}>
                 Otimize sua Infraestrutura de TI com Soluções Especializadas
