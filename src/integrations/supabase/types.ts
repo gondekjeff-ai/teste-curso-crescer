@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      carousel_images: {
+        Row: {
+          active: boolean
+          alt_text: string
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          alt_text: string
+          created_at?: string
+          display_order: number
+          id?: string
+          image_url: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          alt_text?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           created_at: string
@@ -130,6 +160,60 @@ export type Database = {
           id?: string
           name?: string
           price?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          mfa_enabled: boolean
+          mfa_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          mfa_enabled?: boolean
+          mfa_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          mfa_enabled?: boolean
+          mfa_secret?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          section: string
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          section: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          section?: string
           updated_at?: string
         }
         Relationships: []

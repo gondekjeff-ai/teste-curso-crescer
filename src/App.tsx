@@ -6,6 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminHome from "./pages/admin/AdminHome";
+import CarouselManager from "./pages/admin/CarouselManager";
+import ContentManager from "./pages/admin/ContentManager";
 import FireCatProject from "./pages/FireCatProject";
 import SportRetailProject from "./pages/SportRetailProject";
 import WorkwearProject from "./pages/WorkwearProject";
@@ -44,6 +49,12 @@ const App = () => {
             <Route path="/orcamento" element={<Orcamento />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPostDetail />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminDashboard />}>
+              <Route index element={<AdminHome />} />
+              <Route path="carousel" element={<CarouselManager />} />
+              <Route path="content" element={<ContentManager />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
