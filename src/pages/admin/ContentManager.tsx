@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
+import { heroContentSchema, sanitizeObject } from '@/lib/inputValidation';
 
 interface HeroContent {
   title: string;
@@ -62,9 +63,26 @@ const ContentManager = () => {
   const saveContent = async () => {
     setSaving(true);
     try {
+      // Sanitize all text inputs
+      const sanitizedContent = sanitizeObject(content);
+
+      // Validate content
+      const validation = heroContentSchema.safeParse(sanitizedContent);
+      
+      if (!validation.success) {
+        const errorMessage = validation.error.errors[0]?.message || 'Dados inválidos';
+        toast({
+          title: 'Erro de validação',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        setSaving(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('site_content')
-        .update({ content: content as any })
+        .update({ content: validation.data as any })
         .eq('section', 'hero');
 
       if (error) throw error;

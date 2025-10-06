@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { carouselImageSchema, sanitizeInput } from '@/lib/inputValidation';
 
 interface CarouselImage {
   id: string;
@@ -47,9 +48,34 @@ const CarouselManager = () => {
 
   const updateImage = async (id: string, updates: Partial<CarouselImage>) => {
     try {
+      // Sanitize text inputs
+      const sanitizedUpdates = { ...updates };
+      if (sanitizedUpdates.alt_text) {
+        sanitizedUpdates.alt_text = sanitizeInput(sanitizedUpdates.alt_text);
+      }
+
+      // Validate the updates
+      if (Object.keys(sanitizedUpdates).length > 0) {
+        const currentImage = images.find(img => img.id === id);
+        if (currentImage) {
+          const merged = { ...currentImage, ...sanitizedUpdates };
+          const validation = carouselImageSchema.safeParse(merged);
+          
+          if (!validation.success) {
+            const errorMessage = validation.error.errors[0]?.message || 'Dados inválidos';
+            toast({
+              title: 'Erro de validação',
+              description: errorMessage,
+              variant: 'destructive',
+            });
+            return;
+          }
+        }
+      }
+
       const { error } = await supabase
         .from('carousel_images')
-        .update(updates)
+        .update(sanitizedUpdates)
         .eq('id', id);
 
       if (error) throw error;

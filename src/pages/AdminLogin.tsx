@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +6,20 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Lock, Mail } from 'lucide-react';
+import { Shield, Lock, Mail, AlertTriangle } from 'lucide-react';
 import optiStratLogo from '@/assets/optistrat-logo-full.png';
 import { supabase } from '@/integrations/supabase/client';
 import { verifyMFAToken } from '@/lib/mfa';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+const RATE_LIMIT_KEY = 'login_attempts';
+const RATE_LIMIT_DURATION = 15 * 60 * 1000; // 15 minutes
+const MAX_ATTEMPTS = 5;
+
+interface LoginAttempt {
+  count: number;
+  lastAttempt: number;
+}
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -17,12 +27,87 @@ const AdminLogin = () => {
   const [mfaCode, setMfaCode] = useState('');
   const [needsMfa, setNeedsMfa] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(0);
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check rate limiting on mount
+  useEffect(() => {
+    checkRateLimit();
+  }, []);
+
+  const checkRateLimit = () => {
+    const stored = localStorage.getItem(RATE_LIMIT_KEY);
+    if (!stored) return;
+
+    const attempt: LoginAttempt = JSON.parse(stored);
+    const timeSinceLastAttempt = Date.now() - attempt.lastAttempt;
+
+    if (attempt.count >= MAX_ATTEMPTS && timeSinceLastAttempt < RATE_LIMIT_DURATION) {
+      setRateLimited(true);
+      setRemainingTime(Math.ceil((RATE_LIMIT_DURATION - timeSinceLastAttempt) / 1000));
+      
+      // Update countdown
+      const interval = setInterval(() => {
+        const newTimeSince = Date.now() - attempt.lastAttempt;
+        const newRemaining = Math.ceil((RATE_LIMIT_DURATION - newTimeSince) / 1000);
+        
+        if (newRemaining <= 0) {
+          setRateLimited(false);
+          localStorage.removeItem(RATE_LIMIT_KEY);
+          clearInterval(interval);
+        } else {
+          setRemainingTime(newRemaining);
+        }
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    } else if (timeSinceLastAttempt >= RATE_LIMIT_DURATION) {
+      localStorage.removeItem(RATE_LIMIT_KEY);
+    }
+  };
+
+  const recordFailedAttempt = () => {
+    const stored = localStorage.getItem(RATE_LIMIT_KEY);
+    const attempt: LoginAttempt = stored 
+      ? JSON.parse(stored) 
+      : { count: 0, lastAttempt: Date.now() };
+
+    const timeSinceLastAttempt = Date.now() - attempt.lastAttempt;
+
+    if (timeSinceLastAttempt >= RATE_LIMIT_DURATION) {
+      attempt.count = 1;
+    } else {
+      attempt.count += 1;
+    }
+
+    attempt.lastAttempt = Date.now();
+    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(attempt));
+
+    if (attempt.count >= MAX_ATTEMPTS) {
+      checkRateLimit();
+    }
+  };
+
+  const clearAttempts = () => {
+    localStorage.removeItem(RATE_LIMIT_KEY);
+    setRateLimited(false);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (rateLimited) {
+      toast({
+        title: 'Tentativas excedidas',
+        description: `Aguarde ${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')} antes de tentar novamente.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -31,6 +116,7 @@ const AdminLogin = () => {
         const { data, error } = await signIn(email, password);
 
         if (error) {
+          recordFailedAttempt();
           toast({
             title: 'Erro no login',
             description: error.message,
@@ -41,20 +127,21 @@ const AdminLogin = () => {
         }
 
         if (data?.user) {
-          // Check if user has MFA enabled
+          // Check if user has MFA enabled (only fetch mfa_enabled, not the secret)
           const { data: profile } = await supabase
             .from('profiles')
-            .select('mfa_enabled, mfa_secret')
+            .select('mfa_enabled')
             .eq('user_id', data.user.id)
             .single();
 
-          if (profile?.mfa_enabled && profile?.mfa_secret) {
+          if (profile?.mfa_enabled) {
             // User has MFA enabled, show MFA input
             setNeedsMfa(true);
             setLoading(false);
             return;
           } else {
             // No MFA, proceed to admin panel
+            clearAttempts();
             toast({
               title: 'Login bem-sucedido',
               description: 'Redirecionando para o painel administrativo...',
@@ -67,6 +154,7 @@ const AdminLogin = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
+          recordFailedAttempt();
           toast({
             title: 'Erro',
             description: 'Sessão expirada. Por favor, faça login novamente.',
@@ -77,6 +165,26 @@ const AdminLogin = () => {
           return;
         }
 
+        // Use the secure server-side verification function
+        const { data: verificationResult, error: verifyError } = await supabase
+          .rpc('verify_mfa_token', {
+            _user_id: user.id,
+            _token: mfaCode
+          });
+
+        if (verifyError || !verificationResult) {
+          recordFailedAttempt();
+          toast({
+            title: 'Erro na verificação',
+            description: 'Não foi possível verificar o código 2FA',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
+        // For now, still do client-side verification as the server function is a placeholder
+        // In production, you'd move the TOTP verification entirely to an edge function
         const { data: profile } = await supabase
           .from('profiles')
           .select('mfa_secret')
@@ -84,6 +192,7 @@ const AdminLogin = () => {
           .single();
 
         if (!profile?.mfa_secret) {
+          recordFailedAttempt();
           toast({
             title: 'Erro',
             description: 'Configuração de 2FA não encontrada',
@@ -96,6 +205,7 @@ const AdminLogin = () => {
         const isValid = verifyMFAToken(mfaCode, profile.mfa_secret);
 
         if (!isValid) {
+          recordFailedAttempt();
           toast({
             title: 'Código inválido',
             description: 'O código de autenticação está incorreto',
@@ -106,6 +216,7 @@ const AdminLogin = () => {
         }
 
         // MFA verification successful
+        clearAttempts();
         toast({
           title: 'Login bem-sucedido',
           description: 'Redirecionando para o painel administrativo...',
@@ -113,6 +224,7 @@ const AdminLogin = () => {
         navigate('/admin');
       }
     } catch (error) {
+      recordFailedAttempt();
       toast({
         title: 'Erro',
         description: 'Ocorreu um erro ao fazer login',
@@ -141,6 +253,14 @@ const AdminLogin = () => {
           </div>
         </CardHeader>
         <CardContent>
+          {rateLimited && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Muitas tentativas de login. Aguarde {Math.floor(remainingTime / 60)}:{(remainingTime % 60).toString().padStart(2, '0')} antes de tentar novamente.
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             {!needsMfa ? (
               <>
@@ -192,7 +312,7 @@ const AdminLogin = () => {
                 </p>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || rateLimited}>
               {loading ? 'Entrando...' : needsMfa ? 'Verificar Código' : 'Entrar'}
             </Button>
           </form>

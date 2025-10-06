@@ -28,18 +28,22 @@ const MFASettings = () => {
     if (!user) return;
 
     try {
+      // Only fetch mfa_enabled status, never fetch the secret from client
       const { data: profile } = await supabase
         .from('profiles')
-        .select('mfa_enabled, mfa_secret')
+        .select('mfa_enabled')
         .eq('user_id', user.id)
         .single();
 
       if (profile) {
         setMfaEnabled(profile.mfa_enabled || false);
-        setMfaSecret(profile.mfa_secret || '');
       }
     } catch (error) {
-      console.error('Error loading MFA status:', error);
+      toast({
+        title: 'Erro ao carregar configurações',
+        description: 'Não foi possível carregar as configurações de segurança',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
