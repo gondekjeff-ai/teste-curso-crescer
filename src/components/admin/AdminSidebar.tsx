@@ -1,4 +1,4 @@
-import { Home, Image, FileText, Settings } from 'lucide-react';
+import { Home, Image, FileText, Shield } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -17,7 +17,7 @@ const menuItems = [
   { title: 'Dashboard', url: '/admin', icon: Home },
   { title: 'Carrossel', url: '/admin/carousel', icon: Image },
   { title: 'Conteúdo', url: '/admin/content', icon: FileText },
-  { title: 'Configurações', url: '/admin/settings', icon: Settings },
+  { title: 'Segurança', url: '/admin/security', icon: Shield },
 ];
 
 export function AdminSidebar() {

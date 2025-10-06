@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminHome from "./pages/admin/AdminHome";
 import CarouselManager from "./pages/admin/CarouselManager";
 import ContentManager from "./pages/admin/ContentManager";
+import MFASettings from "./pages/admin/MFASettings";
 import FireCatProject from "./pages/FireCatProject";
 import SportRetailProject from "./pages/SportRetailProject";
 import WorkwearProject from "./pages/WorkwearProject";
@@ -54,6 +55,7 @@ const App = () => {
               <Route index element={<AdminHome />} />
               <Route path="carousel" element={<CarouselManager />} />
               <Route path="content" element={<ContentManager />} />
+              <Route path="security" element={<MFASettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

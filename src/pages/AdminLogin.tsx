@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Lock, Mail } from 'lucide-react';
 import optiStratLogo from '@/assets/optistrat-logo-full.png';
+import { supabase } from '@/integrations/supabase/client';
+import { verifyMFAToken } from '@/lib/mfa';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -24,21 +26,86 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await signIn(email, password);
+      if (!needsMfa) {
+        // First step: email/password authentication
+        const { data, error } = await signIn(email, password);
 
-      if (error) {
-        toast({
-          title: 'Erro no login',
-          description: error.message,
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-      }
+        if (error) {
+          toast({
+            title: 'Erro no login',
+            description: error.message,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
 
-      if (data?.user) {
-        // Check if user needs MFA
-        // For now, we'll skip MFA implementation and go straight to admin panel
+        if (data?.user) {
+          // Check if user has MFA enabled
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('mfa_enabled, mfa_secret')
+            .eq('user_id', data.user.id)
+            .single();
+
+          if (profile?.mfa_enabled && profile?.mfa_secret) {
+            // User has MFA enabled, show MFA input
+            setNeedsMfa(true);
+            setLoading(false);
+            return;
+          } else {
+            // No MFA, proceed to admin panel
+            toast({
+              title: 'Login bem-sucedido',
+              description: 'Redirecionando para o painel administrativo...',
+            });
+            navigate('/admin');
+          }
+        }
+      } else {
+        // Second step: MFA verification
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          toast({
+            title: 'Erro',
+            description: 'Sessão expirada. Por favor, faça login novamente.',
+            variant: 'destructive',
+          });
+          setNeedsMfa(false);
+          setLoading(false);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('mfa_secret')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!profile?.mfa_secret) {
+          toast({
+            title: 'Erro',
+            description: 'Configuração de 2FA não encontrada',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
+        const isValid = verifyMFAToken(mfaCode, profile.mfa_secret);
+
+        if (!isValid) {
+          toast({
+            title: 'Código inválido',
+            description: 'O código de autenticação está incorreto',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
+        // MFA verification successful
         toast({
           title: 'Login bem-sucedido',
           description: 'Redirecionando para o painel administrativo...',
@@ -61,7 +128,7 @@ const AdminLogin = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <img src={optiStratLogo} alt="OptiStrat" className="h-20" />
+            <img src={optiStratLogo} alt="OptiStrat" className="h-32" />
           </div>
           <div className="space-y-2 text-center">
             <div className="flex justify-center">

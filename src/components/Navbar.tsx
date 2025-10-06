@@ -130,9 +130,11 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <button onClick={() => scrollToSection('noticias')} className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                    Notícias
-                  </button>
+                  <Link to="/blog">
+                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                       Notícias
+                     </NavigationMenuLink>
+                  </Link>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
@@ -144,9 +146,11 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <button onClick={() => scrollToSection('contact')} className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
-                    Contatos
-                  </button>
+                  <Link to="/#contact">
+                    <button className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
+                      Contatos
+                    </button>
+                  </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
