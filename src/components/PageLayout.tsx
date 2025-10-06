@@ -1,6 +1,4 @@
-
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 
 type PageLayoutProps = {
@@ -9,12 +7,10 @@ type PageLayoutProps = {
 };
 
 const PageLayout = ({ children, showContact = true }: PageLayoutProps) => {
-  const location = useLocation();
-
-  // Effect to scroll to top when route changes
+  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [location]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background w-full max-w-[100vw] overflow-x-hidden">
