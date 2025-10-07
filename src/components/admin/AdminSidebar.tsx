@@ -1,4 +1,4 @@
-import { Home, Image, FileText, Shield } from 'lucide-react';
+import { Home, Image, FileText, Shield, Package, Newspaper } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Sidebar,
@@ -17,6 +17,8 @@ const menuItems = [
   { title: 'Dashboard', url: '/admin', icon: Home },
   { title: 'Carrossel', url: '/admin/carousel', icon: Image },
   { title: 'Conteúdo', url: '/admin/content', icon: FileText },
+  { title: 'Produtos', url: '/admin/products', icon: Package },
+  { title: 'Notícias', url: '/admin/news', icon: Newspaper },
   { title: 'Segurança', url: '/admin/security', icon: Shield },
 ];
 
