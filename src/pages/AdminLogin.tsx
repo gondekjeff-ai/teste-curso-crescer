@@ -146,7 +146,10 @@ const AdminLogin = () => {
               title: 'Login bem-sucedido',
               description: 'Redirecionando para o painel administrativo...',
             });
-            navigate('/admin');
+            // Small delay to ensure session is fully established
+            setTimeout(() => {
+              navigate('/admin', { replace: true });
+            }, 100);
           }
         }
       } else {
@@ -221,7 +224,10 @@ const AdminLogin = () => {
           title: 'Login bem-sucedido',
           description: 'Redirecionando para o painel administrativo...',
         });
-        navigate('/admin');
+        // Small delay to ensure session is fully established
+        setTimeout(() => {
+          navigate('/admin', { replace: true });
+        }, 100);
       }
     } catch (error) {
       recordFailedAttempt();
