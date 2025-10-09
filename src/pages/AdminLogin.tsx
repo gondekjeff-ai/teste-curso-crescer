@@ -127,6 +127,26 @@ const AdminLogin = () => {
         }
 
         if (data?.user) {
+          // Check if user is admin
+          const { data: userRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', data.user.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+
+          if (!userRole) {
+            recordFailedAttempt();
+            await supabase.auth.signOut();
+            toast({
+              title: 'Acesso negado',
+              description: 'Você não tem permissão para acessar o painel administrativo.',
+              variant: 'destructive',
+            });
+            setLoading(false);
+            return;
+          }
+
           // Check if user has MFA enabled (only fetch mfa_enabled, not the secret)
           const { data: profile } = await supabase
             .from('profiles')
@@ -218,7 +238,26 @@ const AdminLogin = () => {
           return;
         }
 
-        // MFA verification successful
+        // MFA verification successful - check admin status one more time
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (!userRole) {
+          recordFailedAttempt();
+          await supabase.auth.signOut();
+          toast({
+            title: 'Acesso negado',
+            description: 'Você não tem permissão para acessar o painel administrativo.',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
         clearAttempts();
         toast({
           title: 'Login bem-sucedido',
