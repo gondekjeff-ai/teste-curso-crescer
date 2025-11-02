@@ -335,7 +335,7 @@ export type Database = {
     }
     Functions: {
       get_contacts_for_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -349,6 +349,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      verify_mfa_code: {
+        Args: { _code: string; _user_id: string }
         Returns: boolean
       }
       verify_mfa_token: {

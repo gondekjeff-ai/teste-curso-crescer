@@ -188,46 +188,27 @@ const AdminLogin = () => {
           return;
         }
 
-        // Use the secure server-side verification function
-        const { data: verificationResult, error: verifyError } = await supabase
-          .rpc('verify_mfa_token', {
-            _user_id: user.id,
-            _token: mfaCode
-          });
+        // Call the Edge Function for secure server-side MFA verification
+        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('verify-mfa', {
+          body: {
+            userId: user.id,
+            code: mfaCode
+          }
+        });
 
-        if (verifyError || !verificationResult) {
-          recordFailedAttempt();
-          toast({
-            title: 'Erro na verificação',
-            description: 'Não foi possível verificar o código 2FA',
-            variant: 'destructive',
-          });
-          setLoading(false);
-          return;
-        }
-
-        // For now, still do client-side verification as the server function is a placeholder
-        // In production, you'd move the TOTP verification entirely to an edge function
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('mfa_secret')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!profile?.mfa_secret) {
+        if (verifyError) {
+          console.error('MFA verification error:', verifyError);
           recordFailedAttempt();
           toast({
             title: 'Erro',
-            description: 'Configuração de 2FA não encontrada',
+            description: 'Erro ao verificar código MFA',
             variant: 'destructive',
           });
           setLoading(false);
           return;
         }
 
-        const isValid = verifyMFAToken(mfaCode, profile.mfa_secret);
-
-        if (!isValid) {
+        if (!verifyResult?.valid) {
           recordFailedAttempt();
           toast({
             title: 'Código inválido',

@@ -67,5 +67,58 @@ export const sanitizeObject = <T extends Record<string, any>>(obj: T): T => {
   return sanitized;
 };
 
+// Product validation schema
+export const productSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Nome do produto é obrigatório')
+    .max(200, 'Nome deve ter no máximo 200 caracteres'),
+  description: z
+    .string()
+    .trim()
+    .min(1, 'Descrição é obrigatória')
+    .max(2000, 'Descrição deve ter no máximo 2000 caracteres'),
+  category: z
+    .string()
+    .trim()
+    .min(1, 'Categoria é obrigatória')
+    .max(100, 'Categoria deve ter no máximo 100 caracteres'),
+  price: z
+    .number()
+    .nonnegative('Preço deve ser positivo')
+    .optional(),
+  active: z.boolean(),
+});
+
+// News validation schema
+export const newsSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, 'Título é obrigatório')
+    .max(200, 'Título deve ter no máximo 200 caracteres'),
+  excerpt: z
+    .string()
+    .trim()
+    .max(500, 'Resumo deve ter no máximo 500 caracteres')
+    .optional(),
+  content: z
+    .string()
+    .trim()
+    .min(1, 'Conteúdo é obrigatório')
+    .max(50000, 'Conteúdo deve ter no máximo 50000 caracteres'),
+  image_url: z
+    .string()
+    .trim()
+    .url('URL da imagem inválida')
+    .max(2048, 'URL muito longa')
+    .optional()
+    .or(z.literal('')),
+  published: z.boolean(),
+});
+
 export type CarouselImageInput = z.infer<typeof carouselImageSchema>;
 export type HeroContentInput = z.infer<typeof heroContentSchema>;
+export type ProductInput = z.infer<typeof productSchema>;
+export type NewsInput = z.infer<typeof newsSchema>;

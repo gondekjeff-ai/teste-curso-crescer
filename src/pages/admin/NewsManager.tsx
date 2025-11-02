@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { newsSchema, sanitizeObject } from '@/lib/inputValidation';
 
 interface News {
   id: string;
@@ -56,16 +57,28 @@ const NewsManager = () => {
     if (!editingNews) return;
 
     try {
+      // Validate and sanitize input
+      const validatedData = newsSchema.parse({
+        title: editingNews.title,
+        excerpt: editingNews.excerpt || '',
+        content: editingNews.content,
+        image_url: editingNews.image_url || '',
+        published: editingNews.published,
+      });
+
+      // Sanitize string fields
+      const sanitizedData = sanitizeObject(validatedData);
+
       if (editingNews.id) {
         // Update existing
         const { error } = await supabase
           .from('news')
           .update({
-            title: editingNews.title,
-            content: editingNews.content,
-            excerpt: editingNews.excerpt,
-            image_url: editingNews.image_url,
-            published: editingNews.published,
+            title: sanitizedData.title,
+            content: sanitizedData.content,
+            excerpt: sanitizedData.excerpt,
+            image_url: sanitizedData.image_url,
+            published: sanitizedData.published,
           })
           .eq('id', editingNews.id);
 
@@ -74,13 +87,13 @@ const NewsManager = () => {
         // Create new
         const { error } = await supabase
           .from('news')
-          .insert({
-            title: editingNews.title,
-            content: editingNews.content,
-            excerpt: editingNews.excerpt,
-            image_url: editingNews.image_url,
-            published: editingNews.published,
-          });
+          .insert([{
+            title: sanitizedData.title,
+            content: sanitizedData.content,
+            excerpt: sanitizedData.excerpt,
+            image_url: sanitizedData.image_url,
+            published: sanitizedData.published,
+          }]);
 
         if (error) throw error;
       }
@@ -93,13 +106,24 @@ const NewsManager = () => {
       setDialogOpen(false);
       setEditingNews(null);
       loadNews();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar notícia:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar a notícia',
-        variant: 'destructive',
-      });
+      
+      // Show validation errors
+      if (error.errors && Array.isArray(error.errors)) {
+        const messages = error.errors.map((e: any) => e.message).join(', ');
+        toast({
+          title: 'Erro de validação',
+          description: messages,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível salvar a notícia',
+          variant: 'destructive',
+        });
+      }
     }
   };
 

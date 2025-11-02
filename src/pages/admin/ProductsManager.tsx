@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { productSchema, sanitizeObject } from '@/lib/inputValidation';
 
 interface Product {
   id: string;
@@ -56,16 +57,28 @@ const ProductsManager = () => {
     if (!editingProduct) return;
 
     try {
+      // Validate and sanitize input
+      const validatedData = productSchema.parse({
+        name: editingProduct.name,
+        description: editingProduct.description,
+        category: editingProduct.category,
+        price: editingProduct.price,
+        active: editingProduct.active,
+      });
+
+      // Sanitize string fields
+      const sanitizedData = sanitizeObject(validatedData);
+
       if (editingProduct.id) {
         // Update existing
         const { error } = await supabase
           .from('products')
           .update({
-            name: editingProduct.name,
-            description: editingProduct.description,
-            category: editingProduct.category,
-            price: editingProduct.price,
-            active: editingProduct.active,
+            name: sanitizedData.name,
+            description: sanitizedData.description,
+            category: sanitizedData.category,
+            price: sanitizedData.price,
+            active: sanitizedData.active,
           })
           .eq('id', editingProduct.id);
 
@@ -74,13 +87,13 @@ const ProductsManager = () => {
         // Create new
         const { error } = await supabase
           .from('products')
-          .insert({
-            name: editingProduct.name,
-            description: editingProduct.description,
-            category: editingProduct.category,
-            price: editingProduct.price,
-            active: editingProduct.active,
-          });
+          .insert([{
+            name: sanitizedData.name,
+            description: sanitizedData.description,
+            category: sanitizedData.category,
+            price: sanitizedData.price,
+            active: sanitizedData.active,
+          }]);
 
         if (error) throw error;
       }
@@ -93,13 +106,24 @@ const ProductsManager = () => {
       setDialogOpen(false);
       setEditingProduct(null);
       loadProducts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar produto:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar o produto',
-        variant: 'destructive',
-      });
+      
+      // Show validation errors
+      if (error.errors && Array.isArray(error.errors)) {
+        const messages = error.errors.map((e: any) => e.message).join(', ');
+        toast({
+          title: 'Erro de validação',
+          description: messages,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível salvar o produto',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
