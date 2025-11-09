@@ -7,7 +7,7 @@ import carousel4 from "@/assets/carousel-4.jpg";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useEffect, useRef } from "react";
 
@@ -81,6 +81,14 @@ const Hero = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
+            
+            {/* Navigation Buttons - Aligned with site body */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between pointer-events-auto">
+                <CarouselPrevious className="relative left-0 translate-x-0 translate-y-0" />
+                <CarouselNext className="relative right-0 translate-x-0 translate-y-0" />
+              </div>
+            </div>
           </Carousel>
         </div>
         
