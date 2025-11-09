@@ -57,84 +57,82 @@ const Hero = () => {
   };
   
   return <motion.div className="relative w-full" initial="hidden" animate="visible" variants={containerVariants}>
-      <div className="banner-container bg-gradient-to-br from-primary via-secondary to-primary/80 relative overflow-hidden h-[80vh] sm:h-[85vh] md:h-[700px] lg:h-[800px] xl:h-[850px] w-full">
-        {/* Background Carousel */}
-        <div className="absolute inset-0 w-full h-full">
-          <Carousel
-            plugins={[plugin.current]}
-            className="w-full h-full"
-            opts={{
-              loop: true,
-            }}
-          >
-            <CarouselContent className="h-full">
-              {carouselImages.map((image, index) => (
-                <CarouselItem key={index} className="h-full">
-                  <div className="relative w-full h-full">
-                    <img 
-                      src={image} 
-                      alt={`IT Services ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/60"></div>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            
-            {/* Navigation Buttons - Aligned with site body */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between pointer-events-auto">
+      {/* Carousel Container with Content */}
+      <div className="relative w-full h-[80vh] sm:h-[85vh] md:h-[700px] lg:h-[800px] xl:h-[850px] overflow-hidden">
+        <Carousel
+          plugins={[plugin.current]}
+          className="w-full h-full"
+          opts={{
+            loop: true,
+          }}
+        >
+          {/* Background Images */}
+          <CarouselContent className="h-full">
+            {carouselImages.map((image, index) => (
+              <CarouselItem key={index} className="h-full">
+                <div className="relative w-full h-full">
+                  <img 
+                    src={image} 
+                    alt={`IT Services ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/60"></div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          
+          {/* Overlay Content and Navigation - All in same frame */}
+          <div className="absolute inset-0 z-20">
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col">
+              {/* Navigation Buttons at top */}
+              <div className="flex justify-between items-center py-4">
                 <CarouselPrevious className="relative left-0 translate-x-0 translate-y-0" />
                 <CarouselNext className="relative right-0 translate-x-0 translate-y-0" />
               </div>
+              
+              {/* Main Content */}
+              <div className="flex-1 flex flex-col items-center justify-center pb-16">
+                <motion.div className="w-full max-w-4xl text-center" variants={itemVariants}>
+                  <motion.div className="mb-4" variants={itemVariants}>
+                    <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-48 md:h-64 lg:h-80 xl:h-96 mx-auto mb-4" />
+                  </motion.div>
+                  <motion.h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold" variants={itemVariants}>
+                    Otimize sua Infraestrutura de TI com Soluções Especializadas
+                  </motion.h1>
+                  <motion.p className="text-white/90 mt-4 sm:mt-6 text-base md:text-lg lg:text-xl max-w-3xl mx-auto" variants={itemVariants}>
+                    Gestão completa de TI que potencializa desempenho, fortalece segurança e acelera o crescimento do seu negócio.
+                  </motion.p>
+                  <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 justify-center items-center" variants={itemVariants}>
+                    <button 
+                      className="w-full sm:w-auto min-h-[44px] px-6 sm:px-8 py-3 bg-white text-primary rounded-md hover:bg-primary-foreground transition-all shadow-lg hover:shadow-xl hover:shadow-white/20 flex items-center justify-center group text-sm sm:text-base font-medium"
+                      onClick={e => {
+                        e.preventDefault();
+                        const servicesSection = document.getElementById('features');
+                        if (servicesSection) {
+                          servicesSection.scrollIntoView({
+                            behavior: 'smooth'
+                          });
+                        }
+                      }}
+                    >
+                      Nossos Serviços
+                      <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    
+                    <button 
+                      className="w-full sm:w-auto min-h-[44px] px-6 sm:px-8 py-3 bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md hover:bg-white/20 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10 flex items-center justify-center group text-sm sm:text-base font-medium"
+                      onClick={scrollToContact}
+                    >
+                      Contatos
+                      <MessageSquare className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
+                    </button>
+                  </motion.div>
+                </motion.div>
+              </div>
             </div>
-          </Carousel>
-        </div>
-        
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 z-10"></div>
-        
-        <div className="banner-overlay bg-transparent pt-8 sm:pt-12 md:pt-16 w-full relative z-20">
-          <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-start h-full">
-            <motion.div className="w-full max-w-4xl text-center mt-8" variants={itemVariants}>
-              <motion.div className="mb-4" variants={itemVariants}>
-                <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-64 md:h-80 lg:h-96 xl:h-[28rem] mx-auto mb-4" />
-              </motion.div>
-              <motion.h1 className="banner-title text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold" variants={itemVariants}>
-                Otimize sua Infraestrutura de TI com Soluções Especializadas
-              </motion.h1>
-              <motion.p className="banner-subtitle text-primary-foreground/90 mt-4 sm:mt-6 text-base md:text-lg lg:text-xl max-w-3xl mx-auto" variants={itemVariants}>
-                Gestão completa de TI que potencializa desempenho, fortalece segurança e acelera o crescimento do seu negócio.
-              </motion.p>
-              <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 justify-center items-center" variants={itemVariants}>
-                {/* Styled as a button but using an anchor tag for project navigation */}
-                <button 
-                  className="w-full sm:w-auto min-h-[44px] px-6 sm:px-8 py-3 bg-white text-primary rounded-md hover:bg-primary-foreground transition-all shadow-lg hover:shadow-xl hover:shadow-white/20 flex items-center justify-center group text-sm sm:text-base font-medium"
-                  onClick={e => {
-                    e.preventDefault();
-                    const servicesSection = document.getElementById('features');
-                    if (servicesSection) {
-                      servicesSection.scrollIntoView({
-                        behavior: 'smooth'
-                      });
-                    }
-                  }}
-                >
-                  Nossos Serviços
-                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-                
-                <button 
-                  className="w-full sm:w-auto min-h-[44px] px-6 sm:px-8 py-3 bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-md hover:bg-white/20 transition-all shadow-lg hover:shadow-xl hover:shadow-white/10 flex items-center justify-center group text-sm sm:text-base font-medium"
-                  onClick={scrollToContact}
-                >
-                  Contatos
-                  <MessageSquare className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
-                </button>
-              </motion.div>
-            </motion.div>
           </div>
-        </div>
+        </Carousel>
       </div>
       
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 mx-auto">
