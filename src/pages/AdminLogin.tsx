@@ -29,16 +29,9 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [rateLimited, setRateLimited] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
-  const { signIn, user, isAdmin } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Redirect if already authenticated as admin
-  useEffect(() => {
-    if (user && isAdmin) {
-      navigate('/admin', { replace: true });
-    }
-  }, [user, isAdmin, navigate]);
 
   // Check rate limiting on mount
   useEffect(() => {
