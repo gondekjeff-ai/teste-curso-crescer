@@ -58,19 +58,15 @@ const Navbar = () => {
             <NavigationMenu className={cn(isScrolled ? "" : "text-white")}>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <Link to="/">
-                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                       Início
-                     </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                    <Link to="/">Início</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <Link to="/about">
-                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                       Sobre Nós
-                     </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                    <Link to="/about">Sobre Nós</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
@@ -130,27 +126,23 @@ const Navbar = () => {
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <Link to="/blog">
-                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                       Notícias
-                     </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                    <Link to="/blog">Notícias</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <Link to="/careers">
-                     <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                       Carreiras
-                     </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
+                    <Link to="/careers">Carreiras</Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
-                  <Link to="/#contact">
-                    <button className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
+                  <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle())}>
+                    <Link to="/#contact" className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
                       Contatos
-                    </button>
-                  </Link>
+                    </Link>
+                  </NavigationMenuLink>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
