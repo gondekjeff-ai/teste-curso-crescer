@@ -44,7 +44,6 @@ const ContactForm = () => {
       // Bot checks
       // 1. Honeypot check - should be caught by zod, but double-check
       if (data.honeypot) {
-        console.log('Bot detected via honeypot');
         toast({
           title: "Erro",
           description: "Houve um problema com seu envio. Tente novamente.",
@@ -56,7 +55,6 @@ const ContactForm = () => {
       // 2. Time-based check - Submission should take at least 3 seconds (too fast is likely a bot)
       const timeDiff = Date.now() - data.timestamp;
       if (timeDiff < 3000) {
-        console.log(`Bot detected: Form submitted too quickly (${timeDiff}ms)`);
         toast({
           title: "Erro",
           description: "Por favor, reserve um momento para revisar sua mensagem antes de enviar.",
@@ -65,8 +63,6 @@ const ContactForm = () => {
         setIsSubmitting(false);
         return;
       }
-      
-      console.log('Form submitted:', data);
       
       // Save contact to database
       const { error: dbError } = await supabase
@@ -78,7 +74,6 @@ const ContactForm = () => {
         });
 
       if (dbError) {
-        console.error('Error saving contact:', dbError);
         // Continue with email sending even if database save fails
       }
 
@@ -96,8 +91,6 @@ const ContactForm = () => {
         throw new Error(response.error.message || 'Falha ao enviar mensagem');
       }
       
-      console.log('Email sent successfully:', response);
-      
       toast({
         title: "Mensagem enviada!",
         description: "Recebemos sua mensagem e entraremos em contato em breve.",
@@ -112,8 +105,6 @@ const ContactForm = () => {
         timestamp: Date.now()
       });
     } catch (error: any) {
-      console.error('Error sending email:', error);
-      
       toast({
         title: "Erro",
         description: error.message || "Houve um problema ao enviar sua mensagem. Tente novamente mais tarde.",

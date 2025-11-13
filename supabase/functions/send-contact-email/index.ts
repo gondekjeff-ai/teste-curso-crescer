@@ -89,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check rate limiting
     if (isRateLimited(clientIP)) {
-      console.log(`Rate limit exceeded for IP: ${clientIP}`);
+      console.log('Rate limit exceeded');
       return new Response(
         JSON.stringify({ error: "Muitas tentativas. Tente novamente mais tarde." }),
         {
@@ -187,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log("Email enviado com sucesso:", emailResponse);
+    console.log("Email enviado com sucesso");
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -197,7 +197,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Erro na função send-contact-email:", error);
+    console.error("Erro na função send-contact-email");
     return new Response(
       JSON.stringify({ error: "Falha ao enviar email. Tente novamente mais tarde." }),
       {

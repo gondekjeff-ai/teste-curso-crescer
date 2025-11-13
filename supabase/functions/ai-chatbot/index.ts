@@ -28,7 +28,7 @@ serve(async (req) => {
       throw new Error('Groq API key not configured');
     }
 
-    console.log('Processing message:', message);
+    console.log('Processing chatbot request');
 
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -39,7 +39,7 @@ serve(async (req) => {
       supabase.from('news').select('title, excerpt, content').eq('published', true).order('created_at', { ascending: false }).limit(5)
     ]);
 
-    console.log('RAG data fetched - Products:', productsResult.data?.length, 'News:', newsResult.data?.length);
+    console.log('RAG data fetched successfully');
 
     // Build context from database
     let contextInfo = '';
@@ -127,9 +127,8 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Groq API error:', errorData);
-      throw new Error(`Groq API error: ${errorData.error?.message || 'Unknown error'}`);
+      console.error('Groq API error: Request failed');
+      throw new Error('Groq API error');
     }
 
     // Stream the response
@@ -138,7 +137,7 @@ serve(async (req) => {
       throw new Error('No stream available');
     }
 
-    console.log('AI streaming response started');
+    // Streaming response started
 
     return new Response(stream, {
       headers: { 

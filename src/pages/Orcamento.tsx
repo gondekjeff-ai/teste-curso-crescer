@@ -41,10 +41,13 @@ const formSchema = z.object({
   email: z.string().email("Email inválido"),
   services: z.array(z.string()).min(1, "Selecione pelo menos um serviço"),
   implementation_deadline: z.string().min(1, "Selecione um prazo"),
+  honeypot: z.string().max(0, 'Bot detectado'),
+  timestamp: z.number()
 });
 
 const Orcamento = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formStartTime] = useState<number>(Date.now());
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -54,12 +57,27 @@ const Orcamento = () => {
       email: "",
       services: [],
       implementation_deadline: "",
+      honeypot: "",
+      timestamp: formStartTime
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
+      // Bot checks
+      if (values.honeypot) {
+        toast.error("Houve um problema com seu envio. Tente novamente.");
+        return;
+      }
+      
+      const timeDiff = Date.now() - values.timestamp;
+      if (timeDiff < 3000) {
+        toast.error("Por favor, reserve um momento para revisar sua solicitação antes de enviar.");
+        setIsSubmitting(false);
+        return;
+      }
+
       // Save to Supabase
       const { error: dbError } = await supabase.from("orders").insert({
         name: values.name,
@@ -84,16 +102,21 @@ const Orcamento = () => {
       );
 
       if (emailError) {
-        console.error("Email error:", emailError);
         toast.error("Orçamento salvo, mas houve erro ao enviar email");
       } else {
         toast.success("Orçamento enviado com sucesso!");
       }
 
-      form.reset();
+      form.reset({
+        name: "",
+        email: "",
+        services: [],
+        implementation_deadline: "",
+        honeypot: "",
+        timestamp: Date.now()
+      });
       setTimeout(() => navigate("/"), 2000);
     } catch (error) {
-      console.error("Error:", error);
       toast.error("Erro ao enviar orçamento. Tente novamente.");
     } finally {
       setIsSubmitting(false);
@@ -218,6 +241,31 @@ const Orcamento = () => {
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="honeypot"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormLabel>Deixe isso vazio</FormLabel>
+                    <FormControl>
+                      <Input {...field} tabIndex={-1} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="timestamp"
+                render={({ field }) => (
+                  <FormItem className="hidden">
+                    <FormControl>
+                      <Input type="hidden" {...field} />
+                    </FormControl>
                   </FormItem>
                 )}
               />

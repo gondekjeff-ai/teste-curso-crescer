@@ -16,40 +16,130 @@ interface OrderEmailRequest {
   implementation_deadline: string;
 }
 
+// Rate limiting store (in production, use Redis or similar)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+const isRateLimited = (ip: string, limit: number = 5, windowMs: number = 60000): boolean => {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
+    return false;
+  }
+  
+  if (record.count >= limit) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+};
+
+const sanitizeInput = (input: string): string => {
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim();
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+  }
+
   try {
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0] || 
+                    req.headers.get("x-real-ip") || 
+                    "unknown";
+
+    // Check rate limiting
+    if (isRateLimited(clientIP)) {
+      console.log('Rate limit exceeded');
+      return new Response(
+        JSON.stringify({ error: "Muitas tentativas. Tente novamente mais tarde." }),
+        {
+          status: 429,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     const { name, email, services, implementation_deadline }: OrderEmailRequest = await req.json();
 
-    console.log("Sending order email for:", email);
+    // Input validation
+    if (!name || !email || !services || !implementation_deadline) {
+      return new Response(
+        JSON.stringify({ error: "Campos obrigatórios não preenchidos" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
-    const servicesHtml = services.map(s => `<li>${s}</li>`).join('');
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ error: "Formato de email inválido" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Validate services array
+    if (!Array.isArray(services) || services.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Selecione pelo menos um serviço" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Sanitize inputs
+    const sanitizedName = sanitizeInput(name);
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedServices = services.map(s => sanitizeInput(s));
+    const sanitizedDeadline = sanitizeInput(implementation_deadline);
+
+    console.log("Processing order email request");
+
+    const servicesHtml = sanitizedServices.map(s => `<li>${s}</li>`).join('');
 
     // Email para o comercial
     const commercialEmail = await resend.emails.send({
       from: "OptiStrat <onboarding@resend.dev>",
       to: ["comercial@optistrat.com.br"],
-      subject: `Novo Orçamento - ${name}`,
+      subject: `Novo Orçamento - ${sanitizedName}`,
       html: `
         <h2>Novo Pedido de Orçamento</h2>
-        <p><strong>Nome:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Nome:</strong> ${sanitizedName}</p>
+        <p><strong>Email:</strong> ${sanitizedEmail}</p>
         <p><strong>Serviços de Interesse:</strong></p>
         <ul>${servicesHtml}</ul>
-        <p><strong>Prazo de Implantação:</strong> ${implementation_deadline}</p>
+        <p><strong>Prazo de Implantação:</strong> ${sanitizedDeadline}</p>
       `,
     });
 
     // Email de confirmação para o cliente
     const clientEmail = await resend.emails.send({
       from: "OptiStrat <onboarding@resend.dev>",
-      to: [email],
+      to: [sanitizedEmail],
       subject: "Recebemos seu pedido de orçamento!",
       html: `
-        <h1>Obrigado pelo seu interesse, ${name}!</h1>
+        <h1>Obrigado pelo seu interesse, ${sanitizedName}!</h1>
         <p>Recebemos seu pedido de orçamento e nossa equipe já está analisando.</p>
         <p>Em breve entraremos em contato com uma proposta personalizada.</p>
         <p><strong>Serviços solicitados:</strong></p>
@@ -58,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Emails sent successfully:", { commercialEmail, clientEmail });
+    console.log("Emails sent successfully");
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -68,9 +158,9 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-order-email function:", error);
+    console.error("Error in send-order-email function");
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Falha ao enviar email" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
