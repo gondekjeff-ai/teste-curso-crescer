@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20.19.5-alpine as builder
+FROM node:latest as builder
 
 # Install security updates
 RUN apk update && apk upgrade && apk add --no-cache dumb-init
@@ -19,7 +19,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20.19.5-alpine
+FROM node:latest
 
 # Install security updates and dumb-init for proper signal handling
 RUN apk update && apk upgrade && apk add --no-cache dumb-init \
