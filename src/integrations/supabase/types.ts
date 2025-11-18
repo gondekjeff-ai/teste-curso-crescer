@@ -257,7 +257,6 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          email: string
           id: string
           mfa_enabled: boolean
           mfa_secret: string | null
@@ -266,7 +265,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          email: string
           id?: string
           mfa_enabled?: boolean
           mfa_secret?: string | null
@@ -275,12 +273,38 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          email?: string
           id?: string
           mfa_enabled?: boolean
           mfa_secret?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          created_at: string | null
+          endpoint: string
+          id: string
+          ip_address: string
+          request_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          ip_address: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          ip_address?: string
+          request_count?: number | null
+          window_start?: string | null
         }
         Relationships: []
       }
@@ -342,6 +366,16 @@ export type Database = {
           id: string
           message: string
           name: string
+        }[]
+      }
+      get_user_profile: {
+        Args: { user_id_param: string }
+        Returns: {
+          created_at: string
+          id: string
+          mfa_enabled: boolean
+          updated_at: string
+          user_id: string
         }[]
       }
       has_role: {

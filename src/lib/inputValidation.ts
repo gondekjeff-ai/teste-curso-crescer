@@ -122,3 +122,55 @@ export type CarouselImageInput = z.infer<typeof carouselImageSchema>;
 export type HeroContentInput = z.infer<typeof heroContentSchema>;
 export type ProductInput = z.infer<typeof productSchema>;
 export type NewsInput = z.infer<typeof newsSchema>;
+
+// Contact form validation schemas with strict security
+export const nameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Nome deve ter no mínimo 2 caracteres')
+  .max(100, 'Nome deve ter no máximo 100 caracteres')
+  .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Nome contém caracteres inválidos')
+  .transform(val => val.replace(/\s+/g, ' ')); // Remove multiple spaces
+
+export const emailSchema = z
+  .string()
+  .trim()
+  .email('Email inválido')
+  .max(255, 'Email deve ter no máximo 255 caracteres')
+  .toLowerCase()
+  .regex(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, 'Formato de email inválido');
+
+export const messageSchema = z
+  .string()
+  .trim()
+  .min(10, 'Mensagem deve ter no mínimo 10 caracteres')
+  .max(5000, 'Mensagem deve ter no máximo 5000 caracteres')
+  .transform(val => val.replace(/\s+/g, ' ')); // Remove multiple spaces
+
+export const phoneSchema = z
+  .string()
+  .trim()
+  .regex(/^\+?[1-9]\d{1,14}$/, 'Número de telefone inválido')
+  .optional();
+
+// Honeypot and anti-bot validation
+export const honeypotSchema = z
+  .string()
+  .max(0, 'Bot detectado');
+
+export const timestampSchema = z
+  .number()
+  .positive('Timestamp inválido');
+
+// Service selection validation for orders
+export const servicesArraySchema = z
+  .array(z.string())
+  .min(1, 'Selecione pelo menos um serviço')
+  .max(20, 'Máximo de 20 serviços permitidos');
+
+// Implementation deadline validation
+export const implementationDeadlineSchema = z
+  .string()
+  .trim()
+  .min(1, 'Selecione um prazo de implementação')
+  .max(50, 'Prazo inválido');
