@@ -1,7 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +40,35 @@ const sanitizeInput = (input: string): string => {
     .replace(/javascript:/gi, '')
     .replace(/on\w+\s*=/gi, '')
     .trim();
+};
+
+const sendEmail = async (emailData: {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+}) => {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  
+  if (!resendApiKey) {
+    throw new Error("RESEND_API_KEY not found");
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(emailData),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Resend API error: ${error}`);
+  }
+
+  return await response.json();
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -119,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
     const servicesHtml = sanitizedServices.map(s => `<li>${s}</li>`).join('');
 
     // Email para o comercial
-    const commercialEmail = await resend.emails.send({
+    const commercialEmail = await sendEmail({
       from: "OptiStrat <onboarding@resend.dev>",
       to: ["comercial@optistrat.com.br"],
       subject: `Novo Orçamento - ${sanitizedName}`,
@@ -134,7 +160,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // Email de confirmação para o cliente
-    const clientEmail = await resend.emails.send({
+    const clientEmail = await sendEmail({
       from: "OptiStrat <onboarding@resend.dev>",
       to: [sanitizedEmail],
       subject: "Recebemos seu pedido de orçamento!",
