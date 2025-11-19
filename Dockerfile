@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 # Install security updates
 RUN apk update && apk upgrade && apk add --no-cache dumb-init
@@ -10,7 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci && npm cache clean --force
+# Using npm install to handle lock file synchronization
+RUN npm install && npm cache clean --force
 
 # Copy source files
 COPY . .
@@ -34,7 +35,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
