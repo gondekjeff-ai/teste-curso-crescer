@@ -9,8 +9,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with npm ci for reproducible builds
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies (including devDependencies for build)
+RUN npm ci && npm cache clean --force
 
 # Copy source files
 COPY . .
@@ -33,8 +33,8 @@ WORKDIR /app
 # Copy package files for production dependencies
 COPY package*.json ./
 
-# Install only express (production dependency) with clean cache
-RUN npm install --only=production express && npm cache clean --force
+# Install only production dependencies
+RUN npm ci --only=production && npm cache clean --force
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist ./dist
