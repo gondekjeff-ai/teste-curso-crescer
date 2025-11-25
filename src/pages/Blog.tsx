@@ -94,8 +94,8 @@ const Blog = () => {
       <div className="w-full pt-24 pb-12 bg-gradient-to-b from-black to-gray-900 text-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Notícias de Tecnologia</h1>
-            <p className="text-xl text-gray-300 mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">Notícias de Tecnologia</h1>
+            <p className="text-xl text-muted-foreground mb-6">
               As últimas notícias sobre TI e Telecomunicações
             </p>
             <Button 
@@ -128,7 +128,7 @@ const Blog = () => {
           </div>
         ) : news.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-xl text-gray-600 mb-4">Nenhuma notícia disponível no momento.</p>
+            <p className="text-xl text-muted-foreground mb-4">Nenhuma notícia disponível no momento.</p>
             <Button onClick={refreshNews} disabled={refreshing}>
               <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               Carregar Notícias

@@ -79,17 +79,17 @@ const WhyWrlds = () => {
       }
     }
   };
-  return <section id="why-wrlds" className="relative py-16 md:py-24 bg-white overflow-hidden">
+  return <section id="why-optistrat" className="relative py-16 md:py-24 bg-background overflow-hidden">
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div className="text-center mb-12 md:mb-16" initial="hidden" whileInView="visible" viewport={{
         once: true,
         margin: "-100px"
       }} variants={containerVariants}>
-          <motion.h2 variants={itemVariants} className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">
-            Why WRLDS?
+          <motion.h2 variants={itemVariants} className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3">
+            Por Que OptiStrat?
           </motion.h2>
-          <motion.p variants={itemVariants} className="text-gray-600 text-lg max-w-3xl mx-auto">
-            In an industry where complexity leads to failure, we bring simplicity and expertise to ensure your success
+          <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-3xl mx-auto">
+            Transformamos a complexidade de TI em vantagem competitiva com soluções especializadas
           </motion.p>
         </motion.div>
         
@@ -97,37 +97,37 @@ const WhyWrlds = () => {
         once: true,
         margin: "-100px"
       }} variants={containerVariants}>
-          <motion.div variants={itemVariants} className="bg-gray-100 p-6 rounded-xl border border-gray-200 text-center hover:bg-gray-200 transition-all">
-            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-4">
-              <BarChart className="w-8 h-8 text-gray-700" />
+          <motion.div variants={itemVariants} className="bg-card p-6 rounded-xl border border-border text-center hover:bg-accent transition-all">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <BarChart className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-gray-900 text-2xl lg:text-3xl font-bold mb-3">
-              <AnimatedCounter end={3.8} decimals={1} suffix=" Billion" /> USD
+            <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-3">
+              <AnimatedCounter end={99} decimals={0} suffix="%" />
             </h3>
-            <p className="text-gray-700">Market estimated to reach this value by 2030, with massive growth potential for smart textile solutions</p>
+            <p className="text-muted-foreground">Uptime garantido com monitoramento 24/7 e suporte dedicado</p>
           </motion.div>
           
-          <motion.div variants={itemVariants} className="bg-gray-100 p-6 rounded-xl border border-gray-200 text-center hover:bg-gray-200 transition-all">
-            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-gray-700" />
+          <motion.div variants={itemVariants} className="bg-card p-6 rounded-xl border border-border text-center hover:bg-accent transition-all">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-gray-900 text-2xl lg:text-3xl font-bold mb-3">
-              <AnimatedCounter end={60} suffix="%" /> 
+            <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-3">
+              <AnimatedCounter end={70} suffix="%" /> 
             </h3>
-            <p className="text-gray-700">
-              of IoT projects stall at the proof-of-concept stage due to fragmented expertise and poor coordination
+            <p className="text-muted-foreground">
+              Redução de incidentes de segurança com nossas soluções de cibersegurança
             </p>
           </motion.div>
           
-          <motion.div variants={itemVariants} className="bg-gray-100 p-6 rounded-xl border border-gray-200 text-center hover:bg-gray-200 transition-all">
-            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-4">
-              <Clock4 className="w-8 h-8 text-gray-700" />
+          <motion.div variants={itemVariants} className="bg-card p-6 rounded-xl border border-border text-center hover:bg-accent transition-all">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+              <Clock4 className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-gray-900 text-2xl lg:text-3xl font-bold mb-3">
-              <AnimatedCounter end={80} suffix="%" />
+            <h3 className="text-foreground text-2xl lg:text-3xl font-bold mb-3">
+              <AnimatedCounter end={50} suffix="%" />
             </h3>
-            <p className="text-gray-700">
-              Increase in time-to-market for IoT products over the past four years, creating costly delays
+            <p className="text-muted-foreground">
+              Redução no tempo de resolução de problemas com gestão proativa
             </p>
           </motion.div>
         </motion.div>
@@ -137,59 +137,59 @@ const WhyWrlds = () => {
           margin: "-100px"
         }} variants={containerVariants}>
           <motion.div variants={itemVariants} className="text-center mb-8">
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-              What WRLDS Does for You
+            <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+              O Que a OptiStrat Faz por Você
             </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              We transform your ideas into market-ready solutions with tangible benefits for your business
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Transformamos sua infraestrutura de TI em vantagem competitiva com benefícios tangíveis
             </p>
           </motion.div>
           
           <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <motion.div variants={itemVariants} className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all">
+            <motion.div variants={itemVariants} className="bg-gradient-to-r from-card to-accent/20 p-6 rounded-xl border border-border hover:shadow-lg transition-all">
               <div className="flex items-start">
-                <div className="bg-gray-200 rounded-full p-3 mr-4">
-                  <BarChart className="w-6 h-6 text-gray-700" />
+                <div className="bg-primary/10 rounded-full p-3 mr-4">
+                  <BarChart className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">New Revenue Products</h4>
-                  <p className="text-gray-700">Create high-margin, sensor-enabled products for new revenue streams.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Otimização de Performance</h4>
+                  <p className="text-muted-foreground">Maximizamos o desempenho da sua infraestrutura de TI para maior produtividade.</p>
                 </div>
               </div>
             </motion.div>
             
-            <motion.div variants={itemVariants} className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all">
+            <motion.div variants={itemVariants} className="bg-gradient-to-r from-card to-accent/20 p-6 rounded-xl border border-border hover:shadow-lg transition-all">
               <div className="flex items-start">
-                <div className="bg-gray-200 rounded-full p-3 mr-4">
-                  <Sparkles className="w-6 h-6 text-gray-700" />
+                <div className="bg-primary/10 rounded-full p-3 mr-4">
+                  <Sparkles className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">Innovation That Attracts</h4>
-                  <p className="text-gray-700">Break through to dream clients with tech that makes you stand out.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Segurança Reforçada</h4>
+                  <p className="text-muted-foreground">Proteção avançada contra ameaças cibernéticas e vulnerabilidades.</p>
                 </div>
               </div>
             </motion.div>
             
-            <motion.div variants={itemVariants} className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all">
+            <motion.div variants={itemVariants} className="bg-gradient-to-r from-card to-accent/20 p-6 rounded-xl border border-border hover:shadow-lg transition-all">
               <div className="flex items-start">
-                <div className="bg-gray-200 rounded-full p-3 mr-4">
-                  <Zap className="w-6 h-6 text-gray-700" />
+                <div className="bg-primary/10 rounded-full p-3 mr-4">
+                  <Zap className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">Comfort-Zone Development</h4>
-                  <p className="text-gray-700">We develop frontier tech while you stay in your comfort zone.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Suporte 24/7</h4>
+                  <p className="text-muted-foreground">Equipe especializada disponível a qualquer momento para resolver seus problemas.</p>
                 </div>
               </div>
             </motion.div>
             
-            <motion.div variants={itemVariants} className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all">
+            <motion.div variants={itemVariants} className="bg-gradient-to-r from-card to-accent/20 p-6 rounded-xl border border-border hover:shadow-lg transition-all">
               <div className="flex items-start">
-                <div className="bg-gray-200 rounded-full p-3 mr-4">
-                  <Rocket className="w-6 h-6 text-gray-700" />
+                <div className="bg-primary/10 rounded-full p-3 mr-4">
+                  <Rocket className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">Brand-Building Leaps</h4>
-                  <p className="text-gray-700">We enable hardware/software leaps that define your brand's future.</p>
+                  <h4 className="text-xl font-bold text-foreground mb-2">Crescimento Escalável</h4>
+                  <p className="text-muted-foreground">Infraestrutura que cresce com seu negócio sem preocupações.</p>
                 </div>
               </div>
             </motion.div>
@@ -199,9 +199,9 @@ const WhyWrlds = () => {
             <Link 
               to="/development-process" 
               onClick={() => window.scrollTo(0, 0)}
-              className="inline-flex items-center px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all group"
+              className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all group"
             >
-              Learn more about our structured development process
+              Conheça nosso processo de implementação
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>
