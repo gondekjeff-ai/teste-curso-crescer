@@ -195,22 +195,22 @@ const InteractiveImage = ({ src, alt, className }: InteractiveImageProps) => {
         {/* Instruction overlay - shows initially then fades */}
         {showInstructions && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity duration-500">
-            <div className="bg-white/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg text-center">
+            <div className="bg-card/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg text-center border border-border">
               <div className="flex items-center justify-center gap-2 mb-1">
                 {isMobile ? (
                   <span className="text-2xl">👆</span>
                 ) : (
                   <span className="text-2xl">🖱️</span>
                 )}
-                <Move className="h-5 w-5" />
+                <Move className="h-5 w-5 text-foreground" />
               </div>
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium text-foreground">
                 {isMobile 
                   ? "Tap to zoom, drag to explore"
                   : "Click to zoom, drag to explore"
                 }
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Double-tap to reset
               </p>
             </div>
@@ -226,7 +226,7 @@ const InteractiveImage = ({ src, alt, className }: InteractiveImageProps) => {
               <Button
                 variant="secondary" 
                 size="sm" 
-                className="bg-white/80 backdrop-blur-sm shadow-md h-8 w-8 p-0"
+                className="bg-card/80 backdrop-blur-sm shadow-md h-8 w-8 p-0"
                 onClick={zoomIn}
                 disabled={scale >= 3}
               >
@@ -243,7 +243,7 @@ const InteractiveImage = ({ src, alt, className }: InteractiveImageProps) => {
               <Button
                 variant="secondary" 
                 size="sm" 
-                className="bg-white/80 backdrop-blur-sm shadow-md h-8 w-8 p-0"
+                className="bg-card/80 backdrop-blur-sm shadow-md h-8 w-8 p-0"
                 onClick={zoomOut}
                 disabled={scale <= 1}
               >
@@ -262,15 +262,15 @@ const InteractiveImage = ({ src, alt, className }: InteractiveImageProps) => {
             <Button
               variant="ghost" 
               size="sm" 
-              className="bg-white/60 backdrop-blur-sm h-8 w-8 p-0 rounded-full"
+              className="bg-card/60 backdrop-blur-sm h-8 w-8 p-0 rounded-full"
             >
               ?
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-72">
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">Image Controls</h4>
-              <div className="text-xs space-y-1">
+              <h4 className="font-medium text-sm text-foreground">Image Controls</h4>
+              <div className="text-xs space-y-1 text-muted-foreground">
                 <p className="flex items-center"><ZoomIn className="h-3 w-3 mr-2" /> Click image or zoom button to enlarge</p>
                 <p className="flex items-center"><Move className="h-3 w-3 mr-2" /> Click and drag to pan when zoomed in</p>
                 <p className="flex items-center"><ZoomOut className="h-3 w-3 mr-2" /> Double-click or use zoom out button to reset</p>

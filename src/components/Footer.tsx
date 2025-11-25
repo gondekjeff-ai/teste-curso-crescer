@@ -72,10 +72,6 @@ const Footer = () => {
             <p className="text-white/90 mb-6">
               A OptiStrat oferece soluções abrangentes de gestão de TI que transformam sua infraestrutura tecnológica em vantagem competitiva, ajudando empresas a otimizar performance, aumentar segurança e impulsionar crescimento.
             </p>
-            <p className="text-white/90 mb-6">
-              Rua Tecnologia, 123<br />
-              São Paulo, SP 01000-000 Brasil
-            </p>
             <div className="flex space-x-4">
               <a 
                 href="https://www.linkedin.com/company/optistrat/" 
