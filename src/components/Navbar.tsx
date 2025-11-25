@@ -5,6 +5,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from 'react-router-dom';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import optiStratLogo from "@/assets/optistrat-logo-full.png";
 
 const Navbar = () => {
@@ -148,8 +149,14 @@ const Navbar = () => {
             </NavigationMenu>
           </div>
           
+          {/* Theme Toggle - Desktop */}
+          <div className="hidden md:flex items-center ml-2">
+            <ThemeToggle isScrolled={isScrolled} />
+          </div>
+          
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle isScrolled={isScrolled} />
             <button onClick={toggleMenu} className={cn("focus:outline-none", isScrolled ? "text-gray-700" : "text-white")}>
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
