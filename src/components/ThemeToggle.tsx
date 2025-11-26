@@ -11,7 +11,16 @@ export function ThemeToggle({ isScrolled = false }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    // Add fade effect during theme transition
+    document.documentElement.style.setProperty('transition', 'opacity 0.3s ease');
+    document.documentElement.style.opacity = '0.95';
+    
+    setTimeout(() => {
+      setTheme(theme === "dark" ? "light" : "dark");
+      setTimeout(() => {
+        document.documentElement.style.opacity = '1';
+      }, 50);
+    }, 150);
   };
 
   return (

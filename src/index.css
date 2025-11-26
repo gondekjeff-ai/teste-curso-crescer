@@ -72,6 +72,7 @@
 @layer base {
   * {
     @apply border-border;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
 
   html, body {
@@ -82,6 +83,12 @@
 
   body {
     @apply bg-background text-foreground font-space;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+  
+  /* Smooth transitions for theme-aware elements */
+  .transition-theme {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
   }
 }
 
