@@ -11,6 +11,8 @@ interface ContactEmailRequest {
   email: string;
   message: string;
   type: 'contact' | 'subscription';
+  honeypot?: string;
+  timestamp?: number;
 }
 
 // Rate limiting store (in production, use Redis or similar)
@@ -99,7 +101,31 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { name, email, message, type }: ContactEmailRequest = await req.json();
+    const { name, email, message, type, honeypot, timestamp }: ContactEmailRequest = await req.json();
+
+    // Bot detection: Honeypot check
+    if (honeypot && honeypot.length > 0) {
+      console.log('Bot detected via honeypot');
+      return new Response(
+        JSON.stringify({ error: "Requisição inválida" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Bot detection: Time-based check (submission should take at least 3 seconds)
+    if (timestamp && (Date.now() - timestamp) < 3000) {
+      console.log('Bot detected via timestamp check');
+      return new Response(
+        JSON.stringify({ error: "Por favor, reserve um momento para revisar antes de enviar." }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     // Input validation
     if (!name || !email || (!message && type === 'contact')) {

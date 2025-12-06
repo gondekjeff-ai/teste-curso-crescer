@@ -11,6 +11,28 @@ const groqApiKey = Deno.env.get('GROQ_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Simple in-memory rate limiting for chatbot
+const chatRateLimits = new Map<string, { count: number; resetTime: number }>();
+
+const isChatRateLimited = (ip: string): boolean => {
+  const now = Date.now();
+  const record = chatRateLimits.get(ip);
+  const limit = 20; // 20 messages per minute
+  const windowMs = 60000;
+  
+  if (!record || now > record.resetTime) {
+    chatRateLimits.set(ip, { count: 1, resetTime: now + windowMs });
+    return false;
+  }
+  
+  if (record.count >= limit) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -18,6 +40,23 @@ serve(async (req) => {
   }
 
   try {
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                    req.headers.get("x-real-ip") || 
+                    "unknown";
+
+    // Check rate limiting
+    if (isChatRateLimited(clientIP)) {
+      console.log('Chat rate limit exceeded for:', clientIP);
+      return new Response(
+        JSON.stringify({ 
+          error: "Muitas mensagens. Aguarde um momento antes de enviar novamente.",
+          response: "Estou recebendo muitas mensagens! 😅 Aguarde um momento antes de continuar nossa conversa."
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { message } = await req.json();
 
     if (!message) {
