@@ -77,13 +77,15 @@ const ContactForm = () => {
         // Continue with email sending even if database save fails
       }
 
-      // Send email
+      // Send email with honeypot and timestamp for server-side validation
       const response = await supabase.functions.invoke('send-contact-email', {
         body: {
           name: data.name,
           email: data.email,
           message: data.message,
-          type: 'contact'
+          type: 'contact',
+          honeypot: data.honeypot,
+          timestamp: data.timestamp
         }
       });
 

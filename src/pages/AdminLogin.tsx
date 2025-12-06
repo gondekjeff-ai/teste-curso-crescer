@@ -11,15 +11,6 @@ import optiStratLogo from '@/assets/optistrat-logo-full.png';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const RATE_LIMIT_KEY = 'login_attempts';
-const RATE_LIMIT_DURATION = 15 * 60 * 1000; // 15 minutes
-const MAX_ATTEMPTS = 5;
-
-interface LoginAttempt {
-  count: number;
-  lastAttempt: number;
-}
-
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,67 +23,28 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check rate limiting on mount
-  useEffect(() => {
-    checkRateLimit();
-  }, []);
-
-  const checkRateLimit = () => {
-    const stored = localStorage.getItem(RATE_LIMIT_KEY);
-    if (!stored) return;
-
-    const attempt: LoginAttempt = JSON.parse(stored);
-    const timeSinceLastAttempt = Date.now() - attempt.lastAttempt;
-
-    if (attempt.count >= MAX_ATTEMPTS && timeSinceLastAttempt < RATE_LIMIT_DURATION) {
-      setRateLimited(true);
-      setRemainingTime(Math.ceil((RATE_LIMIT_DURATION - timeSinceLastAttempt) / 1000));
-      
-      // Update countdown
-      const interval = setInterval(() => {
-        const newTimeSince = Date.now() - attempt.lastAttempt;
-        const newRemaining = Math.ceil((RATE_LIMIT_DURATION - newTimeSince) / 1000);
-        
-        if (newRemaining <= 0) {
-          setRateLimited(false);
-          localStorage.removeItem(RATE_LIMIT_KEY);
-          clearInterval(interval);
-        } else {
-          setRemainingTime(newRemaining);
+  // Check server-side rate limiting
+  const checkServerRateLimit = async (): Promise<{ allowed: boolean; remaining: number; resetInSeconds?: number }> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('check-rate-limit', {
+        body: {
+          endpoint: 'admin-login',
+          maxAttempts: 5,
+          windowMinutes: 15
         }
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    } else if (timeSinceLastAttempt >= RATE_LIMIT_DURATION) {
-      localStorage.removeItem(RATE_LIMIT_KEY);
+      });
+
+      if (error) {
+        console.error('Rate limit check error:', error);
+        // Fail open - allow on error
+        return { allowed: true, remaining: 5 };
+      }
+
+      return data as { allowed: boolean; remaining: number; resetInSeconds?: number };
+    } catch (err) {
+      console.error('Rate limit check failed:', err);
+      return { allowed: true, remaining: 5 };
     }
-  };
-
-  const recordFailedAttempt = () => {
-    const stored = localStorage.getItem(RATE_LIMIT_KEY);
-    const attempt: LoginAttempt = stored 
-      ? JSON.parse(stored) 
-      : { count: 0, lastAttempt: Date.now() };
-
-    const timeSinceLastAttempt = Date.now() - attempt.lastAttempt;
-
-    if (timeSinceLastAttempt >= RATE_LIMIT_DURATION) {
-      attempt.count = 1;
-    } else {
-      attempt.count += 1;
-    }
-
-    attempt.lastAttempt = Date.now();
-    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(attempt));
-
-    if (attempt.count >= MAX_ATTEMPTS) {
-      checkRateLimit();
-    }
-  };
-
-  const clearAttempts = () => {
-    localStorage.removeItem(RATE_LIMIT_KEY);
-    setRateLimited(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -110,12 +62,40 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
+      // Check server-side rate limit before attempting login
+      const rateLimitResult = await checkServerRateLimit();
+      
+      if (!rateLimitResult.allowed) {
+        setRateLimited(true);
+        const resetSeconds = rateLimitResult.resetInSeconds || 900;
+        setRemainingTime(resetSeconds);
+        
+        // Start countdown
+        const interval = setInterval(() => {
+          setRemainingTime(prev => {
+            if (prev <= 1) {
+              setRateLimited(false);
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        toast({
+          title: 'Tentativas excedidas',
+          description: 'Muitas tentativas de login. Aguarde antes de tentar novamente.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
+
       if (!needsMfa) {
         // First step: email/password authentication
         const { data, error } = await signIn(email, password);
 
         if (error) {
-          recordFailedAttempt();
           toast({
             title: 'Erro no login',
             description: error.message,
@@ -135,7 +115,6 @@ const AdminLogin = () => {
             .maybeSingle();
 
           if (!userRole) {
-            recordFailedAttempt();
             await supabase.auth.signOut();
             toast({
               title: 'Acesso negado',
@@ -160,7 +139,6 @@ const AdminLogin = () => {
             return;
           } else {
             // No MFA, proceed to admin panel
-            clearAttempts();
             toast({
               title: 'Login bem-sucedido',
               description: 'Redirecionando para o painel administrativo...',
@@ -176,7 +154,6 @@ const AdminLogin = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          recordFailedAttempt();
           toast({
             title: 'Erro',
             description: 'Sessão expirada. Por favor, faça login novamente.',
@@ -197,7 +174,6 @@ const AdminLogin = () => {
 
         if (verifyError) {
           console.error('MFA verification error:', verifyError);
-          recordFailedAttempt();
           toast({
             title: 'Erro',
             description: 'Erro ao verificar código MFA',
@@ -208,7 +184,6 @@ const AdminLogin = () => {
         }
 
         if (!verifyResult?.valid) {
-          recordFailedAttempt();
           toast({
             title: 'Código inválido',
             description: 'O código de autenticação está incorreto',
@@ -227,7 +202,6 @@ const AdminLogin = () => {
           .maybeSingle();
 
         if (!userRole) {
-          recordFailedAttempt();
           await supabase.auth.signOut();
           toast({
             title: 'Acesso negado',
@@ -238,7 +212,6 @@ const AdminLogin = () => {
           return;
         }
 
-        clearAttempts();
         toast({
           title: 'Login bem-sucedido',
           description: 'Redirecionando para o painel administrativo...',
@@ -249,7 +222,6 @@ const AdminLogin = () => {
         }, 100);
       }
     } catch (error) {
-      recordFailedAttempt();
       toast({
         title: 'Erro',
         description: 'Ocorreu um erro ao fazer login',

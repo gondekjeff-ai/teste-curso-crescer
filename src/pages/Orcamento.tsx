@@ -88,7 +88,7 @@ const Orcamento = () => {
 
       if (dbError) throw dbError;
 
-      // Send email
+      // Send email with honeypot and timestamp for server-side validation
       const { error: emailError } = await supabase.functions.invoke(
         "send-order-email",
         {
@@ -97,6 +97,8 @@ const Orcamento = () => {
             email: values.email,
             services: values.services,
             implementation_deadline: values.implementation_deadline,
+            honeypot: values.honeypot,
+            timestamp: values.timestamp
           },
         }
       );

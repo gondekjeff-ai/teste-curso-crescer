@@ -11,6 +11,8 @@ interface OrderEmailRequest {
   email: string;
   services: string[];
   implementation_deadline: string;
+  honeypot?: string;
+  timestamp?: number;
 }
 
 // Rate limiting store (in production, use Redis or similar)
@@ -98,7 +100,31 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { name, email, services, implementation_deadline }: OrderEmailRequest = await req.json();
+    const { name, email, services, implementation_deadline, honeypot, timestamp }: OrderEmailRequest = await req.json();
+
+    // Bot detection: Honeypot check
+    if (honeypot && honeypot.length > 0) {
+      console.log('Bot detected via honeypot');
+      return new Response(
+        JSON.stringify({ error: "Requisição inválida" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Bot detection: Time-based check (submission should take at least 3 seconds)
+    if (timestamp && (Date.now() - timestamp) < 3000) {
+      console.log('Bot detected via timestamp check');
+      return new Response(
+        JSON.stringify({ error: "Por favor, reserve um momento para revisar antes de enviar." }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     // Input validation
     if (!name || !email || !services || !implementation_deadline) {

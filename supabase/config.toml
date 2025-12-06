@@ -9,6 +9,12 @@ verify_jwt = false
 [functions.send-order-email]
 verify_jwt = false
 
+[functions.fetch-tech-news]
+verify_jwt = false
+
+[functions.check-rate-limit]
+verify_jwt = false
+
 [functions.setup-mfa]
 verify_jwt = true
 
