@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, Lock, Mail, AlertTriangle } from 'lucide-react';
 import optiStratLogo from '@/assets/optistrat-logo-full.png';
 import { supabase } from '@/integrations/supabase/client';
-import { verifyMFAToken } from '@/lib/mfa';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const RATE_LIMIT_KEY = 'login_attempts';
