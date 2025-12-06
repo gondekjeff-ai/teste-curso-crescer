@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { generateMFASecret, generateQRCode, verifyMFAToken } from '@/lib/mfa';
 import { Shield, CheckCircle } from 'lucide-react';
 import QRCode from 'qrcode';
 
@@ -14,11 +12,11 @@ const MFASettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [mfaEnabled, setMfaEnabled] = useState(false);
-  const [mfaSecret, setMfaSecret] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     loadMFAStatus();
@@ -28,7 +26,6 @@ const MFASettings = () => {
     if (!user) return;
 
     try {
-      // Only fetch mfa_enabled status, never fetch the secret from client
       const { data: profile } = await supabase
         .from('profiles')
         .select('mfa_enabled')
@@ -52,94 +49,103 @@ const MFASettings = () => {
   const startMFASetup = async () => {
     if (!user?.email) return;
 
-    const secret = generateMFASecret();
-    const otpauth = generateQRCode(user.email, secret);
-
+    setIsProcessing(true);
     try {
-      const qrUrl = await QRCode.toDataURL(otpauth);
+      // Call server-side Edge Function to generate MFA secret
+      const { data, error } = await supabase.functions.invoke('setup-mfa', {
+        body: { userId: user.id, email: user.email },
+      });
+
+      if (error) throw error;
+
+      // Generate QR code from the OTPAuth URL (safe - doesn't expose secret)
+      const qrUrl = await QRCode.toDataURL(data.otpauthUrl);
       setQrCodeUrl(qrUrl);
-      setMfaSecret(secret);
       setIsSettingUp(true);
     } catch (error) {
+      console.error('MFA setup error:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível gerar o código QR',
+        description: 'Não foi possível iniciar a configuração do 2FA',
         variant: 'destructive',
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const verifyAndEnableMFA = async () => {
-    if (!user || !mfaSecret || !verificationCode) return;
+    if (!user || !verificationCode) return;
 
-    const isValid = verifyMFAToken(verificationCode, mfaSecret);
-
-    if (!isValid) {
-      toast({
-        title: 'Código inválido',
-        description: 'O código de verificação está incorreto',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: user.id,
-          email: user.email!,
-          mfa_enabled: true,
-          mfa_secret: mfaSecret,
-          updated_at: new Date().toISOString(),
-        });
+      // Call server-side Edge Function to verify and enable MFA
+      const { data, error } = await supabase.functions.invoke('enable-mfa', {
+        body: { userId: user.id, code: verificationCode },
+      });
 
       if (error) throw error;
+
+      if (!data.valid) {
+        toast({
+          title: 'Código inválido',
+          description: 'O código de verificação está incorreto',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       setMfaEnabled(true);
       setIsSettingUp(false);
       setVerificationCode('');
+      setQrCodeUrl('');
       toast({
         title: 'Sucesso',
         description: 'Autenticação de dois fatores ativada com sucesso',
       });
     } catch (error) {
+      console.error('MFA enable error:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível ativar o 2FA',
         variant: 'destructive',
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const disableMFA = async () => {
     if (!user) return;
 
+    setIsProcessing(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          mfa_enabled: false,
-          mfa_secret: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
+      // Call server-side Edge Function to disable MFA
+      const { data, error } = await supabase.functions.invoke('disable-mfa', {
+        body: { userId: user.id },
+      });
 
       if (error) throw error;
 
+      if (!data.success) {
+        throw new Error('Failed to disable MFA');
+      }
+
       setMfaEnabled(false);
-      setMfaSecret('');
       setQrCodeUrl('');
       toast({
         title: 'Sucesso',
         description: 'Autenticação de dois fatores desativada',
       });
     } catch (error) {
+      console.error('MFA disable error:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível desativar o 2FA',
         variant: 'destructive',
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -172,8 +178,8 @@ const MFASettings = () => {
                 A autenticação de dois fatores adiciona uma camada extra de segurança 
                 exigindo um código do seu aplicativo autenticador além da sua senha.
               </p>
-              <Button onClick={startMFASetup}>
-                Ativar 2FA
+              <Button onClick={startMFASetup} disabled={isProcessing}>
+                {isProcessing ? 'Processando...' : 'Ativar 2FA'}
               </Button>
             </div>
           )}
@@ -205,13 +211,16 @@ const MFASettings = () => {
                     maxLength={6}
                     className="max-w-xs"
                   />
-                  <Button onClick={verifyAndEnableMFA} disabled={verificationCode.length !== 6}>
-                    Verificar e Ativar
+                  <Button 
+                    onClick={verifyAndEnableMFA} 
+                    disabled={verificationCode.length !== 6 || isProcessing}
+                  >
+                    {isProcessing ? 'Verificando...' : 'Verificar e Ativar'}
                   </Button>
                 </div>
               </div>
 
-              <Button variant="outline" onClick={() => setIsSettingUp(false)}>
+              <Button variant="outline" onClick={() => setIsSettingUp(false)} disabled={isProcessing}>
                 Cancelar
               </Button>
             </div>
@@ -226,8 +235,8 @@ const MFASettings = () => {
               <p className="text-sm text-muted-foreground">
                 Sua conta está protegida com autenticação de dois fatores.
               </p>
-              <Button variant="destructive" onClick={disableMFA}>
-                Desativar 2FA
+              <Button variant="destructive" onClick={disableMFA} disabled={isProcessing}>
+                {isProcessing ? 'Desativando...' : 'Desativar 2FA'}
               </Button>
             </div>
           )}
