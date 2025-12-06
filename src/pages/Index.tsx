@@ -1,4 +1,3 @@
-
 import PageLayout from '@/components/PageLayout';
 import Hero from '@/components/Hero';
 import ITServices from '@/components/ITServices';
@@ -9,6 +8,7 @@ import ChatBot from '@/components/ChatBot';
 import MiniContactForm from '@/components/MiniContactForm';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
+import { IndexPopup } from '@/components/IndexPopup';
 import { useEffect } from 'react';
 
 const Index = () => {
@@ -23,6 +23,7 @@ const Index = () => {
 
   return (
     <PageLayout>
+      <IndexPopup />
       <SEO 
         title="OptiStrat - Expert IT Management Solutions" 
         description="OptiStrat delivers comprehensive IT management services including cloud infrastructure, cybersecurity, network management, and 24/7 support for growing businesses."
