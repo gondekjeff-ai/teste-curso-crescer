@@ -72,54 +72,44 @@ const Navbar = () => {
                 
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className={cn(isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                    Serviços de TI
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 w-[400px]">
-                      <li>
-                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
-                          <div className="font-medium">Infraestrutura em Nuvem</div>
-                          <p className="text-sm text-muted-foreground">Migração e gerenciamento abrangente em nuvem</p>
-                        </button>
-                      </li>
-                      <li>
-                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
-                          <div className="font-medium">Cibersegurança</div>
-                          <p className="text-sm text-muted-foreground">Detecção e proteção avançada contra ameaças</p>
-                        </button>
-                      </li>
-                      <li>
-                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
-                          <div className="font-medium">Gerenciamento de Rede</div>
-                          <p className="text-sm text-muted-foreground">Monitoramento e otimização 24/7</p>
-                        </button>
-                      </li>
-                      <li>
-                        <button onClick={() => scrollToSection('services')} className="block w-full text-left p-3 space-y-1 rounded-md hover:bg-accent">
-                          <div className="font-medium">Gestão de Dados</div>
-                          <p className="text-sm text-muted-foreground">Backup seguro e soluções de recuperação</p>
-                        </button>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={cn(isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
                     Soluções
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 w-[400px]">
+                    <ul className="grid gap-3 p-4 w-[400px] bg-background">
                       <li>
-                        <Link to="/tech-details" className="block p-3 space-y-1 rounded-md hover:bg-accent">
+                        <Link to="/tech-details" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
                           <div className="font-medium">Consultoria de TI</div>
                           <p className="text-sm text-muted-foreground">Planejamento estratégico e avaliação de TI</p>
                         </Link>
                       </li>
                       <li>
-                        <Link to="/development-process" className="block p-3 space-y-1 rounded-md hover:bg-accent">
+                        <Link to="/development-process" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
                           <div className="font-medium">Processo de Implementação</div>
                           <p className="text-sm text-muted-foreground">Nossa metodologia comprovada para transformação de TI</p>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
+                          <div className="font-medium">Infraestrutura em Nuvem</div>
+                          <p className="text-sm text-muted-foreground">Migração e gerenciamento abrangente em nuvem</p>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
+                          <div className="font-medium">Cibersegurança</div>
+                          <p className="text-sm text-muted-foreground">Detecção e proteção avançada contra ameaças</p>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
+                          <div className="font-medium">Gerenciamento de Rede</div>
+                          <p className="text-sm text-muted-foreground">Monitoramento e otimização 24/7</p>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
+                          <div className="font-medium">Gestão de Dados</div>
+                          <p className="text-sm text-muted-foreground">Backup seguro e soluções de recuperação</p>
                         </Link>
                       </li>
                     </ul>
@@ -178,37 +168,33 @@ const Navbar = () => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
-            About Us
+            Sobre Nós
           </Link>
-          
-          <button onClick={() => scrollToSection('features')} className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")}>
-            IT Services
-          </button>
           
           <Link to="/tech-details" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
-            Solutions
+            Soluções
           </Link>
           
           <Link to="/blog" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
-            News
+            Notícias
           </Link>
           
           <Link to="/careers" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
-            Careers
+            Carreiras
           </Link>
           
-          <button onClick={() => scrollToSection('contact')} className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-white bg-primary hover:bg-primary/90" : "text-white bg-white/10 hover:bg-white/20")}>
-            Get Started
-          </button>
+          <Link to="/#contact" className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-white bg-primary hover:bg-primary/90" : "text-white bg-white/10 hover:bg-white/20")} onClick={() => setIsMenuOpen(false)}>
+            Contatos
+          </Link>
         </div>
       </div>
     </motion.nav>
