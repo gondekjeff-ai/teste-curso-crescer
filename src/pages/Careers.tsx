@@ -85,9 +85,9 @@ const Careers = () => {
                         Interessado em fazer parte da equipe OptiStrat? Entre em contato conosco!
                       </p>
                       <div className="flex flex-col space-y-3">
-                        <a href="mailto:comercial@optistrat.com.br" className="flex items-center text-gray-700 hover:text-primary transition-colors">
+                        <a href="mailto:rh@optistrat.com.br" className="flex items-center text-gray-700 hover:text-primary transition-colors">
                           <Mail className="w-5 h-5 mr-2" />
-                          comercial@optistrat.com.br
+                          rh@optistrat.com.br
                         </a>
                         <p className="text-sm text-gray-600 mt-4">
                           Envie seu currículo e conte-nos sobre sua experiência e interesse em trabalhar com tecnologia.
