@@ -1,21 +1,12 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface RateLimitRequest {
-  endpoint: string;
-  maxAttempts?: number;
-  windowMinutes?: number;
-}
+// Simple in-memory rate limiting (no DB dependency)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-serve(async (req: Request): Promise<Response> => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -25,14 +16,11 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Get client IP
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
                     req.headers.get("x-real-ip") || 
                     "unknown";
 
-    const { endpoint, maxAttempts = 5, windowMinutes = 15 }: RateLimitRequest = await req.json();
+    const { endpoint, maxAttempts = 5, windowMinutes = 15 } = await req.json();
 
     if (!endpoint) {
       return new Response(
@@ -41,86 +29,34 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();
+    const key = `${clientIP}:${endpoint}`;
+    const now = Date.now();
+    const windowMs = windowMinutes * 60 * 1000;
+    const record = rateLimitStore.get(key);
 
-    // Check current rate limit status
-    const { data: existingRecord, error: fetchError } = await supabase
-      .from('rate_limits')
-      .select('*')
-      .eq('ip_address', clientIP)
-      .eq('endpoint', endpoint)
-      .gte('window_start', windowStart)
-      .order('window_start', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error('Error fetching rate limit:', fetchError);
-      // Allow request on error (fail open for availability)
+    if (!record || now > record.resetTime) {
+      rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
       return new Response(
         JSON.stringify({ allowed: true, remaining: maxAttempts - 1 }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    if (existingRecord) {
-      // Check if rate limit exceeded
-      if (existingRecord.request_count >= maxAttempts) {
-        const resetTime = new Date(new Date(existingRecord.window_start).getTime() + windowMinutes * 60 * 1000);
-        const remainingSeconds = Math.ceil((resetTime.getTime() - Date.now()) / 1000);
-        
-        console.log(`Rate limit exceeded for ${clientIP} on ${endpoint}`);
-        
-        return new Response(
-          JSON.stringify({ 
-            allowed: false, 
-            remaining: 0,
-            resetInSeconds: remainingSeconds > 0 ? remainingSeconds : 0
-          }),
-          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
-      // Increment count
-      const { error: updateError } = await supabase
-        .from('rate_limits')
-        .update({ request_count: existingRecord.request_count + 1 })
-        .eq('id', existingRecord.id);
-
-      if (updateError) {
-        console.error('Error updating rate limit:', updateError);
-      }
-
+    if (record.count >= maxAttempts) {
+      const remainingSeconds = Math.ceil((record.resetTime - now) / 1000);
       return new Response(
-        JSON.stringify({ 
-          allowed: true, 
-          remaining: maxAttempts - existingRecord.request_count - 1 
-        }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    } else {
-      // Create new record
-      const { error: insertError } = await supabase
-        .from('rate_limits')
-        .insert({
-          ip_address: clientIP,
-          endpoint: endpoint,
-          request_count: 1,
-          window_start: new Date().toISOString()
-        });
-
-      if (insertError) {
-        console.error('Error inserting rate limit:', insertError);
-      }
-
-      return new Response(
-        JSON.stringify({ allowed: true, remaining: maxAttempts - 1 }),
+        JSON.stringify({ allowed: false, remaining: 0, resetInSeconds: Math.max(remainingSeconds, 0) }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    record.count++;
+    return new Response(
+      JSON.stringify({ allowed: true, remaining: maxAttempts - record.count }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   } catch (error: any) {
     console.error('Rate limit check error:', error);
-    // Fail open for availability
     return new Response(
       JSON.stringify({ allowed: true, remaining: 0 }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }

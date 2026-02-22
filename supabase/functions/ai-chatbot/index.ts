@@ -1,10 +1,8 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 const groqApiKey = Deno.env.get('GROQ_API_KEY');
@@ -17,7 +15,7 @@ const chatRateLimits = new Map<string, { count: number; resetTime: number }>();
 const isChatRateLimited = (ip: string): boolean => {
   const now = Date.now();
   const record = chatRateLimits.get(ip);
-  const limit = 20; // 20 messages per minute
+  const limit = 20;
   const windowMs = 60000;
   
   if (!record || now > record.resetTime) {
@@ -33,21 +31,17 @@ const isChatRateLimited = (ip: string): boolean => {
   return false;
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get client IP for rate limiting
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
                     req.headers.get("x-real-ip") || 
                     "unknown";
 
-    // Check rate limiting
     if (isChatRateLimited(clientIP)) {
-      console.log('Chat rate limit exceeded for:', clientIP);
       return new Response(
         JSON.stringify({ 
           error: "Muitas mensagens. Aguarde um momento antes de enviar novamente.",
@@ -67,20 +61,13 @@ serve(async (req) => {
       throw new Error('Groq API key not configured');
     }
 
-    console.log('Processing chatbot request');
-
-    // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch context data from Supabase for RAG
     const [productsResult, newsResult] = await Promise.all([
       supabase.from('products').select('name, description, category, price').eq('active', true).limit(10),
       supabase.from('news').select('title, excerpt, content').eq('published', true).order('created_at', { ascending: false }).limit(5)
     ]);
 
-    console.log('RAG data fetched successfully');
-
-    // Build context from database
     let contextInfo = '';
     
     if (productsResult.data && productsResult.data.length > 0) {
@@ -119,32 +106,15 @@ serve(async (req) => {
     FORMATO DE RESPOSTA - EXTREMAMENTE IMPORTANTE:
     - SEMPRE responda em BLOCOS pequenos separados por quebras de linha dupla
     - Cada bloco deve ter NO MÁXIMO 2-3 linhas curtas
-    - Use "\n\n" entre cada bloco para criar pausas visuais naturais
+    - Use "\\n\\n" entre cada bloco para criar pausas visuais naturais
     - NUNCA escreva parágrafos longos - quebre o pensamento em pedaços menores
     
-    Exemplo de formato CORRETO:
-    "Olá! 👋 
-    
-    Entendi sua pergunta sobre segurança...
-    
-    Bom, a gente oferece algumas soluções bem interessantes nessa área!
-    
-    Por exemplo, temos proteção contra ameaças, firewall avançado e monitoramento 24h.
-    
-    Quer que eu explique melhor algum desses pontos?"
-    
-    Diretrizes de PERSONALIDADE (mantenha sempre humano e natural):
-    - Seja sempre prestativo, empático e profissional, mas informal e amigável
-    - Use reações naturais: "Hmm...", "Ah!", "Entendo!", "Ótima pergunta!", "Olha só..."
-    - Use emojis ocasionalmente para dar tom 😊
-    - Reformule perguntas para mostrar que está ouvindo: "Então você quer saber sobre...?"
-    - Use expressões coloquiais: "olha só", "veja bem", "sem problemas", "com certeza"
-    - Quando perguntarem sobre valores: "Sobre valores, posso te encaminhar para fazer um orçamento personalizado!"
-    - Mostre entusiasmo quando apropriado: "Que legal!", "Excelente!", "Perfeito!"
-    - SEMPRE encerre oferecendo mais ajuda de forma amigável
+    Diretrizes de PERSONALIDADE:
+    - Seja prestativo, empático e profissional, mas informal e amigável
+    - Use reações naturais: "Hmm...", "Ah!", "Entendo!", "Ótima pergunta!"
+    - Use emojis ocasionalmente 😊
+    - SEMPRE encerre oferecendo mais ajuda
     - Use as informações de produtos e notícias quando relevante
-    
-    LEMBRE-SE: Blocos pequenos com quebras de linha! Isso é ESSENCIAL para parecer natural e humano!
     `;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -166,17 +136,13 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      console.error('Groq API error: Request failed');
       throw new Error('Groq API error');
     }
 
-    // Stream the response
     const stream = response.body;
     if (!stream) {
       throw new Error('No stream available');
     }
-
-    // Streaming response started
 
     return new Response(stream, {
       headers: { 
@@ -194,7 +160,7 @@ serve(async (req) => {
       error: error?.message || 'Erro interno do servidor',
       response: 'Desculpe, estou com dificuldades técnicas no momento. Para atendimento imediato, entre em contato pelo email comercial@optistrat.com.br ou pelo formulário de contato em nosso site.'
     }), {
-      status: 200, // Return 200 so the frontend can show the fallback message
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

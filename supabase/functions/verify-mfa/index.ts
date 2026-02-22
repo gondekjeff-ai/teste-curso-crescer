@@ -1,9 +1,9 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
-import { authenticator } from 'https://esm.sh/otplib@12.0.1';
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { authenticator } from "npm:otplib@12.0.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface VerifyMFARequest {
@@ -12,7 +12,6 @@ interface VerifyMFARequest {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,11 +19,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    // Create Supabase client with service role to access mfa_secret
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -33,7 +29,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the user's JWT token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -46,15 +41,13 @@ Deno.serve(async (req) => {
 
     const { userId, code }: VerifyMFARequest = await req.json();
 
-    // Verify the user is requesting their own MFA verification
     if (userId !== user.id) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized: Cannot verify MFA for another user' }),
+        JSON.stringify({ error: 'Unauthorized' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate input
     if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
       return new Response(
         JSON.stringify({ error: 'Invalid MFA code format' }),
@@ -62,7 +55,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch the MFA secret using service role (never expose to client)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('mfa_secret, mfa_enabled')
@@ -70,7 +62,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (profileError || !profile) {
-      console.error('Error fetching profile:', profileError);
       return new Response(
         JSON.stringify({ error: 'Profile not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,20 +75,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the TOTP code server-side
     const isValid = authenticator.verify({
       token: code,
       secret: profile.mfa_secret,
     });
 
-    console.log(`MFA verification attempt for user ${userId}: ${isValid ? 'SUCCESS' : 'FAILED'}`);
-
     return new Response(
       JSON.stringify({ valid: isValid }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
