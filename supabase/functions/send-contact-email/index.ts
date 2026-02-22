@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("Erro na função send-contact-email");
+    console.error("Erro na função send-contact-email:", error?.message || error);
     return new Response(JSON.stringify({ error: "Falha ao enviar email. Tente novamente mais tarde." }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
