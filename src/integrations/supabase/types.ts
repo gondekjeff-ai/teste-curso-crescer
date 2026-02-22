@@ -10,97 +10,55 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
-      audit_logs: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          ip_address: string | null
-          new_data: Json | null
-          old_data: Json | null
-          record_id: string | null
-          table_name: string
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          new_data?: Json | null
-          old_data?: Json | null
-          record_id?: string | null
-          table_name: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          new_data?: Json | null
-          old_data?: Json | null
-          record_id?: string | null
-          table_name?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       carousel_images: {
         Row: {
           active: boolean
-          alt_text: string
+          alt_text: string | null
           created_at: string
-          display_order: number
+          display_order: number | null
           id: string
-          image_url: string
-          updated_at: string
+          image_url: string | null
         }
         Insert: {
           active?: boolean
-          alt_text: string
+          alt_text?: string | null
           created_at?: string
-          display_order: number
+          display_order?: number | null
           id?: string
-          image_url: string
-          updated_at?: string
+          image_url?: string | null
         }
         Update: {
           active?: boolean
-          alt_text?: string
+          alt_text?: string | null
           created_at?: string
-          display_order?: number
+          display_order?: number | null
           id?: string
-          image_url?: string
-          updated_at?: string
+          image_url?: string | null
         }
         Relationships: []
       }
       chatbot_interactions: {
         Row: {
+          bot_response: string | null
           created_at: string
           id: string
-          message: string
-          response: string | null
-          session_id: string
+          user_message: string | null
         }
         Insert: {
+          bot_response?: string | null
           created_at?: string
           id?: string
-          message: string
-          response?: string | null
-          session_id: string
+          user_message?: string | null
         }
         Update: {
+          bot_response?: string | null
           created_at?: string
           id?: string
-          message?: string
-          response?: string | null
-          session_id?: string
+          user_message?: string | null
         }
         Relationships: []
       }
@@ -109,21 +67,21 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          message: string
+          message: string | null
           name: string
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
-          message: string
+          message?: string | null
           name: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
-          message?: string
+          message?: string | null
           name?: string
         }
         Relationships: []
@@ -132,29 +90,26 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
-          display_order: number
+          display_order: number | null
           id: string
-          image_url: string
-          text: string
-          updated_at: string
+          image_url: string | null
+          text: string | null
         }
         Insert: {
           active?: boolean
           created_at?: string
-          display_order?: number
+          display_order?: number | null
           id?: string
-          image_url: string
-          text: string
-          updated_at?: string
+          image_url?: string | null
+          text?: string | null
         }
         Update: {
           active?: boolean
           created_at?: string
-          display_order?: number
+          display_order?: number | null
           id?: string
-          image_url?: string
-          text?: string
-          updated_at?: string
+          image_url?: string | null
+          text?: string | null
         }
         Relationships: []
       }
@@ -196,28 +151,25 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          implementation_deadline: string
+          implementation_deadline: string | null
           name: string
-          services: string[]
-          updated_at: string
+          services: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
-          implementation_deadline: string
+          implementation_deadline?: string | null
           name: string
-          services: string[]
-          updated_at?: string
+          services?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
-          implementation_deadline?: string
+          implementation_deadline?: string | null
           name?: string
-          services?: string[]
-          updated_at?: string
+          services?: string | null
         }
         Relationships: []
       }
@@ -225,38 +177,26 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          ip_address: string | null
           page_path: string
-          referrer: string | null
-          session_id: string | null
-          user_agent: string | null
         }
         Insert: {
           created_at?: string
           id?: string
-          ip_address?: string | null
           page_path: string
-          referrer?: string | null
-          session_id?: string | null
-          user_agent?: string | null
         }
         Update: {
           created_at?: string
           id?: string
-          ip_address?: string | null
           page_path?: string
-          referrer?: string | null
-          session_id?: string | null
-          user_agent?: string | null
         }
         Relationships: []
       }
       products: {
         Row: {
           active: boolean
-          category: string
+          category: string | null
           created_at: string
-          description: string
+          description: string | null
           id: string
           name: string
           price: number | null
@@ -264,9 +204,9 @@ export type Database = {
         }
         Insert: {
           active?: boolean
-          category: string
+          category?: string | null
           created_at?: string
-          description: string
+          description?: string | null
           id?: string
           name: string
           price?: number | null
@@ -274,9 +214,9 @@ export type Database = {
         }
         Update: {
           active?: boolean
-          category?: string
+          category?: string | null
           created_at?: string
-          description?: string
+          description?: string | null
           id?: string
           name?: string
           price?: number | null
@@ -288,7 +228,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          mfa_enabled: boolean
+          mfa_enabled: boolean | null
           mfa_secret: string | null
           updated_at: string
           user_id: string
@@ -296,7 +236,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          mfa_enabled?: boolean
+          mfa_enabled?: boolean | null
           mfa_secret?: string | null
           updated_at?: string
           user_id: string
@@ -304,7 +244,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          mfa_enabled?: boolean
+          mfa_enabled?: boolean | null
           mfa_secret?: string | null
           updated_at?: string
           user_id?: string
@@ -313,48 +253,42 @@ export type Database = {
       }
       rate_limits: {
         Row: {
-          created_at: string | null
-          endpoint: string
+          action: string
+          created_at: string
           id: string
           ip_address: string
-          request_count: number | null
-          window_start: string | null
         }
         Insert: {
-          created_at?: string | null
-          endpoint: string
+          action: string
+          created_at?: string
           id?: string
           ip_address: string
-          request_count?: number | null
-          window_start?: string | null
         }
         Update: {
-          created_at?: string | null
-          endpoint?: string
+          action?: string
+          created_at?: string
           id?: string
           ip_address?: string
-          request_count?: number | null
-          window_start?: string | null
         }
         Relationships: []
       }
       site_content: {
         Row: {
-          content: Json
+          content: Json | null
           created_at: string
           id: string
           section: string
           updated_at: string
         }
         Insert: {
-          content: Json
+          content?: Json | null
           created_at?: string
           id?: string
           section: string
           updated_at?: string
         }
         Update: {
-          content?: Json
+          content?: Json | null
           created_at?: string
           id?: string
           section?: string
@@ -366,19 +300,19 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
+          role?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: string
           user_id?: string
         }
         Relationships: []
@@ -388,44 +322,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_contacts_for_admin: {
-        Args: never
-        Returns: {
-          created_at: string
-          email: string
-          id: string
-          message: string
-          name: string
-        }[]
-      }
-      get_user_profile: {
-        Args: { user_id_param: string }
-        Returns: {
-          created_at: string
-          id: string
-          mfa_enabled: boolean
-          updated_at: string
-          user_id: string
-        }[]
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      verify_mfa_code: {
-        Args: { _code: string; _user_id: string }
-        Returns: boolean
-      }
-      verify_mfa_token: {
-        Args: { _token: string; _user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -552,8 +452,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "moderator", "user"],
-    },
+    Enums: {},
   },
 } as const

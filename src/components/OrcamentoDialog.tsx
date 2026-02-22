@@ -88,12 +88,12 @@ const OrcamentoDialog = ({ open, onOpenChange }: OrcamentoDialogProps) => {
       }
 
       // Save to Supabase
-      const { error: dbError } = await supabase.from("orders").insert({
+      const { error: dbError } = await supabase.from("orders").insert([{
         name: values.name,
         email: values.email,
-        services: values.services,
+        services: Array.isArray(values.services) ? values.services.join(', ') : values.services,
         implementation_deadline: values.implementation_deadline,
-      });
+      }]);
 
       if (dbError) throw dbError;
 
