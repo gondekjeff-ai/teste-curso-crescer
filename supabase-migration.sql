@@ -194,3 +194,41 @@ CREATE POLICY "Allow inserts on rate_limits" ON public.rate_limits FOR INSERT
   WITH CHECK (true);
 CREATE POLICY "Allow reads on rate_limits" ON public.rate_limits FOR SELECT
   USING (true);
+
+-- =============================================
+-- 4. UNIQUE CONSTRAINT para user_roles
+-- =============================================
+ALTER TABLE public.user_roles ADD CONSTRAINT unique_user_role UNIQUE (user_id, role);
+
+-- =============================================
+-- 5. TRIGGERS para updated_at
+-- =============================================
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public;
+
+CREATE TRIGGER update_news_updated_at BEFORE UPDATE ON public.news
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON public.products
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_site_content_updated_at BEFORE UPDATE ON public.site_content
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- =============================================
+-- 6. DADOS INICIAIS
+-- =============================================
+INSERT INTO public.site_content (section, content)
+VALUES ('hero', '{"title": "Otimize sua Infraestrutura de TI com Soluções Especializadas", "subtitle": "Gestão completa de TI que potencializa desempenho, fortalece segurança e acelera o crescimento do seu negócio.", "primaryButtonText": "Nossos Serviços", "secondaryButtonText": "Contatos"}')
+ON CONFLICT DO NOTHING;
+
+-- =============================================
+-- 7. CRIAR ADMIN (executar após criar user via Auth)
+-- =============================================
+-- INSERT INTO public.user_roles (user_id, role) VALUES ('SEU-UUID', 'admin');
+-- INSERT INTO public.profiles (user_id, mfa_enabled) VALUES ('SEU-UUID', false);
