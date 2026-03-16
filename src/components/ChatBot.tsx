@@ -59,16 +59,7 @@ const ChatBot = () => {
     setMessages(prev => [...prev, botMessage]);
 
     try {
-      // Call AI chatbot edge function with streaming
-      const { data, error: functionError } = await supabase.functions.invoke('ai-chatbot', {
-        body: { message: text.trim() }
-      });
-
-      if (functionError) {
-        throw functionError;
-      }
-
-      // Get the response as a stream
+      // Call AI chatbot edge function with streaming via fetch
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const response = await fetch(
