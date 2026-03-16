@@ -228,7 +228,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 O frontend invoca Edge Functions de duas formas:
 
 ```typescript
-// 1. Via SDK (preferido)
+// 1. Via SDK (preferido para chamadas simples)
 const { data, error } = await supabase.functions.invoke('nome-funcao', {
   body: { ... }
 });
@@ -248,7 +248,46 @@ const response = await fetch(`${supabaseUrl}/functions/v1/ai-chatbot`, {
 
 ---
 
-## 7️⃣ Funcionalidades e Dependências
+## 7️⃣ Mapeamento Dados Dinâmicos vs Estáticos
+
+### ✅ Dados Dinâmicos (PostgreSQL)
+
+Estes dados são gerenciados via banco e painel admin:
+
+| Funcionalidade | Tabela | Componente Frontend |
+|----------------|--------|---------------------|
+| Formulário de contato | `contacts` | ContactForm, MiniContactForm |
+| Orçamentos | `orders` | OrcamentoDialog |
+| Notícias/Blog | `news` | BlogPreview, Blog |
+| Produtos/Serviços | `products` | ProductPlatform |
+| Carousel do Hero | `carousel_images` | CarouselManager (admin) |
+| Popup da Home | `index_popup` | IndexPopup |
+| Conteúdo do Site | `site_content` | ContentManager (admin) |
+| Page Views | `page_views` | Analytics |
+| Chatbot | `chatbot_interactions` | ChatBot |
+| Perfis de Usuário | `profiles` | MFASettings |
+| Roles de Admin | `user_roles` | AdminLogin |
+| Rate Limiting | `rate_limits` | check-rate-limit |
+
+### 📝 Conteúdo Estático (Código-fonte)
+
+Estes conteúdos são parte do layout/design e estão no código:
+
+| Componente | Conteúdo | Recomendação |
+|-----------|----------|--------------|
+| `Hero.tsx` | Textos do hero, imagens do carousel | Já tem suporte via `site_content` table. Pode ser migrado para leitura do DB |
+| `ITServices.tsx` | Lista de serviços, estudos de caso | Criar tabela `services` no futuro |
+| `WhyOptiStrat.tsx` | Estatísticas e benefícios | Manter estático (raramente muda) |
+| `Navbar.tsx` | Links de navegação | Manter estático (estrutura do site) |
+| `Footer.tsx` | Links e informações | Manter estático |
+| `Features.tsx` | Features WRLDS (legado) | Conteúdo antigo, considerar remover |
+| `Projects.tsx` | Projetos WRLDS (legado) | Conteúdo antigo, considerar remover |
+| `Process.tsx` | Processo WRLDS (legado) | Conteúdo antigo, considerar remover |
+| `blogPosts.ts` | Posts estáticos WRLDS | Conteúdo legado, substituído pela tabela `news` |
+
+---
+
+## 8️⃣ Funcionalidades e Dependências
 
 | Funcionalidade | Tabelas | Edge Functions | Secrets |
 |----------------|---------|----------------|---------|
@@ -261,16 +300,18 @@ const response = await fetch(`${supabaseUrl}/functions/v1/ai-chatbot`, {
 | Admin 2FA | profiles | setup-mfa, verify-mfa, enable-mfa, disable-mfa | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
 | Admin CRUD | news, products, carousel_images, site_content | - | - |
 | Newsletter | - | send-contact-email | RESEND_API_KEY |
+| Serviços/Soluções | products | - | - |
 
 ---
 
-## 8️⃣ Checklist de Deploy
+## 9️⃣ Checklist de Deploy
 
 ### Banco de Dados
 - [ ] Migração SQL executada sem erros
 - [ ] RLS habilitado em todas as tabelas
 - [ ] Usuário admin criado via Auth
 - [ ] Registro na tabela user_roles
+- [ ] Dados iniciais inseridos (site_content hero)
 
 ### Edge Functions
 - [ ] Todas as 9 functions deployadas
@@ -278,22 +319,29 @@ const response = await fetch(`${supabaseUrl}/functions/v1/ai-chatbot`, {
 - [ ] JWT verification desabilitado (verify_jwt = false)
 
 ### EasyPanel
-- [ ] Variáveis de ambiente configuradas
+- [ ] Variáveis de ambiente configuradas (VITE_*)
 - [ ] Build completou sem erros
 - [ ] Health check respondendo em /health
 - [ ] Domínio configurado com SSL
 
-### Testes
-- [ ] Página inicial carrega
-- [ ] Formulário de contato funciona
+### Testes Funcionais
+- [ ] Página inicial carrega com todos os componentes
+- [ ] Popup da home aparece (se configurado no banco)
+- [ ] Produtos/Serviços carregam do banco
+- [ ] Notícias carregam na seção de blog
+- [ ] Formulário de contato envia e salva no banco
+- [ ] Formulário de orçamento funciona
 - [ ] Chatbot responde
 - [ ] Login admin funciona
 - [ ] Dashboard admin carrega dados
-- [ ] Routing SPA funciona (refresh em /admin)
+- [ ] CRUD de notícias funciona no admin
+- [ ] CRUD de produtos funciona no admin
+- [ ] Routing SPA funciona (refresh em /admin, /blog, etc)
+- [ ] Tema claro/escuro funciona
 
 ---
 
-## 9️⃣ Troubleshooting
+## 🔟 Troubleshooting
 
 ### "Failed to fetch" nos formulários
 → Verifique se `VITE_SUPABASE_URL` está correto e se as Edge Functions estão deployadas.
@@ -308,8 +356,14 @@ const response = await fetch(`${supabaseUrl}/functions/v1/ai-chatbot`, {
 → Verifique se o usuário tem role 'admin' na tabela user_roles.
 
 ### 404 ao recarregar páginas
-→ Verifique se o server.js está servindo o fallback para index.html.
+→ O server.js já serve fallback para index.html. Verifique se o Dockerfile está correto.
+
+### Produtos/Serviços não aparecem
+→ Verifique se existem registros na tabela `products` com `active = true`.
+
+### Notícias não aparecem
+→ Verifique se existem registros na tabela `news` com `published = true`.
 
 ---
 
-**Versão**: 1.0 | **Data**: 2026-03
+**Versão**: 2.0 | **Data**: 2026-03

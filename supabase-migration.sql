@@ -189,7 +189,7 @@ CREATE POLICY "Public can read site content" ON public.site_content FOR SELECT
 CREATE POLICY "Users can read own roles" ON public.user_roles FOR SELECT
   USING (auth.uid() = user_id);
 
--- rate_limits (public insert for edge functions)
+-- rate_limits (public insert/read for edge functions)
 CREATE POLICY "Allow inserts on rate_limits" ON public.rate_limits FOR INSERT
   WITH CHECK (true);
 CREATE POLICY "Allow reads on rate_limits" ON public.rate_limits FOR SELECT
@@ -223,8 +223,24 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles
 -- =============================================
 -- 6. DADOS INICIAIS
 -- =============================================
+
+-- Conteúdo do Hero
 INSERT INTO public.site_content (section, content)
 VALUES ('hero', '{"title": "Otimize sua Infraestrutura de TI com Soluções Especializadas", "subtitle": "Gestão completa de TI que potencializa desempenho, fortalece segurança e acelera o crescimento do seu negócio.", "primaryButtonText": "Nossos Serviços", "secondaryButtonText": "Contatos"}')
+ON CONFLICT DO NOTHING;
+
+-- Produtos/Serviços iniciais
+INSERT INTO public.products (name, description, category, active) VALUES
+  ('Consultoria em TI', 'Planejamento estratégico e avaliação completa da sua infraestrutura de TI', 'service', true),
+  ('Gerenciamento de Rede', 'Monitoramento e otimização de redes 24/7 para máxima performance', 'service', true),
+  ('Segurança Cibernética', 'Proteção avançada contra ameaças digitais e auditorias de segurança', 'service', true),
+  ('Cloud Computing', 'Migração e gerenciamento de infraestrutura em nuvem AWS, Azure e GCP', 'service', true),
+  ('Backup Automático', 'Soluções de backup e recuperação de dados com redundância garantida', 'service', true),
+  ('Suporte Técnico 24h', 'Equipe dedicada disponível 24/7 para resolver incidentes críticos', 'service', true),
+  ('Infraestrutura Completa', 'Solução integrada de servidores, redes e sistemas para sua empresa', 'solution', true),
+  ('Segurança 360°', 'Pacote completo de cibersegurança com monitoramento proativo', 'solution', true),
+  ('Migração para Nuvem', 'Migração segura e planejada para ambientes cloud', 'solution', true),
+  ('Gestão de TI Terceirizada', 'Gerenciamento completo da sua TI por especialistas dedicados', 'solution', true)
 ON CONFLICT DO NOTHING;
 
 -- =============================================
