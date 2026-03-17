@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Eye, EyeOff } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { carouselImageSchema, sanitizeInput } from '@/lib/inputValidation';
+import { ImageUpload } from '@/components/admin/ImageUpload';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { sanitizeInput } from '@/lib/inputValidation';
 
 interface CarouselImage {
   id: string;
@@ -20,6 +22,9 @@ interface CarouselImage {
 const CarouselManager = () => {
   const [images, setImages] = useState<CarouselImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newAltText, setNewAltText] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,176 +41,169 @@ const CarouselManager = () => {
       if (error) throw error;
       setImages(data || []);
     } catch (error: any) {
-      toast({
-        title: 'Erro ao carregar imagens',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro ao carregar imagens', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
 
-  const updateImage = async (id: string, updates: Partial<CarouselImage>) => {
+  const addImage = async () => {
+    if (!newImageUrl) {
+      toast({ title: 'Envie uma imagem primeiro', variant: 'destructive' });
+      return;
+    }
     try {
-      // Sanitize text inputs
-      const sanitizedUpdates = { ...updates };
-      if (sanitizedUpdates.alt_text) {
-        sanitizedUpdates.alt_text = sanitizeInput(sanitizedUpdates.alt_text);
-      }
-
-      // Validate the updates
-      if (Object.keys(sanitizedUpdates).length > 0) {
-        const currentImage = images.find(img => img.id === id);
-        if (currentImage) {
-          const merged = { ...currentImage, ...sanitizedUpdates };
-          const validation = carouselImageSchema.safeParse(merged);
-          
-          if (!validation.success) {
-            const errorMessage = validation.error.errors[0]?.message || 'Dados inválidos';
-            toast({
-              title: 'Erro de validação',
-              description: errorMessage,
-              variant: 'destructive',
-            });
-            return;
-          }
-        }
-      }
-
-      const { error } = await supabase
-        .from('carousel_images')
-        .update(sanitizedUpdates)
-        .eq('id', id);
-
+      const { error } = await supabase.from('carousel_images').insert([{
+        image_url: newImageUrl,
+        alt_text: sanitizeInput(newAltText || 'Imagem do carrossel'),
+        display_order: images.length,
+        active: true,
+      }]);
       if (error) throw error;
-
-      toast({
-        title: 'Imagem atualizada',
-        description: 'As alterações foram salvas com sucesso.',
-      });
+      toast({ title: 'Imagem adicionada com sucesso' });
+      setDialogOpen(false);
+      setNewAltText('');
+      setNewImageUrl('');
       loadImages();
     } catch (error: any) {
-      toast({
-        title: 'Erro ao atualizar',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const updateImage = async (id: string, updates: Partial<CarouselImage>) => {
+    try {
+      if (updates.alt_text) updates.alt_text = sanitizeInput(updates.alt_text);
+      const { error } = await supabase.from('carousel_images').update(updates).eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Atualizado' });
+      loadImages();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }
   };
 
   const deleteImage = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
-
+    if (!confirm('Excluir esta imagem do carrossel?')) return;
     try {
-      const { error } = await supabase
-        .from('carousel_images')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('carousel_images').delete().eq('id', id);
       if (error) throw error;
-
-      toast({
-        title: 'Imagem excluída',
-        description: 'A imagem foi removida com sucesso.',
-      });
+      toast({ title: 'Imagem excluída' });
       loadImages();
     } catch (error: any) {
-      toast({
-        title: 'Erro ao excluir',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }
   };
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Gerenciar Carrossel</h1>
-          <p className="text-muted-foreground mt-2">
-            Adicione ou edite as imagens do carrossel da página inicial
+          <h1 className="text-2xl font-bold">Carrossel</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gerencie as imagens da página inicial ({images.length} imagens)
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Imagem
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {images.map((image) => (
-          <Card key={image.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>Imagem {image.display_order}</CardTitle>
-                  <CardDescription>{image.alt_text}</CardDescription>
+      {images.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <p>Nenhuma imagem no carrossel. Adicione a primeira!</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {images.map((image) => (
+            <Card key={image.id} className={`overflow-hidden ${!image.active ? 'opacity-60' : ''}`}>
+              <div className="aspect-video bg-muted relative">
+                {image.image_url ? (
+                  <img src={image.image_url} alt={image.alt_text} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">Sem imagem</div>
+                )}
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <Button
+                    size="icon"
+                    variant={image.active ? 'default' : 'secondary'}
+                    className="h-7 w-7"
+                    onClick={() => updateImage(image.id, { active: !image.active })}
+                    title={image.active ? 'Desativar' : 'Ativar'}
+                  >
+                    {image.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className="h-7 w-7"
+                    onClick={() => deleteImage(image.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteImage(image.id)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={image.image_url}
-                  alt={image.alt_text}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <CardContent className="p-3 space-y-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Texto alternativo</Label>
+                  <Input
+                    value={image.alt_text || ''}
+                    onChange={(e) => updateImage(image.id, { alt_text: e.target.value })}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs">Ordem:</Label>
+                  <Input
+                    type="number"
+                    value={image.display_order}
+                    onChange={(e) => updateImage(image.id, { display_order: parseInt(e.target.value) || 0 })}
+                    className="h-8 text-sm w-20"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-              <div className="space-y-2">
-                <Label htmlFor={`alt-${image.id}`}>Texto Alternativo</Label>
-                <Input
-                  id={`alt-${image.id}`}
-                  value={image.alt_text}
-                  onChange={(e) =>
-                    updateImage(image.id, { alt_text: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor={`active-${image.id}`}>
-                  {image.active ? 'Ativa' : 'Inativa'}
-                </Label>
-                <Switch
-                  id={`active-${image.id}`}
-                  checked={image.active}
-                  onCheckedChange={(checked) =>
-                    updateImage(image.id, { active: checked })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`order-${image.id}`}>Ordem de Exibição</Label>
-                <Input
-                  id={`order-${image.id}`}
-                  type="number"
-                  value={image.display_order}
-                  onChange={(e) =>
-                    updateImage(image.id, {
-                      display_order: parseInt(e.target.value),
-                    })
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Imagem do Carrossel</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <ImageUpload
+              currentUrl={newImageUrl || null}
+              onUpload={(url) => setNewImageUrl(url)}
+              onRemove={() => setNewImageUrl('')}
+              folder="carousel"
+            />
+            <div className="space-y-2">
+              <Label>Texto alternativo</Label>
+              <Input
+                value={newAltText}
+                onChange={(e) => setNewAltText(e.target.value)}
+                placeholder="Descrição da imagem"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={addImage} disabled={!newImageUrl}>Adicionar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
