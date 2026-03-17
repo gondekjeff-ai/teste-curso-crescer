@@ -94,7 +94,7 @@ export function AdminSidebar() {
 
         <Separator className="my-2" />
 
-        <SidebarGroup defaultOpen>
+        <SidebarGroup>
           <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-3">
             Sistema
           </SidebarGroupLabel>

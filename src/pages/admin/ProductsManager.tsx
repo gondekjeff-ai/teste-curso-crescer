@@ -55,10 +55,22 @@ const ProductsManager = () => {
       const sanitizedData = sanitizeObject(validatedData);
 
       if (editingProduct.id) {
-        const { error } = await supabase.from('products').update(sanitizedData).eq('id', editingProduct.id);
+        const { error } = await supabase.from('products').update({
+          name: sanitizedData.name,
+          description: sanitizedData.description,
+          category: sanitizedData.category,
+          price: sanitizedData.price,
+          active: sanitizedData.active,
+        }).eq('id', editingProduct.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('products').insert([sanitizedData]);
+        const { error } = await supabase.from('products').insert([{
+          name: sanitizedData.name,
+          description: sanitizedData.description,
+          category: sanitizedData.category,
+          price: sanitizedData.price,
+          active: sanitizedData.active,
+        }]);
         if (error) throw error;
       }
       toast({ title: 'Produto salvo com sucesso' });
