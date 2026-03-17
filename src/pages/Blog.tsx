@@ -137,11 +137,10 @@ const Blog = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredPost && (
-              <a 
-                href={featuredPost.image_url || '#'} 
-                target="_blank" 
-                rel="noopener noreferrer"
+              <Link 
+                to={`/blog/${featuredPost.id}`}
                 className="col-span-1 md:col-span-2 lg:col-span-3"
+                onClick={() => window.scrollTo(0, 0)}
               >
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full">
                   <div className="grid md:grid-cols-2 h-full">
