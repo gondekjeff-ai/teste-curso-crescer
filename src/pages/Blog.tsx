@@ -168,11 +168,10 @@ const Blog = () => {
             )}
             
             {otherPosts.map((post) => (
-              <a 
+              <Link 
                 key={post.id}
-                href={post.image_url || '#'} 
-                target="_blank" 
-                rel="noopener noreferrer"
+                to={`/blog/${post.id}`}
+                onClick={() => window.scrollTo(0, 0)}
               >
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full">
                   <div className="grid grid-rows-[200px,1fr]">
