@@ -84,7 +84,7 @@ const Blog = () => {
   return (
     <PageLayout>
       <SEO 
-        title="Notícias de TI e Telecomunicações - WRLDS Technologies" 
+        title="Notícias de TI e Telecomunicações - OptiStrat" 
         description="Fique atualizado com as últimas notícias sobre tecnologia da informação e telecomunicações."
         imageUrl={featuredPost?.image_url || "/lovable-uploads/6b0637e9-4a7b-40d0-b219-c8b7f879f93e.png"}
         keywords={['tecnologia', 'TI', 'telecomunicações', 'notícias tech', 'inovação', 'tecnologia da informação']}
