@@ -193,7 +193,7 @@ const Blog = () => {
                     </CardContent>
                   </div>
                 </Card>
-              </a>
+              </Link>
             ))}
           </div>
         )}
