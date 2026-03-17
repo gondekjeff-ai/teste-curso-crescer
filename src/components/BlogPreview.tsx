@@ -117,37 +117,39 @@ const BlogPreview = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {news.map((item) => (
-              <Card key={item.id} className="group hover:shadow-lg transition-shadow duration-300 border-border">
-                {item.image_url && (
-                  <div className="aspect-video overflow-hidden rounded-t-lg">
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                )}
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{formatDate(item.created_at)}</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h3>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {item.excerpt || truncateText(item.content, 150)}
-                  </p>
-                  <div className="mt-4">
-                    <span className="text-primary text-sm font-medium group-hover:underline inline-flex items-center">
-                      Ler mais
-                      <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+              <Link key={item.id} to={`/blog/${item.id}`} onClick={() => window.scrollTo(0, 0)}>
+                <Card className="group hover:shadow-lg transition-shadow duration-300 border-border h-full">
+                  {item.image_url && (
+                    <div className="aspect-video overflow-hidden rounded-t-lg">
+                      <img
+                        src={item.image_url}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <Calendar className="w-4 h-4" />
+                      <span>{formatDate(item.created_at)}</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      {item.excerpt || truncateText(item.content, 150)}
+                    </p>
+                    <div className="mt-4">
+                      <span className="text-primary text-sm font-medium group-hover:underline inline-flex items-center">
+                        Ler mais
+                        <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
