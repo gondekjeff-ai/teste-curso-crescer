@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Plus, Newspaper, Eye, EyeOff } from 'lucide-react';
+import { Pencil, Trash2, Plus, Newspaper } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { newsSchema, sanitizeObject } from '@/lib/inputValidation';
@@ -33,11 +33,7 @@ const NewsManager = () => {
 
   const loadNews = async () => {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
+      const data = await api.get('/admin/news');
       setNews(data || []);
     } catch (error) {
       toast({ title: 'Erro', description: 'Não foi possível carregar as notícias', variant: 'destructive' });
@@ -61,23 +57,9 @@ const NewsManager = () => {
       const sanitizedData = sanitizeObject(validatedData);
 
       if (editingNews.id) {
-        const { error } = await supabase.from('news').update({
-          title: sanitizedData.title,
-          content: sanitizedData.content,
-          excerpt: sanitizedData.excerpt,
-          image_url: sanitizedData.image_url,
-          published: sanitizedData.published,
-        }).eq('id', editingNews.id);
-        if (error) throw error;
+        await api.put(`/admin/news/${editingNews.id}`, sanitizedData);
       } else {
-        const { error } = await supabase.from('news').insert([{
-          title: sanitizedData.title,
-          content: sanitizedData.content,
-          excerpt: sanitizedData.excerpt,
-          image_url: sanitizedData.image_url,
-          published: sanitizedData.published,
-        }]);
-        if (error) throw error;
+        await api.post('/admin/news', sanitizedData);
       }
 
       toast({ title: 'Sucesso', description: 'Notícia salva com sucesso' });
@@ -96,8 +78,7 @@ const NewsManager = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir esta notícia?')) return;
     try {
-      const { error } = await supabase.from('news').delete().eq('id', id);
-      if (error) throw error;
+      await api.del(`/admin/news/${id}`);
       toast({ title: 'Notícia excluída' });
       loadNews();
     } catch (error: any) {

@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, GripVertical, Eye, EyeOff } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
+import { Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { sanitizeInput } from '@/lib/inputValidation';
@@ -27,18 +26,11 @@ const CarouselManager = () => {
   const [newImageUrl, setNewImageUrl] = useState('');
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadImages();
-  }, []);
+  useEffect(() => { loadImages(); }, []);
 
   const loadImages = async () => {
     try {
-      const { data, error } = await supabase
-        .from('carousel_images')
-        .select('*')
-        .order('display_order');
-
-      if (error) throw error;
+      const data = await api.get('/admin/carousel');
       setImages(data || []);
     } catch (error: any) {
       toast({ title: 'Erro ao carregar imagens', description: error.message, variant: 'destructive' });
@@ -53,13 +45,12 @@ const CarouselManager = () => {
       return;
     }
     try {
-      const { error } = await supabase.from('carousel_images').insert([{
+      await api.post('/admin/carousel', {
         image_url: newImageUrl,
         alt_text: sanitizeInput(newAltText || 'Imagem do carrossel'),
         display_order: images.length,
         active: true,
-      }]);
-      if (error) throw error;
+      });
       toast({ title: 'Imagem adicionada com sucesso' });
       setDialogOpen(false);
       setNewAltText('');
@@ -73,8 +64,7 @@ const CarouselManager = () => {
   const updateImage = async (id: string, updates: Partial<CarouselImage>) => {
     try {
       if (updates.alt_text) updates.alt_text = sanitizeInput(updates.alt_text);
-      const { error } = await supabase.from('carousel_images').update(updates).eq('id', id);
-      if (error) throw error;
+      await api.put(`/admin/carousel/${id}`, updates);
       toast({ title: 'Atualizado' });
       loadImages();
     } catch (error: any) {
@@ -85,8 +75,7 @@ const CarouselManager = () => {
   const deleteImage = async (id: string) => {
     if (!confirm('Excluir esta imagem do carrossel?')) return;
     try {
-      const { error } = await supabase.from('carousel_images').delete().eq('id', id);
-      if (error) throw error;
+      await api.del(`/admin/carousel/${id}`);
       toast({ title: 'Imagem excluída' });
       loadImages();
     } catch (error: any) {
