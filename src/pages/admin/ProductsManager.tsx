@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,8 +31,7 @@ const ProductsManager = () => {
 
   const loadProducts = async () => {
     try {
-      const { data, error } = await supabase.from('products').select('*').order('name');
-      if (error) throw error;
+      const data = await api.get('/admin/products');
       setProducts(data || []);
     } catch (error) {
       toast({ title: 'Erro', description: 'Não foi possível carregar os produtos', variant: 'destructive' });
@@ -55,23 +54,9 @@ const ProductsManager = () => {
       const sanitizedData = sanitizeObject(validatedData);
 
       if (editingProduct.id) {
-        const { error } = await supabase.from('products').update({
-          name: sanitizedData.name,
-          description: sanitizedData.description,
-          category: sanitizedData.category,
-          price: sanitizedData.price,
-          active: sanitizedData.active,
-        }).eq('id', editingProduct.id);
-        if (error) throw error;
+        await api.put(`/admin/products/${editingProduct.id}`, sanitizedData);
       } else {
-        const { error } = await supabase.from('products').insert([{
-          name: sanitizedData.name,
-          description: sanitizedData.description,
-          category: sanitizedData.category,
-          price: sanitizedData.price,
-          active: sanitizedData.active,
-        }]);
-        if (error) throw error;
+        await api.post('/admin/products', sanitizedData);
       }
       toast({ title: 'Produto salvo com sucesso' });
       setDialogOpen(false);
@@ -89,8 +74,7 @@ const ProductsManager = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('Excluir este produto?')) return;
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      await api.del(`/admin/products/${id}`);
       toast({ title: 'Produto excluído' });
       loadProducts();
     } catch (error: any) {

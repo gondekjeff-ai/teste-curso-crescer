@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Newspaper, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 
 interface NewsItem {
   id: string;
@@ -18,24 +18,12 @@ const BlogPreview = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchNews();
-  }, []);
+  useEffect(() => { fetchNews(); }, []);
 
   const fetchNews = async () => {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('id, title, content, excerpt, image_url, created_at')
-        .eq('published', true)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (error) throw error;
-
-      if (data) {
-        setNews(data);
-      }
+      const data = await api.get('/news?limit=3');
+      setNews(data || []);
     } catch (error) {
       console.error('Error fetching news:', error);
     } finally {
@@ -44,11 +32,7 @@ const BlogPreview = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
+    return new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
   const truncateText = (text: string, maxLength: number) => {
@@ -89,9 +73,7 @@ const BlogPreview = () => {
               <Newspaper size={20} className="text-primary" />
               <span className="text-primary font-medium">Notícias</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
-              Últimas Atualizações
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Últimas Atualizações</h2>
             <p className="text-muted-foreground max-w-xl">
               Fique por dentro das últimas novidades em tecnologia, tendências de TI e atualizações da OptiStrat.
             </p>
@@ -103,16 +85,12 @@ const BlogPreview = () => {
             </Button>
           </Link>
         </div>
-        
+
         {news.length === 0 ? (
           <div className="text-center py-12">
             <Newspaper className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Nenhuma notícia disponível
-            </h3>
-            <p className="text-muted-foreground">
-              Estamos trabalhando em novas atualizações. Volte em breve!
-            </p>
+            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhuma notícia disponível</h3>
+            <p className="text-muted-foreground">Estamos trabalhando em novas atualizações. Volte em breve!</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -121,11 +99,7 @@ const BlogPreview = () => {
                 <Card className="group hover:shadow-lg transition-shadow duration-300 border-border h-full">
                   {item.image_url && (
                     <div className="aspect-video overflow-hidden rounded-t-lg">
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
                   )}
                   <CardHeader className="pb-3">
@@ -133,9 +107,7 @@ const BlogPreview = () => {
                       <Calendar className="w-4 h-4" />
                       <span>{formatDate(item.created_at)}</span>
                     </div>
-                    <h3 className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors">
-                      {item.title}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors">{item.title}</h3>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <p className="text-muted-foreground text-sm leading-relaxed">
@@ -143,8 +115,7 @@ const BlogPreview = () => {
                     </p>
                     <div className="mt-4">
                       <span className="text-primary text-sm font-medium group-hover:underline inline-flex items-center">
-                        Ler mais
-                        <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
+                        Ler mais <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
                       </span>
                     </div>
                   </CardContent>

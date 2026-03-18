@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,225 +6,48 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Lock, Mail, AlertTriangle } from 'lucide-react';
+import { Shield, Lock, Mail } from 'lucide-react';
 import optiStratLogo from '@/assets/optistrat-logo-full.png';
-import { supabase } from '@/integrations/supabase/client';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { api } from '@/lib/api';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
+  const [mfaToken, setMfaToken] = useState('');
   const [needsMfa, setNeedsMfa] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [rateLimited, setRateLimited] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(0);
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check server-side rate limiting
-  const checkServerRateLimit = async (): Promise<{ allowed: boolean; remaining: number; resetInSeconds?: number }> => {
-    try {
-      const { data, error } = await supabase.functions.invoke('check-rate-limit', {
-        body: {
-          endpoint: 'admin-login',
-          maxAttempts: 5,
-          windowMinutes: 15
-        }
-      });
-
-      if (error) {
-        console.error('Rate limit check error:', error);
-        // Fail open - allow on error
-        return { allowed: true, remaining: 5 };
-      }
-
-      return data as { allowed: boolean; remaining: number; resetInSeconds?: number };
-    } catch (err) {
-      console.error('Rate limit check failed:', err);
-      return { allowed: true, remaining: 5 };
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (rateLimited) {
-      toast({
-        title: 'Tentativas excedidas',
-        description: `Aguarde ${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')} antes de tentar novamente.`,
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Check server-side rate limit before attempting login
-      const rateLimitResult = await checkServerRateLimit();
-      
-      if (!rateLimitResult.allowed) {
-        setRateLimited(true);
-        const resetSeconds = rateLimitResult.resetInSeconds || 900;
-        setRemainingTime(resetSeconds);
-        
-        // Start countdown
-        const interval = setInterval(() => {
-          setRemainingTime(prev => {
-            if (prev <= 1) {
-              setRateLimited(false);
-              clearInterval(interval);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-        
-        toast({
-          title: 'Tentativas excedidas',
-          description: 'Muitas tentativas de login. Aguarde antes de tentar novamente.',
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-      }
-
       if (!needsMfa) {
-        // First step: email/password authentication
-        const { data, error } = await signIn(email, password);
+        const result = await signIn(email, password);
 
-        if (error) {
-          toast({
-            title: 'Erro no login',
-            description: error.message,
-            variant: 'destructive',
-          });
+        if (result.requiresMfa) {
+          setMfaToken(result.mfaToken);
+          setNeedsMfa(true);
           setLoading(false);
           return;
         }
 
-        if (data?.user) {
-          // Check if user is admin
-          const { data: userRole } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', data.user.id)
-            .eq('role', 'admin')
-            .maybeSingle();
-
-          if (!userRole) {
-            await supabase.auth.signOut();
-            toast({
-              title: 'Acesso negado',
-              description: 'Você não tem permissão para acessar o painel administrativo.',
-              variant: 'destructive',
-            });
-            setLoading(false);
-            return;
-          }
-
-          // Check if user has MFA enabled (only fetch mfa_enabled, not the secret)
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('mfa_enabled')
-            .eq('user_id', data.user.id)
-            .single();
-
-          if (profile?.mfa_enabled) {
-            // User has MFA enabled, show MFA input
-            setNeedsMfa(true);
-            setLoading(false);
-            return;
-          } else {
-            // No MFA, proceed to admin panel
-            toast({
-              title: 'Login bem-sucedido',
-              description: 'Redirecionando para o painel administrativo...',
-            });
-            // Small delay to ensure session is fully established
-            setTimeout(() => {
-              navigate('/admin', { replace: true });
-            }, 100);
-          }
-        }
+        toast({ title: 'Login bem-sucedido', description: 'Redirecionando para o painel administrativo...' });
+        setTimeout(() => navigate('/admin', { replace: true }), 100);
       } else {
-        // Second step: MFA verification
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          toast({
-            title: 'Erro',
-            description: 'Sessão expirada. Por favor, faça login novamente.',
-            variant: 'destructive',
-          });
-          setNeedsMfa(false);
-          setLoading(false);
-          return;
-        }
-
-        // Call the Edge Function for secure server-side MFA verification
-        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('verify-mfa', {
-          body: {
-            userId: user.id,
-            code: mfaCode
-          }
-        });
-
-        if (verifyError) {
-          console.error('MFA verification error:', verifyError);
-          toast({
-            title: 'Erro',
-            description: 'Erro ao verificar código MFA',
-            variant: 'destructive',
-          });
-          setLoading(false);
-          return;
-        }
-
-        if (!verifyResult?.valid) {
-          toast({
-            title: 'Código inválido',
-            description: 'O código de autenticação está incorreto',
-            variant: 'destructive',
-          });
-          setLoading(false);
-          return;
-        }
-
-        // MFA verification successful - check admin status one more time
-        const { data: userRole } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-
-        if (!userRole) {
-          await supabase.auth.signOut();
-          toast({
-            title: 'Acesso negado',
-            description: 'Você não tem permissão para acessar o painel administrativo.',
-            variant: 'destructive',
-          });
-          setLoading(false);
-          return;
-        }
-
-        toast({
-          title: 'Login bem-sucedido',
-          description: 'Redirecionando para o painel administrativo...',
-        });
-        // Small delay to ensure session is fully established
-        setTimeout(() => {
-          navigate('/admin', { replace: true });
-        }, 100);
+        const result = await api.post('/auth/verify-mfa', { mfaToken, code: mfaCode });
+        api.setToken(result.token);
+        toast({ title: 'Login bem-sucedido', description: 'Redirecionando...' });
+        setTimeout(() => { window.location.href = '/admin'; }, 100);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: 'Erro',
-        description: 'Ocorreu um erro ao fazer login',
+        title: 'Erro no login',
+        description: error.message || 'Ocorreu um erro ao fazer login',
         variant: 'destructive',
       });
     }
@@ -250,14 +73,6 @@ const AdminLogin = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {rateLimited && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Muitas tentativas de login. Aguarde {Math.floor(remainingTime / 60)}:{(remainingTime % 60).toString().padStart(2, '0')} antes de tentar novamente.
-              </AlertDescription>
-            </Alert>
-          )}
           <form onSubmit={handleLogin} className="space-y-4">
             {!needsMfa ? (
               <>
@@ -309,7 +124,7 @@ const AdminLogin = () => {
                 </p>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading || rateLimited}>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Entrando...' : needsMfa ? 'Verificar Código' : 'Entrar'}
             </Button>
           </form>

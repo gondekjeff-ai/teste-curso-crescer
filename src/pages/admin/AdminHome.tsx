@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Image, FileText, Package, Newspaper, Eye, MessageSquare, Users, TrendingUp } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Link } from 'react-router-dom';
 
 interface Stats {
@@ -27,39 +27,16 @@ const AdminHome = () => {
 
   const loadStats = async () => {
     try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const since = thirtyDaysAgo.toISOString();
-
-      const [carousel, contacts, pageViews, chatbot, products, news, pvData] = await Promise.all([
-        supabase.from('carousel_images').select('*', { count: 'exact', head: true }).eq('active', true),
-        supabase.from('contacts').select('*', { count: 'exact', head: true }),
-        supabase.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', since),
-        supabase.from('chatbot_interactions').select('*', { count: 'exact', head: true }).gte('created_at', since),
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('news').select('*', { count: 'exact', head: true }),
-        supabase.from('page_views').select('page_path').gte('created_at', since),
-      ]);
-
-      if (pvData.data) {
-        const pageCounts: Record<string, number> = {};
-        pvData.data.forEach((v) => { pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1; });
-        setTopPages(
-          Object.entries(pageCounts)
-            .map(([page_path, views]) => ({ page_path, views }))
-            .sort((a, b) => b.views - a.views)
-            .slice(0, 5)
-        );
-      }
-
+      const data = await api.get('/admin/stats');
       setStats({
-        carouselImages: carousel.count || 0,
-        contacts: contacts.count || 0,
-        pageViews: pageViews.count || 0,
-        chatbotInteractions: chatbot.count || 0,
-        products: products.count || 0,
-        news: news.count || 0,
+        carouselImages: data.carouselImages,
+        contacts: data.contacts,
+        pageViews: data.pageViews,
+        chatbotInteractions: data.chatbotInteractions,
+        products: data.products,
+        news: data.news,
       });
+      setTopPages(data.topPages || []);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
     } finally {

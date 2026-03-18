@@ -6,5 +6,15 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    volumes:
+      - uploads_data:/app/uploads
     environment:
       - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DB_SSL=${DB_SSL:-true}
+
+volumes:
+  uploads_data:
