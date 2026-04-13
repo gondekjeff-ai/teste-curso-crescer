@@ -1,369 +1,99 @@
-# Deploy OptiStrat com Supabase Externo + EasyPanel
+# Deployment Guide - OptiStrat (EasyPanel / Docker)
 
-Guia completo para exportar o projeto do GitHub e deployar no EasyPanel com banco de dados Supabase externo.
+## Requisitos
 
-## 📋 Arquitetura
+- Docker & Docker Compose
+- PostgreSQL 12+ (externo)
+- Node.js 20+ (apenas para desenvolvimento local)
 
-```
-┌─────────────────┐     ┌──────────────────────┐     ┌──────────────────┐
-│   EasyPanel     │────▶│  Supabase Externo     │     │  Serviços        │
-│   (Frontend)    │     │  (Auth, DB, Functions) │     │  Externos        │
-│   Node.js       │     │                        │     │  - Resend (Email)│
-│   Port 3000     │     │  URL: dm.aut8...       │     │  - Groq (AI)     │
-└─────────────────┘     └──────────────────────┘     └──────────────────┘
-```
+## Configuração do Banco de Dados
 
-## 🔧 Pré-requisitos
+### 1. Executar o script de migração
 
-1. **Supabase Self-Hosted** rodando (ex: `https://dm.aut8.optistrat.com.br`)
-2. **EasyPanel** v2.23.0+ com servidor VPS
-3. **Repositório GitHub** com o código do projeto
-4. **Contas**: Resend (email), Groq (chatbot AI)
-
----
-
-## 1️⃣ Configurar Banco de Dados
-
-### 1.1 Executar Migração SQL
-
-No SQL Editor do seu Supabase externo, execute o arquivo `supabase-migration.sql` que contém:
-
-- 12 tabelas (contacts, news, products, orders, carousel_images, index_popup, site_content, page_views, chatbot_interactions, profiles, user_roles, rate_limits)
-- Políticas RLS para todas as tabelas
-- Triggers de `updated_at`
-- Dados iniciais do site
+Conecte ao PostgreSQL e execute o arquivo `supabase-migration.sql`:
 
 ```bash
-# Opção 1: Via SQL Editor do Supabase Dashboard
-# Cole o conteúdo de supabase-migration.sql e execute
-
-# Opção 2: Via psql (se tiver acesso direto)
-psql -h SEU_HOST -U postgres -d postgres -f supabase-migration.sql
+psql -h pgsql.optistrat.com.br -U optistrat -d optistrat -f supabase-migration.sql
 ```
 
-### 1.2 Criar Usuário Admin
+### 2. Variáveis de Ambiente (EasyPanel)
 
-1. No Supabase Dashboard → Authentication → Users → "Add User"
-2. Crie um usuário com email/senha
-3. Copie o UUID do usuário
-4. Execute no SQL Editor:
+Configure no EasyPanel as seguintes variáveis:
 
-```sql
-INSERT INTO public.user_roles (user_id, role)
-VALUES ('SEU-USER-UUID', 'admin');
+| Variável | Valor | Descrição |
+|----------|-------|-----------|
+| `DATABASE_URL` | `postgresql://optistrat:<SENHA>@pgsql.optistrat.com.br:5432/optistrat` | Conexão PostgreSQL |
+| `DB_SSL` | `true` | SSL do banco (use `false` se não suportar) |
+| `JWT_SECRET` | (gere um segredo forte) | Segredo para tokens JWT |
+| `RESEND_API_KEY` | (sua chave Resend) | Para envio de emails |
+| `GROQ_API_KEY` | (sua chave Groq) | Para o chatbot IA |
+| `NODE_ENV` | `production` | Ambiente |
+| `PORT` | `3000` | Porta do servidor |
 
-INSERT INTO public.profiles (user_id, mfa_enabled)
-VALUES ('SEU-USER-UUID', false);
-```
-
----
-
-## 2️⃣ Variáveis de Ambiente (EasyPanel)
-
-### Variáveis de Build (VITE_*)
-
-⚠️ **IMPORTANTE**: Variáveis `VITE_*` são embutidas no bundle durante o build. Alterar depois exige REBUILD.
-
-```env
-# Obrigatórias - Frontend
-VITE_SUPABASE_URL=https://dm.aut8.optistrat.com.br
-VITE_SUPABASE_PUBLISHABLE_KEY=SUA_ANON_KEY_AQUI
-VITE_SUPABASE_PROJECT_ID=optistrat-external
-
-# Servidor
-NODE_ENV=production
-PORT=3000
-```
-
-### Variáveis de Runtime (Edge Functions)
-
-Estas devem ser configuradas como **Secrets** no Supabase:
-
-| Secret | Descrição | Onde Obter |
-|--------|-----------|------------|
-| `SUPABASE_URL` | URL do Supabase | Seu domínio Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço | Supabase Dashboard → Settings → API |
-| `SUPABASE_ANON_KEY` | Chave anônima | Supabase Dashboard → Settings → API |
-| `RESEND_API_KEY` | API Key do Resend | https://resend.com/api-keys |
-| `GROQ_API_KEY` | API Key do Groq | https://console.groq.com |
-
----
-
-## 3️⃣ Deploy das Edge Functions
-
-As Edge Functions devem ser deployadas no seu Supabase externo. Os arquivos estão em `supabase/functions/`:
-
-| Função | Descrição | Secrets Necessárias |
-|--------|-----------|---------------------|
-| `ai-chatbot` | Chatbot com IA (Groq) | GROQ_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| `send-contact-email` | Envio de emails de contato | RESEND_API_KEY |
-| `send-order-email` | Envio de emails de orçamento | RESEND_API_KEY |
-| `check-rate-limit` | Rate limiting server-side | Nenhuma |
-| `fetch-tech-news` | Buscar notícias de tech | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| `setup-mfa` | Configurar 2FA | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| `verify-mfa` | Verificar código 2FA | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| `enable-mfa` | Ativar 2FA | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| `disable-mfa` | Desativar 2FA | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-
-### Deploy via Supabase CLI
+### 3. Deploy via Docker
 
 ```bash
-# Instalar Supabase CLI
-npm install -g supabase
-
-# Login (para self-hosted, configure o endpoint)
-supabase login
-
-# Linkar ao projeto
-supabase link --project-ref SEU_PROJECT_REF
-
-# Deploy de todas as functions
-supabase functions deploy ai-chatbot --no-verify-jwt
-supabase functions deploy send-contact-email --no-verify-jwt
-supabase functions deploy send-order-email --no-verify-jwt
-supabase functions deploy check-rate-limit --no-verify-jwt
-supabase functions deploy fetch-tech-news --no-verify-jwt
-supabase functions deploy setup-mfa --no-verify-jwt
-supabase functions deploy verify-mfa --no-verify-jwt
-supabase functions deploy enable-mfa --no-verify-jwt
-supabase functions deploy disable-mfa --no-verify-jwt
+docker-compose up -d --build
 ```
 
-### Configurar Secrets no Supabase
+### 4. Criar o primeiro administrador
+
+Após o deploy, execute:
 
 ```bash
-supabase secrets set RESEND_API_KEY=re_xxxxx
-supabase secrets set GROQ_API_KEY=gsk_xxxxx
+curl -X POST https://seu-dominio.com.br/api/setup \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@optistrat.com.br", "password": "sua-senha-segura"}'
 ```
 
----
-
-## 4️⃣ Deploy no EasyPanel
-
-### 4.1 Criar Projeto
-
-1. Login no EasyPanel → "Create Project"
-2. Nome: `optistrat`
-3. Tipo: Docker (Git Repository)
-4. Conectar ao repositório GitHub
-
-### 4.2 Configuração de Build
-
-```yaml
-Build Method: Dockerfile
-Dockerfile Path: ./Dockerfile
-Build Context: .
-```
-
-### 4.3 Variáveis de Ambiente
-
-Adicione no EasyPanel → Environment Variables:
+## Arquitetura
 
 ```
-NODE_ENV=production
-PORT=3000
-VITE_SUPABASE_URL=https://dm.aut8.optistrat.com.br
-VITE_SUPABASE_PUBLISHABLE_KEY=SUA_ANON_KEY
-VITE_SUPABASE_PROJECT_ID=optistrat-external
+Frontend (React/Vite) → Express API (server.js) → PostgreSQL
+                         ↓
+                    server/api.js (rotas)
+                    server/auth.js (JWT + MFA)
+                    server/db.js (pool PostgreSQL)
 ```
 
-### 4.4 Networking
+### Armazenamento de Mídia
 
-```yaml
-Container Port: 3000
-Protocol: HTTP
-Health Check Path: /health
-Health Check Interval: 30s
-```
+Imagens e vídeos são armazenados como BLOB na tabela `media` do PostgreSQL.
+O endpoint `GET /api/media/:id` serve os arquivos diretamente do banco.
 
-### 4.5 Deploy
+### Endpoints Públicos
 
-Clique em "Deploy" e aguarde o build (2-5 minutos).
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/news` | Notícias publicadas |
+| GET | `/api/news/:id` | Detalhe da notícia |
+| GET | `/api/products` | Produtos ativos |
+| GET | `/api/carousel` | Imagens do carrossel |
+| GET | `/api/popups` | Popups ativos |
+| GET | `/api/site-content/:section` | Conteúdo do site |
+| GET | `/api/media/:id` | Servir mídia (BLOB) |
+| POST | `/api/contacts` | Enviar contato |
+| POST | `/api/orders` | Enviar orçamento |
+| POST | `/api/chatbot` | Chat IA (streaming) |
 
----
+### Endpoints Admin (requer JWT)
 
-## 5️⃣ Configurar Domínio
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/api/auth/login` | Login |
+| GET | `/api/auth/me` | Dados do usuário |
+| CRUD | `/api/admin/news` | Gerenciar notícias |
+| CRUD | `/api/admin/products` | Gerenciar produtos |
+| CRUD | `/api/admin/carousel` | Gerenciar carrossel |
+| CRUD | `/api/admin/popups` | Gerenciar popups |
+| CRUD | `/api/admin/contacts` | Ver contatos |
+| GET | `/api/admin/orders` | Ver orçamentos |
+| GET | `/api/admin/stats` | Dashboard stats |
+| PUT | `/api/admin/site-content/:section` | Editar conteúdo |
+| POST | `/api/admin/upload` | Upload de mídia (BLOB) |
+| GET | `/api/admin/media` | Listar mídia |
 
-### DNS
+## GitHub Actions
 
-```
-Tipo: A    | Nome: @   | Valor: IP_DO_SERVIDOR
-Tipo: CNAME | Nome: www | Valor: seu-dominio.com
-```
-
-### SSL
-
-EasyPanel gera certificado Let's Encrypt automaticamente.
-
-### Configurar URLs de Redirect no Supabase
-
-No Supabase Dashboard → Authentication → URL Configuration:
-
-```
-Site URL: https://seu-dominio.com
-Redirect URLs:
-  - https://seu-dominio.com/**
-  - https://seu-dominio.com/admin/**
-  - http://localhost:3000/** (para dev)
-```
-
----
-
-## 6️⃣ Conexão Frontend ↔ Supabase
-
-O frontend conecta ao Supabase via variáveis de ambiente:
-
-```typescript
-// src/integrations/supabase/client.ts (NÃO EDITAR - gerado automaticamente)
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: { storage: localStorage, persistSession: true, autoRefreshToken: true }
-});
-```
-
-### Chamadas às Edge Functions
-
-O frontend invoca Edge Functions de duas formas:
-
-```typescript
-// 1. Via SDK (preferido para chamadas simples)
-const { data, error } = await supabase.functions.invoke('nome-funcao', {
-  body: { ... }
-});
-
-// 2. Via fetch direto (para streaming - usado no chatbot)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const response = await fetch(`${supabaseUrl}/functions/v1/ai-chatbot`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${supabaseKey}`,
-  },
-  body: JSON.stringify({ message })
-});
-```
-
----
-
-## 7️⃣ Mapeamento Dados Dinâmicos vs Estáticos
-
-### ✅ Dados Dinâmicos (PostgreSQL)
-
-Estes dados são gerenciados via banco e painel admin:
-
-| Funcionalidade | Tabela | Componente Frontend |
-|----------------|--------|---------------------|
-| Formulário de contato | `contacts` | ContactForm, MiniContactForm |
-| Orçamentos | `orders` | OrcamentoDialog |
-| Notícias/Blog | `news` | BlogPreview, Blog |
-| Produtos/Serviços | `products` | ProductPlatform |
-| Carousel do Hero | `carousel_images` | CarouselManager (admin) |
-| Popup da Home | `index_popup` | IndexPopup |
-| Conteúdo do Site | `site_content` | ContentManager (admin) |
-| Page Views | `page_views` | Analytics |
-| Chatbot | `chatbot_interactions` | ChatBot |
-| Perfis de Usuário | `profiles` | MFASettings |
-| Roles de Admin | `user_roles` | AdminLogin |
-| Rate Limiting | `rate_limits` | check-rate-limit |
-
-### 📝 Conteúdo Estático (Código-fonte)
-
-Estes conteúdos são parte do layout/design e estão no código:
-
-| Componente | Conteúdo | Recomendação |
-|-----------|----------|--------------|
-| `Hero.tsx` | Textos do hero, imagens do carousel | Já tem suporte via `site_content` table. Pode ser migrado para leitura do DB |
-| `ITServices.tsx` | Lista de serviços, estudos de caso | Criar tabela `services` no futuro |
-| `WhyOptiStrat.tsx` | Estatísticas e benefícios | Manter estático (raramente muda) |
-| `Navbar.tsx` | Links de navegação | Manter estático (estrutura do site) |
-| `Footer.tsx` | Links e informações | Manter estático |
-| `Features.tsx` | Features WRLDS (legado) | Conteúdo antigo, considerar remover |
-| `Projects.tsx` | Projetos WRLDS (legado) | Conteúdo antigo, considerar remover |
-| `Process.tsx` | Processo WRLDS (legado) | Conteúdo antigo, considerar remover |
-| `blogPosts.ts` | Posts estáticos WRLDS | Conteúdo legado, substituído pela tabela `news` |
-
----
-
-## 8️⃣ Funcionalidades e Dependências
-
-| Funcionalidade | Tabelas | Edge Functions | Secrets |
-|----------------|---------|----------------|---------|
-| Site público | site_content, carousel_images, index_popup, page_views | - | - |
-| Blog/Notícias | news | fetch-tech-news | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| Formulário de contato | contacts | send-contact-email | RESEND_API_KEY |
-| Orçamento | orders | send-order-email | RESEND_API_KEY |
-| Chatbot AI | chatbot_interactions | ai-chatbot | GROQ_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| Admin Login | user_roles, profiles | check-rate-limit | - |
-| Admin 2FA | profiles | setup-mfa, verify-mfa, enable-mfa, disable-mfa | SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY |
-| Admin CRUD | news, products, carousel_images, site_content | - | - |
-| Newsletter | - | send-contact-email | RESEND_API_KEY |
-| Serviços/Soluções | products | - | - |
-
----
-
-## 9️⃣ Checklist de Deploy
-
-### Banco de Dados
-- [ ] Migração SQL executada sem erros
-- [ ] RLS habilitado em todas as tabelas
-- [ ] Usuário admin criado via Auth
-- [ ] Registro na tabela user_roles
-- [ ] Dados iniciais inseridos (site_content hero)
-
-### Edge Functions
-- [ ] Todas as 9 functions deployadas
-- [ ] Secrets configuradas (RESEND_API_KEY, GROQ_API_KEY)
-- [ ] JWT verification desabilitado (verify_jwt = false)
-
-### EasyPanel
-- [ ] Variáveis de ambiente configuradas (VITE_*)
-- [ ] Build completou sem erros
-- [ ] Health check respondendo em /health
-- [ ] Domínio configurado com SSL
-
-### Testes Funcionais
-- [ ] Página inicial carrega com todos os componentes
-- [ ] Popup da home aparece (se configurado no banco)
-- [ ] Produtos/Serviços carregam do banco
-- [ ] Notícias carregam na seção de blog
-- [ ] Formulário de contato envia e salva no banco
-- [ ] Formulário de orçamento funciona
-- [ ] Chatbot responde
-- [ ] Login admin funciona
-- [ ] Dashboard admin carrega dados
-- [ ] CRUD de notícias funciona no admin
-- [ ] CRUD de produtos funciona no admin
-- [ ] Routing SPA funciona (refresh em /admin, /blog, etc)
-- [ ] Tema claro/escuro funciona
-
----
-
-## 🔟 Troubleshooting
-
-### "Failed to fetch" nos formulários
-→ Verifique se `VITE_SUPABASE_URL` está correto e se as Edge Functions estão deployadas.
-
-### Login redireciona para localhost
-→ Verifique as Redirect URLs no Supabase Auth.
-
-### Edge Functions retornam 500
-→ Verifique se as secrets estão configuradas no Supabase.
-
-### Dados não aparecem no admin
-→ Verifique se o usuário tem role 'admin' na tabela user_roles.
-
-### 404 ao recarregar páginas
-→ O server.js já serve fallback para index.html. Verifique se o Dockerfile está correto.
-
-### Produtos/Serviços não aparecem
-→ Verifique se existem registros na tabela `products` com `active = true`.
-
-### Notícias não aparecem
-→ Verifique se existem registros na tabela `news` com `published = true`.
-
----
-
-**Versão**: 2.0 | **Data**: 2026-03
+O workflow `.github/workflows/lovable-deploy.yml` faz build e deploy automático
+para a branch `stable-website` a cada push na `main`.
