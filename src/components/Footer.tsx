@@ -3,7 +3,7 @@ import { ArrowRight, Linkedin, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import optiStratLogo from "@/assets/optistrat-logo-full.png";
 
 const Footer = () => {
@@ -26,18 +26,12 @@ const Footer = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await supabase.functions.invoke('send-contact-email', {
-        body: {
-          name: "Website Subscriber",
-          email: email,
-          message: "",
-          type: 'subscription'
-        }
+      await api.post('/send-contact-email', {
+        name: "Website Subscriber",
+        email: email,
+        message: "",
+        type: 'subscription'
       });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to subscribe');
-      }
       
       toast({
         title: "Sucesso!",
