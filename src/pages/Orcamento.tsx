@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -78,36 +78,27 @@ const Orcamento = () => {
         return;
       }
 
-      // Save to Supabase
-      const { error: dbError } = await supabase.from("orders").insert([{
+      // Save to PostgreSQL via Express API
+      await api.post('/orders', {
         name: values.name,
         email: values.email,
         services: Array.isArray(values.services) ? values.services.join(', ') : values.services,
         implementation_deadline: values.implementation_deadline,
-      }]);
+      });
 
-      if (dbError) throw dbError;
-
-      // Send email with honeypot and timestamp for server-side validation
-      const { error: emailError } = await supabase.functions.invoke(
-        "send-order-email",
-        {
-          body: {
-            name: values.name,
-            email: values.email,
-            services: values.services,
-            implementation_deadline: values.implementation_deadline,
-            honeypot: values.honeypot,
-            timestamp: values.timestamp
-          },
-        }
-      );
-
-      if (emailError) {
-        toast.error("Orçamento salvo, mas houve erro ao enviar email");
-      } else {
-        toast.success("Orçamento enviado com sucesso!");
+      // Send email via Express API
+      try {
+        await api.post('/send-order-email', {
+          name: values.name,
+          email: values.email,
+          services: values.services,
+          implementation_deadline: values.implementation_deadline,
+        });
+      } catch {
+        // Email failure is non-critical
       }
+
+      toast.success("Orçamento enviado com sucesso!");
 
       form.reset({
         name: "",

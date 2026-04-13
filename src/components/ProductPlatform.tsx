@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Database, Shield, Cloud, Settings, Headphones, Server } from 'lucide-react';
 
 interface Product {
@@ -21,16 +21,10 @@ const ProductPlatform = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, description, category')
-        .eq('active', true);
-
-      if (error) throw error;
-
+      const data = await api.get('/products');
       if (data) {
-        setServices(data.filter(product => product.category === 'service'));
-        setSolutions(data.filter(product => product.category === 'solution'));
+        setServices(data.filter((product: Product) => product.category === 'service'));
+        setSolutions(data.filter((product: Product) => product.category === 'solution'));
       }
     } catch (error) {
       console.error('Error fetching products:', error);
