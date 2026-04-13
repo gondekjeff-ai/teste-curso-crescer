@@ -10,7 +10,7 @@ services:
       - uploads_data:/app/uploads
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://optistrat:FuEO4FYYOAl1QaVmZWRh@pgsql.optistrat.com.br:5432/optistrat
+      - DATABASE_URL=${DATABASE_URL}
       - DB_SSL=true
       - JWT_SECRET=${JWT_SECRET}
       - RESEND_API_KEY=${RESEND_API_KEY}
