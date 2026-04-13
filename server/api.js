@@ -24,25 +24,13 @@ export function createApiRoutes(pool) {
     next();
   });
 
-  // File upload config
+  // File upload config (for backwards compatibility - also stores in DB)
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const folder = req.body.folder || 'general';
-      const dir = path.join(uploadsDir, folder);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    }
-  });
-  const uploadMiddleware = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+  const memoryUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'video/mp4', 'video/webm'];
       cb(null, allowed.includes(file.mimetype));
     }
   });
@@ -131,12 +119,12 @@ export function createApiRoutes(pool) {
   }));
 
   router.get('/products', wrap(async (req, res) => {
-    const { rows } = await pool.query('SELECT * FROM products WHERE active = true ORDER BY name');
+    const { rows } = await pool.query('SELECT id, name, description, category, price FROM products WHERE active = true ORDER BY name');
     res.json(rows);
   }));
 
   router.get('/carousel', wrap(async (req, res) => {
-    const { rows } = await pool.query('SELECT * FROM carousel_images WHERE active = true ORDER BY display_order');
+    const { rows } = await pool.query('SELECT id, image_url, alt_text, display_order FROM carousel_images WHERE active = true ORDER BY display_order');
     res.json(rows);
   }));
 
@@ -225,13 +213,31 @@ export function createApiRoutes(pool) {
       return res.end();
     }
 
+    // Fetch context from DB
+    const [productsResult, newsResult] = await Promise.all([
+      pool.query("SELECT name, description, category FROM products WHERE active = true LIMIT 10"),
+      pool.query("SELECT title, excerpt FROM news WHERE published = true ORDER BY created_at DESC LIMIT 5"),
+    ]);
+
+    let contextInfo = '';
+    if (productsResult.rows.length > 0) {
+      contextInfo += '\n\nProdutos e Serviços Disponíveis:\n';
+      productsResult.rows.forEach(p => { contextInfo += `- ${p.name} (${p.category}): ${p.description}\n`; });
+    }
+    if (newsResult.rows.length > 0) {
+      contextInfo += '\n\nNotícias Recentes:\n';
+      newsResult.rows.forEach(n => { contextInfo += `- ${n.title}: ${n.excerpt || ''}\n`; });
+    }
+
+    const systemPrompt = `Você é o assistente virtual da OptiStrat, empresa de gestão de TI e telecomunicações. Responda em português do Brasil de forma amigável e profissional. Ajude com informações sobre os serviços: consultoria em TI, gerenciamento de redes, segurança cibernética, cloud computing, backup automático, suporte técnico 24h, desenvolvimento de software e infraestrutura de TI. Para contato direto: comercial@optistrat.com.br. NUNCA informe valores ou preços - direcione para /orcamento.${contextInfo}`;
+
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: 'Você é o assistente virtual da OptiStrat, empresa de gestão de TI e telecomunicações. Responda em português do Brasil de forma amigável e profissional. Ajude com informações sobre os serviços: consultoria em TI, gerenciamento de redes, segurança cibernética, cloud computing, backup automático, suporte técnico 24h, desenvolvimento de software e infraestrutura de TI. Para contato direto: comercial@optistrat.com.br' },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: message },
         ],
         stream: true,
@@ -261,8 +267,17 @@ export function createApiRoutes(pool) {
     res.end();
   }));
 
-  router.post('/fetch-tech-news', wrap(async (req, res) => {
-    res.json({ message: 'Funcionalidade em desenvolvimento' });
+  // =================== MEDIA (BLOB) ===================
+
+  // Serve media from DB by ID
+  router.get('/media/:id', wrap(async (req, res) => {
+    const { rows } = await pool.query('SELECT data, mime_type, filename FROM media WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Arquivo não encontrado' });
+    const media = rows[0];
+    res.setHeader('Content-Type', media.mime_type);
+    res.setHeader('Content-Disposition', `inline; filename="${media.filename}"`);
+    res.setHeader('Cache-Control', 'public, max-age=604800');
+    res.send(media.data);
   }));
 
   // =================== ADMIN ===================
@@ -365,9 +380,49 @@ export function createApiRoutes(pool) {
     res.json({ success: true });
   }));
 
+  // Popups CRUD
+  router.get('/admin/popups', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    const { rows } = await pool.query('SELECT * FROM index_popup ORDER BY display_order');
+    res.json(rows);
+  }));
+
+  router.post('/admin/popups', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    const { image_url, text, display_order, active } = req.body;
+    const { rows } = await pool.query(
+      'INSERT INTO index_popup (image_url, text, display_order, active) VALUES ($1,$2,$3,$4) RETURNING *',
+      [image_url || null, text || null, display_order || 0, active !== false]
+    );
+    res.json(rows[0]);
+  }));
+
+  router.put('/admin/popups/:id', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    const { image_url, text, display_order, active } = req.body;
+    const { rows } = await pool.query(
+      'UPDATE index_popup SET image_url=$1, text=$2, display_order=$3, active=$4 WHERE id=$5 RETURNING *',
+      [image_url, text, display_order, active, req.params.id]
+    );
+    res.json(rows[0]);
+  }));
+
+  router.delete('/admin/popups/:id', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    await pool.query('DELETE FROM index_popup WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  }));
+
   // Contacts (read-only for admin)
   router.get('/admin/contacts', authMiddleware, requireAdmin, wrap(async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM contacts ORDER BY created_at DESC');
+    res.json(rows);
+  }));
+
+  router.delete('/admin/contacts/:id', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    await pool.query('DELETE FROM contacts WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  }));
+
+  // Orders (read-only for admin)
+  router.get('/admin/orders', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    const { rows } = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
     res.json(rows);
   }));
 
@@ -377,13 +432,14 @@ export function createApiRoutes(pool) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const since = thirtyDaysAgo.toISOString();
 
-    const [carousel, contacts, pageViews, chatbot, products, news, pvData] = await Promise.all([
+    const [carousel, contacts, pageViews, chatbot, products, news, orders, pvData] = await Promise.all([
       pool.query("SELECT COUNT(*) as count FROM carousel_images WHERE active = true"),
       pool.query("SELECT COUNT(*) as count FROM contacts"),
       pool.query("SELECT COUNT(*) as count FROM page_views WHERE created_at >= $1", [since]),
       pool.query("SELECT COUNT(*) as count FROM chatbot_interactions WHERE created_at >= $1", [since]),
       pool.query("SELECT COUNT(*) as count FROM products"),
       pool.query("SELECT COUNT(*) as count FROM news"),
+      pool.query("SELECT COUNT(*) as count FROM orders"),
       pool.query("SELECT page_path FROM page_views WHERE created_at >= $1", [since]),
     ]);
 
@@ -401,6 +457,7 @@ export function createApiRoutes(pool) {
       chatbotInteractions: parseInt(chatbot.rows[0].count),
       products: parseInt(products.rows[0].count),
       news: parseInt(news.rows[0].count),
+      orders: parseInt(orders.rows[0].count),
       topPages,
     });
   }));
@@ -416,19 +473,42 @@ export function createApiRoutes(pool) {
     const { content } = req.body;
     const { rows } = await pool.query('SELECT id FROM site_content WHERE section = $1', [req.params.section]);
     if (rows.length === 0) {
-      await pool.query('INSERT INTO site_content (section, content) VALUES ($1, $2)', [req.params.section, content]);
+      await pool.query('INSERT INTO site_content (section, content) VALUES ($1, $2)', [req.params.section, JSON.stringify(content)]);
     } else {
-      await pool.query('UPDATE site_content SET content = $1, updated_at = NOW() WHERE section = $2', [content, req.params.section]);
+      await pool.query('UPDATE site_content SET content = $1, updated_at = NOW() WHERE section = $2', [JSON.stringify(content), req.params.section]);
     }
     res.json({ success: true });
   }));
 
-  // File Upload
-  router.post('/admin/upload', authMiddleware, requireAdmin, uploadMiddleware.single('file'), wrap(async (req, res) => {
+  // File Upload - stores in PostgreSQL as BLOB
+  router.post('/admin/upload', authMiddleware, requireAdmin, memoryUpload.single('file'), wrap(async (req, res) => {
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado' });
     const folder = req.body.folder || 'general';
-    const publicUrl = `/uploads/${folder}/${req.file.filename}`;
+    const { rows } = await pool.query(
+      'INSERT INTO media (filename, mime_type, data, folder, size_bytes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.file.originalname, req.file.mimetype, req.file.buffer, folder, req.file.size]
+    );
+    const publicUrl = `/api/media/${rows[0].id}`;
     res.json({ url: publicUrl });
+  }));
+
+  // Media list for admin
+  router.get('/admin/media', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    const folder = req.query.folder;
+    let query = 'SELECT id, filename, mime_type, folder, size_bytes, created_at FROM media';
+    const params = [];
+    if (folder) {
+      query += ' WHERE folder = $1';
+      params.push(folder);
+    }
+    query += ' ORDER BY created_at DESC LIMIT 100';
+    const { rows } = await pool.query(query, params);
+    res.json(rows.map(r => ({ ...r, url: `/api/media/${r.id}` })));
+  }));
+
+  router.delete('/admin/media/:id', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    await pool.query('DELETE FROM media WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
   }));
 
   // MFA
@@ -459,6 +539,54 @@ export function createApiRoutes(pool) {
   router.post('/admin/mfa/disable', authMiddleware, wrap(async (req, res) => {
     await pool.query('UPDATE profiles SET mfa_enabled = false, mfa_secret = NULL WHERE user_id = $1', [req.user.id]);
     res.json({ success: true });
+  }));
+
+  // Fetch tech news (server-side RSS)
+  router.post('/fetch-tech-news', authMiddleware, requireAdmin, wrap(async (req, res) => {
+    const RSS_FEEDS = [
+      'https://feeds.feedburner.com/tecmundo',
+      'https://olhardigital.com.br/feed/',
+      'https://canaltech.com.br/rss/',
+    ];
+
+    const parseRSS = (xml) => {
+      const items = [];
+      const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+      let match;
+      while ((match = itemRegex.exec(xml)) !== null) {
+        const itemXml = match[1];
+        const titleMatch = itemXml.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/);
+        const title = titleMatch ? titleMatch[1].trim() : '';
+        const descMatch = itemXml.match(/<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/description>/s);
+        let description = descMatch ? descMatch[1].trim().replace(/<[^>]*>/g, '').substring(0, 200) : '';
+        const linkMatch = itemXml.match(/<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>/);
+        const link = linkMatch ? linkMatch[1].trim() : '';
+        if (title) items.push({ title, description, link });
+      }
+      return items;
+    };
+
+    let inserted = 0;
+    for (const feedUrl of RSS_FEEDS) {
+      try {
+        const resp = await fetch(feedUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (!resp.ok) continue;
+        const xml = await resp.text();
+        const items = parseRSS(xml).slice(0, 10);
+        for (const item of items) {
+          const { rows: existing } = await pool.query('SELECT id FROM news WHERE title = $1', [item.title]);
+          if (existing.length === 0) {
+            await pool.query(
+              'INSERT INTO news (title, content, excerpt, image_url, published) VALUES ($1, $2, $3, $4, true)',
+              [item.title, item.description, item.description, item.link]
+            );
+            inserted++;
+          }
+        }
+      } catch { /* skip failed feeds */ }
+    }
+
+    res.json({ success: true, message: `${inserted} novas notícias importadas` });
   }));
 
   // Error handler
