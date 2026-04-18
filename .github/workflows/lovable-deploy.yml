@@ -12,29 +12,47 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: "Checkout do Repositorio"
         uses: actions/checkout@v4
-      
+
       - name: "Configurar Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-      
-      - name: "Instalar Dependencias"
+
+      - name: "Instalar Dependencias (com devDependencies para build)"
         run: npm ci --ignore-scripts
-      
-      - name: "Rodar Build"
+
+      - name: "Rodar Build do Frontend"
         run: npm run build
-      
+
+      - name: "Preparar pasta de deploy"
+        run: |
+          mkdir -p deploy
+          # Frontend compilado
+          cp -r dist deploy/
+          # Backend Express
+          cp server.js deploy/
+          cp -r server deploy/
+          # Manifests e migracao
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp supabase-migration.sql deploy/ || true
+          cp .node-version deploy/ || true
+          cp KINGHOST-DEPLOY.md deploy/ || true
+          cp .env.example deploy/ || true
+          # Assets publicos servidos pelo Express
+          cp -r public deploy/ || true
+          # Lista o que sera publicado (debug)
+          ls -la deploy/
+
       - name: "Deploy para a Branch stable-website"
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: stable-website
-          folder: .
+          folder: deploy
           clean: true
-          clean-exclude: |
-            node_modules
