@@ -9,6 +9,14 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 21002;
+const DATABASE_URL = "postgresql://optistrat:FuEO4FYYOAl1QaVmZWRh@pgsql.optistrat.com.br:5432/optistrat";
+const DB_SSL = false || false;
+const JWT_SECRET = "e03cffff9615e89004c87369246c4871a80285596e127457e72a9728c2309068"
+const NODE_ENV = "production"
+
+// (Opcional) API Keys
+//RESEND_API_KEY=
+//GROQ_API_KEY=
 
 // Security
 app.disable('x-powered-by');
