@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 21002;
+const PORT = process.env.PORT || 3000;
 
 // Security
 app.disable('x-powered-by');
