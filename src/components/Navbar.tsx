@@ -7,10 +7,19 @@ import { Link } from 'react-router-dom';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import optiStratLogo from "@/assets/optistrat-logo-full.png";
+import { api } from "@/lib/api";
+
+interface SolutionItem {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+}
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [solutions, setSolutions] = useState<SolutionItem[]>([]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +31,24 @@ const Navbar = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const data = await api.get('/products');
+        if (!active || !Array.isArray(data)) return;
+        const filtered = data.filter(
+          (p: SolutionItem) => (p.category || '').toLowerCase() === 'solution'
+        );
+        setSolutions(filtered);
+      } catch (err) {
+        console.error('Failed to load solutions menu:', err);
+        if (active) setSolutions([]);
+      }
+    })();
+    return () => { active = false; };
   }, []);
 
   const toggleMenu = () => {
