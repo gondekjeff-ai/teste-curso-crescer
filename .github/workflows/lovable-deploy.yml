@@ -29,31 +29,47 @@ jobs:
       - name: "Rodar Build do Frontend"
         run: npm run build
 
-      - name: "Preparar pasta de deploy"
+      - name: "Preparar pasta de deploy (projeto COMPLETO)"
         run: |
           mkdir -p deploy
-          # Frontend compilado
-          cp -r dist deploy/
-          # Backend Express
-          cp server.js deploy/
-          cp -r server deploy/
-          # Manifests e migracao
-          cp package.json deploy/
-          cp package-lock.json deploy/
-          cp supabase-migration.sql deploy/ || true
-          cp .node-version deploy/ || true
-          cp KINGHOST-DEPLOY.md deploy/ || true
-          cp .env.example deploy/ || true
-          # Assets publicos servidos pelo Express
-          cp -r public deploy/ || true
-          # Documentacao da area administrativa
-          cp ADMIN-SETUP.md deploy/ || true
-          cp optistrat-database.sql deploy/ || true
-          # Verifica se a build gerou as paginas admin
+          # Copia TUDO do projeto, exceto pastas que nao devem ir para deploy.
+          # Usamos rsync com excludes para garantir que nenhum arquivo seja perdido.
+          rsync -a \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='deploy' \
+            --exclude='.github/workflows/.cache' \
+            --exclude='*.tsbuildinfo' \
+            ./ deploy/
+
+          # Garante que o build compilado esta presente
+          if [ ! -d deploy/dist ]; then
+            echo "ERRO: pasta dist/ nao foi gerada pelo build"
+            exit 1
+          fi
+
+          # Verifica se a build gerou as paginas admin no bundle
           echo "=== Verificando rotas admin no bundle ==="
-          grep -r "AdminDashboard\|AdminLogin" deploy/dist/assets/ 2>/dev/null | head -3 || echo "AVISO: rotas admin nao encontradas no bundle"
+          if grep -r "AdminDashboard\|AdminLogin" deploy/dist/assets/ >/dev/null 2>&1; then
+            echo "OK: rotas admin presentes no bundle compilado"
+          else
+            echo "ERRO: rotas admin nao encontradas no bundle compilado"
+            exit 1
+          fi
+
+          # Verifica se arquivos criticos do servidor existem
+          for f in server.js server/api.js server/auth.js server/db.js package.json package-lock.json supabase-migration.sql; do
+            if [ ! -f deploy/$f ]; then
+              echo "ERRO: arquivo critico ausente em deploy/: $f"
+              exit 1
+            fi
+          done
+
           # Lista o que sera publicado (debug)
+          echo "=== Conteudo final de deploy/ ==="
           ls -la deploy/
+          echo "=== src/pages/admin presente? ==="
+          ls -la deploy/src/pages/admin/ || echo "AVISO: src/pages/admin ausente"
 
       - name: "Deploy para a Branch stable-website"
         uses: JamesIves/github-pages-deploy-action@v4
