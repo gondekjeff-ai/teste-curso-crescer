@@ -46,6 +46,12 @@ jobs:
           cp .env.example deploy/ || true
           # Assets publicos servidos pelo Express
           cp -r public deploy/ || true
+          # Documentacao da area administrativa
+          cp ADMIN-SETUP.md deploy/ || true
+          cp optistrat-database.sql deploy/ || true
+          # Verifica se a build gerou as paginas admin
+          echo "=== Verificando rotas admin no bundle ==="
+          grep -r "AdminDashboard\|AdminLogin" deploy/dist/assets/ 2>/dev/null | head -3 || echo "AVISO: rotas admin nao encontradas no bundle"
           # Lista o que sera publicado (debug)
           ls -la deploy/
 
