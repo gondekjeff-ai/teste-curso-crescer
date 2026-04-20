@@ -7,10 +7,19 @@ import { Link } from 'react-router-dom';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import optiStratLogo from "@/assets/optistrat-logo-full.png";
+import { api } from "@/lib/api";
+
+interface SolutionItem {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+}
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [solutions, setSolutions] = useState<SolutionItem[]>([]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +31,24 @@ const Navbar = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const data = await api.get('/products');
+        if (!active || !Array.isArray(data)) return;
+        const filtered = data.filter(
+          (p: SolutionItem) => (p.category || '').toLowerCase() === 'solution'
+        );
+        setSolutions(filtered);
+      } catch (err) {
+        console.error('Failed to load solutions menu:', err);
+        if (active) setSolutions([]);
+      }
+    })();
+    return () => { active = false; };
   }, []);
 
   const toggleMenu = () => {
@@ -75,44 +102,30 @@ const Navbar = () => {
                     Soluções
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 w-[400px] bg-background">
-                      <li>
-                        <Link to="/tech-details" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
-                          <div className="font-medium">Consultoria de TI</div>
-                          <p className="text-sm text-muted-foreground">Planejamento estratégico e avaliação de TI</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/development-process" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
-                          <div className="font-medium">Processo de Implementação</div>
-                          <p className="text-sm text-muted-foreground">Nossa metodologia comprovada para transformação de TI</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
-                          <div className="font-medium">Infraestrutura em Nuvem</div>
-                          <p className="text-sm text-muted-foreground">Migração e gerenciamento abrangente em nuvem</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
-                          <div className="font-medium">Cibersegurança</div>
-                          <p className="text-sm text-muted-foreground">Detecção e proteção avançada contra ameaças</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
-                          <div className="font-medium">Gerenciamento de Rede</div>
-                          <p className="text-sm text-muted-foreground">Monitoramento e otimização 24/7</p>
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="/#services" className="block p-3 space-y-1 rounded-md hover:bg-accent" onClick={() => setIsMenuOpen(false)}>
-                          <div className="font-medium">Gestão de Dados</div>
-                          <p className="text-sm text-muted-foreground">Backup seguro e soluções de recuperação</p>
-                        </Link>
-                      </li>
-                    </ul>
+                    {solutions.length === 0 ? (
+                      <ul className="grid gap-3 p-4 w-[400px] bg-background">
+                        <li className="text-sm text-muted-foreground p-3">
+                          Nenhuma solução cadastrada no momento.
+                        </li>
+                      </ul>
+                    ) : (
+                      <ul className="grid gap-3 p-4 w-[400px] bg-background">
+                        {solutions.map((s) => (
+                          <li key={s.id}>
+                            <Link
+                              to="/#services"
+                              className="block p-3 space-y-1 rounded-md hover:bg-accent"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <div className="font-medium">{s.name}</div>
+                              {s.description && (
+                                <p className="text-sm text-muted-foreground">{s.description}</p>
+                              )}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </NavigationMenuContent>
                 </NavigationMenuItem>
                 
