@@ -168,3 +168,58 @@ Todas as rotas `/api/admin/*` exigem header
 - Auth e JWT: `server/auth.js`
 - Schema do banco: `optistrat-database.sql`, `supabase-migration.sql`
 - Deploy KingHost: `KINGHOST-DEPLOY.md`
+---
+
+## Troubleshooting: 404 ao acessar /admin/login
+
+Se ao abrir `https://optistrat.com.br/admin/login` voce ver 404, verifique
+em ordem:
+
+### 1. O servidor Node esta rodando?
+O site PRECISA ser servido pelo `server.js` (Express), nao por um servidor
+estatico (Apache/Nginx puro). O Express tem o catch-all SPA que faz o
+React Router responder rotas como `/admin/login`.
+
+```bash
+curl -i https://optistrat.com.br/health
+```
+Deve retornar `200 OK` com JSON `{"status":"healthy",...}`. Se retornar
+404 ou HTML, o `server.js` nao esta no ar - confira o painel da KingHost
+e suba o processo Node.
+
+### 2. O bundle compilado contem as rotas admin?
+Na branch `stable-website`, dentro de `dist/assets/`, deve existir um
+arquivo JS contendo as strings `AdminDashboard` e `AdminLogin`:
+
+```bash
+grep -l "AdminDashboard" dist/assets/*.js
+```
+
+O workflow `.github/workflows/lovable-deploy.yml` ja faz essa verificacao
+automaticamente e FALHA se as rotas estiverem ausentes.
+
+### 3. O arquivo index.html esta sendo servido como fallback?
+Teste com curl - tem que retornar o HTML do React (com `<div id="root">`):
+
+```bash
+curl -i https://optistrat.com.br/admin/login
+```
+
+Se vier 404, o catch-all do Express nao esta funcionando. Confira em
+`server.js` que existe `app.use((req, res) => res.sendFile(... 'index.html'))`
+DEPOIS do `app.use(express.static(... 'dist'))`.
+
+### 4. Reiniciei e continua 404 - como reproduzir local?
+```bash
+git clone https://github.com/gondekjeff-ai/teste-curso-crescer.git
+cd teste-curso-crescer
+git checkout stable-website
+npm install --omit=dev
+node server.js
+# Acesse http://localhost:3000/admin/login
+```
+
+Se funcionar local mas nao em producao, o problema esta no proxy/host
+da KingHost - verifique se as requests para `/admin/*` estao sendo
+encaminhadas ao Node.
+
