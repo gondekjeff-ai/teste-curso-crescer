@@ -1,4 +1,9 @@
-const getToken = (): string | null => localStorage.getItem('admin_token');
+// SECURITY: Use sessionStorage instead of localStorage to reduce XSS token-theft window.
+// Token expires when the browser session ends (tab close).
+const TOKEN_KEY = 'admin_token';
+const getToken = (): string | null => {
+  try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
+};
 
 async function request<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {};
@@ -68,8 +73,12 @@ export const api = {
   },
 
   setToken: (token: string | null) => {
-    if (token) localStorage.setItem('admin_token', token);
-    else localStorage.removeItem('admin_token');
+    try {
+      if (token) sessionStorage.setItem(TOKEN_KEY, token);
+      else sessionStorage.removeItem(TOKEN_KEY);
+      // Clean up any legacy localStorage token from previous versions
+      localStorage.removeItem(TOKEN_KEY);
+    } catch { /* storage disabled */ }
   },
 
   getToken,

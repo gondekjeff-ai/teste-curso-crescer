@@ -1,75 +1,89 @@
-import express from 'express';
+import Fastify from 'fastify';
+import fastifyStatic from '@fastify/static';
+import fastifyCors from '@fastify/cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pool from './server/db.js';
-import { createApiRoutes } from './server/api.js';
+import { registerApiRoutes } from './server/api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PORT = parseInt(process.env.PORT || '3000', 10);
+const HOST = process.env.HOST || '0.0.0.0';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const app = Fastify({
+  logger: {
+    level: process.env.LOG_LEVEL || 'info',
+    transport: process.env.NODE_ENV === 'production' ? undefined : { target: 'pino-pretty' },
+  },
+  bodyLimit: 10 * 1024 * 1024,
+  trustProxy: true,
+  disableRequestLogging: false,
+});
 
-// Security
-app.disable('x-powered-by');
+// Security: hide framework header
+app.addHook('onSend', async (req, reply, payload) => {
+  reply.header('x-powered-by', undefined);
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('X-Frame-Options', 'SAMEORIGIN');
+  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  return payload;
+});
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+await app.register(fastifyCors, {
+  origin: true,
+  credentials: true,
+});
 
 // Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    env: process.env.NODE_ENV || 'production'
-  });
-});
-
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  maxAge: '7d',
-  etag: true,
-  lastModified: true
+app.get('/health', async () => ({
+  status: 'healthy',
+  timestamp: new Date().toISOString(),
+  uptime: process.uptime(),
+  env: process.env.NODE_ENV || 'production',
 }));
 
-// API routes
-app.use('/api', createApiRoutes(pool));
+// API routes (registers /api/* + /api/admin/upload via @fastify/multipart)
+await app.register(registerApiRoutes, { pool, prefix: '/api' });
 
-// Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, 'dist'), {
+// Serve compiled SPA from dist/
+await app.register(fastifyStatic, {
+  root: path.join(__dirname, 'dist'),
+  prefix: '/',
   maxAge: '1d',
   etag: true,
-  lastModified: true
-}));
+  lastModified: true,
+  decorateReply: true,
+});
 
-// SPA catch-all
-app.use((req, res) => {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+// SPA catch-all: any non-API GET returns index.html so React Router handles it
+app.setNotFoundHandler((request, reply) => {
+  if (request.method !== 'GET') {
+    return reply.code(405).send({ error: 'Method not allowed' });
   }
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
-    if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).send('Internal Server Error');
-    }
-  });
+  if (request.url.startsWith('/api/')) {
+    return reply.code(404).send({ message: 'Endpoint não encontrado' });
+  }
+  return reply.sendFile('index.html');
 });
 
-// Error handling
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
+// Crash safety
+process.on('uncaughtException', (err) => {
+  app.log.error({ err }, 'uncaughtException');
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  app.log.error({ reason }, 'unhandledRejection');
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+try {
+  await app.listen({ port: PORT, host: HOST });
+  console.log(`✅ Fastify server running on http://${HOST}:${PORT}`);
+  console.log(`   Health:  http://${HOST}:${PORT}/health`);
+  console.log(`   API:     http://${HOST}:${PORT}/api`);
+  console.log(`   Admin:   http://${HOST}:${PORT}/admin/login`);
+} catch (err) {
+  app.log.error(err);
   process.exit(1);
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
-  console.log(`API available at: http://localhost:${PORT}/api`);
-});
+}
