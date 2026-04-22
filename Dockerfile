@@ -11,7 +11,7 @@ RUN npm install && npm cache clean --force
 COPY . .
 RUN npm run build
 
-# Production stage
+# Production stage — Fastify + PM2 (cluster-ready, graceful restarts)
 FROM node:20-alpine
 
 RUN apk update && apk upgrade && apk add --no-cache dumb-init \
@@ -22,24 +22,25 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force \
+    && npm install -g pm2@latest && npm cache clean --force
 
-# Copy built assets from builder stage
+# Built SPA + server runtime
 COPY --from=builder /app/dist ./dist
-
-# Copy server files
 COPY server.js ./
 COPY server/ ./server/
+COPY ecosystem.config.cjs ./
 
-# Create uploads directory
-RUN mkdir -p /app/uploads && chown -R nodejs:nodejs /app
+RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app
 
 USER nodejs
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "server.js"]
+# pm2-runtime is the container-native PM2 entrypoint: keeps process in foreground,
+# forwards signals, and respects ecosystem config.
+CMD ["pm2-runtime", "start", "ecosystem.config.cjs"]
