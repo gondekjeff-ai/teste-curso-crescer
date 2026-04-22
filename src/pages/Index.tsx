@@ -1,9 +1,8 @@
 import PageLayout from '@/components/PageLayout';
 import Hero from '@/components/Hero';
-import ITServices from '@/components/ITServices';
 import WhyOptiStrat from '@/components/WhyOptiStrat';
 import BlogPreview from '@/components/BlogPreview';
-import ProductPlatform from '@/components/ProductPlatform';
+import ReflectiveQuestions from '@/components/ReflectiveQuestions';
 import ChatBot from '@/components/ChatBot';
 import MiniContactForm from '@/components/MiniContactForm';
 import Footer from '@/components/Footer';
@@ -31,8 +30,7 @@ const Index = () => {
         keywords={['IT management', 'cloud infrastructure', 'cybersecurity', 'network management', 'IT support', 'business technology', 'system optimization']}
       />
       <Hero />
-      <ITServices />
-      <ProductPlatform />
+      <ReflectiveQuestions />
       <WhyOptiStrat />
       <BlogPreview />
       <div id="contact" className="bg-gradient-to-b from-background to-secondary py-16">
