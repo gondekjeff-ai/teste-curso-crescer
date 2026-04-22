@@ -68,9 +68,10 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Error in disable-mfa function:', error);
+    // SECURITY: log full detail server-side, return generic message to client
+    console.error('[disable-mfa] error:', error);
     return new Response(
-      JSON.stringify({ error: error.message, success: false }),
+      JSON.stringify({ error: 'Internal server error', success: false }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -35,11 +35,18 @@ export const useAuth = () => {
   }, [checkAuth]);
 
   const signIn = async (email: string, password: string) => {
-    const data = await api.post('/auth/login', { email, password });
-    if (data.token) {
+    const data = await api.post<{
+      token?: string;
+      user?: User;
+      isAdmin?: boolean;
+      requiresMfa?: boolean;
+      mfaToken?: string;
+    }>('/auth/login', { email, password });
+    if (data.token && data.user) {
       api.setToken(data.token);
       setUser(data.user);
-      setIsAdmin(true);
+      // SECURITY: trust the server's isAdmin flag, never assume client-side.
+      setIsAdmin(data.isAdmin ?? false);
     }
     return data;
   };
