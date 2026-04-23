@@ -4,7 +4,7 @@ O projeto migrou de **Express → Fastify** e agora roda sob **PM2** para gerenc
 
 ## Pré-requisitos
 
-- Node.js **20.19.5+**
+- Node.js **22.1.0+** (versão fixada em `.nvmrc` / `.node-version`)
 - PM2 instalado globalmente: `npm install -g pm2`
 - PostgreSQL acessível (variável `DATABASE_URL`)
 

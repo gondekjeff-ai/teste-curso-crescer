@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22.1.0-alpine AS builder
 
 RUN apk update && apk upgrade && apk add --no-cache dumb-init
 
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 # Production stage — Fastify + PM2 (cluster-ready, graceful restarts)
-FROM node:20-alpine
+FROM node:22.1.0-alpine
 
 RUN apk update && apk upgrade && apk add --no-cache dumb-init \
     && rm -rf /var/cache/apk/*
