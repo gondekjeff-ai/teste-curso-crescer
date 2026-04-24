@@ -16,7 +16,7 @@ No painel da KingHost, configure as seguintes variáveis de ambiente:
 | `DB_SSL` | `false` |
 | `JWT_SECRET` | (gere um segredo forte, ex: `openssl rand -hex 32`) |
 | `NODE_ENV` | `production` |
-| `PORT` | (use a porta fornecida pela KingHost, geralmente 3000) |
+| `PORT` | (use a porta fornecida pela KingHost, geralmente 21002) |
 | `RESEND_API_KEY` | (opcional, para envio de emails) |
 | `GROQ_API_KEY` | (opcional, para chatbot IA) |
 

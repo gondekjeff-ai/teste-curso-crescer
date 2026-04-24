@@ -35,10 +35,10 @@ RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app
 
 USER nodejs
 
-EXPOSE 3000
+EXPOSE 21002
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "require('http').get('http://localhost:21002/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 ENTRYPOINT ["dumb-init", "--"]
 # pm2-runtime is the container-native PM2 entrypoint: keeps process in foreground,

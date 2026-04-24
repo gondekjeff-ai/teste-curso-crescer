@@ -21,12 +21,12 @@ module.exports = {
       wait_ready: false,
       env: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 21002,
         HOST: '0.0.0.0',
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 21002,
         HOST: '0.0.0.0',
       },
       error_file: './logs/pm2-error.log',
