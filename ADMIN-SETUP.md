@@ -26,7 +26,7 @@ EasyPanel, VPS, etc.).
 - PostgreSQL **>= 13** acessível pela aplicação
 - Variáveis de ambiente configuradas (ver seção 4)
 - Comando de start: `npm start` (executa `node server.js`)
-- Porta exposta (padrão `3000`, configurável via `PORT`)
+- Porta exposta (padrão `21002`, configurável via `PORT`)
 
 ---
 

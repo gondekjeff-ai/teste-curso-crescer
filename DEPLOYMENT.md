@@ -87,15 +87,15 @@ FROM node:20.19.5-alpine
 WORKDIR /app
 RUN npm install -g serve
 COPY --from=builder /app/dist ./dist
-EXPOSE 3000
-CMD ["serve", "-s", "dist", "-l", "3000"]
+EXPOSE 21002
+CMD ["serve", "-s", "dist", "-l", "21002"]
 ```
 
 **Características:**
 - ✅ Build em duas etapas para imagem otimizada
 - ✅ Node.js v20.19.5 Alpine (imagem leve)
 - ✅ Serve estático usando `serve`
-- ✅ Porta 3000 exposta
+- ✅ Porta 21002 exposta
 - ✅ Suporte a SPA routing
 
 ## 🚀 Configuração Inicial
@@ -152,7 +152,7 @@ PORT=21002
 docker build -t optistrat:test .
 
 # Executar container
-docker run -p 3000:21002 \
+docker run -p 21002:21002 \
   -e NODE_ENV=production \
   -e VITE_SUPABASE_URL=https://bsbwwgicxjmjshofxyop.supabase.co \
   -e VITE_SUPABASE_ANON_KEY=sua_anon_key_aqui \
@@ -243,7 +243,7 @@ VITE_SUPABASE_PROJECT_ID=bsbwwgicxjmjshofxyop
 #### Port Mapping
 
 ```yaml
-Container Port: 3000
+Container Port: 21002
 Protocol: HTTP
 External Port: 80 (ou 443 para HTTPS)
 ```

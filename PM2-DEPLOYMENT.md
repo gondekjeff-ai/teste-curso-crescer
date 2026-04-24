@@ -59,7 +59,7 @@ O `Dockerfile` já usa `pm2-runtime` como ENTRYPOINT (modo container-native do P
 
 ```bash
 docker build -t optistrat .
-docker run -d --name optistrat -p 3000:21002 \
+docker run -d --name optistrat -p 21002:21002 \
   -e DATABASE_URL=... -e JWT_SECRET=... \
   optistrat
 ```
