@@ -28,7 +28,7 @@ Configure no EasyPanel as seguintes variáveis:
 | `RESEND_API_KEY` | (sua chave Resend) | Para envio de emails |
 | `GROQ_API_KEY` | (sua chave Groq) | Para o chatbot IA |
 | `NODE_ENV` | `production` | Ambiente |
-| `PORT` | `3000` | Porta do servidor |
+| `PORT` | `21002` | Porta do servidor |
 
 ### 3. Deploy via Docker
 

@@ -122,7 +122,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 VITE_SUPABASE_PROJECT_ID=bsbwwgicxjmjshofxyop
 
 # Server Configuration
-PORT=3000
+PORT=21002
 ```
 
 **⚠️ Importante**: 
@@ -133,7 +133,7 @@ PORT=3000
 #### 5. Configurar Domínio e Portas
 
 **Port Mapping:**
-- Container Port: `3000`
+- Container Port: `21002`
 - External Port: `80` (ou `443` para HTTPS)
 
 **Domain Configuration:**
@@ -203,7 +203,7 @@ Logs > Build Logs
 
 **Problema**: Erro 502 Bad Gateway
 ```bash
-# Solução 1: Verifique se a porta está correta (3000)
+# Solução 1: Verifique se a porta está correta (21002)
 # Solução 2: Verifique os logs da aplicação
 # Solução 3: Restart a aplicação
 ```
@@ -305,7 +305,7 @@ git push origin main
 - Porta 80 (HTTP) - Aberta
 - Porta 443 (HTTPS) - Aberta
 - Porta 22 (SSH) - Restrita
-- Porta 3000 - Fechada (somente interna)
+- Porta 21002 - Fechada (somente interna)
 ```
 
 ### 📚 Recursos Adicionais
@@ -404,7 +404,7 @@ server {
     server_name seu-dominio.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:21002;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';

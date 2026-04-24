@@ -26,7 +26,7 @@ EasyPanel, VPS, etc.).
 - PostgreSQL **>= 13** acessível pela aplicação
 - Variáveis de ambiente configuradas (ver seção 4)
 - Comando de start: `npm start` (executa `node server.js`)
-- Porta exposta (padrão `3000`, configurável via `PORT`)
+- Porta exposta (padrão `21002`, configurável via `PORT`)
 
 ---
 
@@ -68,7 +68,7 @@ JWT_SECRET=cole-aqui-um-segredo-forte-e-unico-com-no-minimo-64-chars
 
 # Ambiente
 NODE_ENV=production
-PORT=3000
+PORT=21002
 
 # (Opcional) Integrações
 RESEND_API_KEY=               # Envio de e-mail via Resend
@@ -135,7 +135,7 @@ Todas as rotas `/api/admin/*` exigem header
 - [ ] Login com admin criado retorna token JWT
 - [ ] Dashboard `/admin` carrega estatísticas reais
 - [ ] Upload de imagem no carrossel funciona (BLOB salvo no DB)
-- [ ] Logs do servidor mostram `Server running on port 3000`
+- [ ] Logs do servidor mostram `Server running on port 21002`
 
 ---
 
@@ -216,7 +216,7 @@ cd teste-curso-crescer
 git checkout stable-website
 npm install --omit=dev
 node server.js
-# Acesse http://localhost:3000/admin/login
+# Acesse http://localhost:21002/admin/login
 ```
 
 Se funcionar local mas nao em producao, o problema esta no proxy/host
