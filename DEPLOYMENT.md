@@ -142,7 +142,7 @@ VITE_SUPABASE_ANON_KEY=sua_anon_key_aqui
 VITE_SUPABASE_PROJECT_ID=bsbwwgicxjmjshofxyop
 
 # Server Configuration
-PORT=3000
+PORT=21002
 ```
 
 ### 3. Testar Build Docker Localmente
@@ -152,14 +152,14 @@ PORT=3000
 docker build -t optistrat:test .
 
 # Executar container
-docker run -p 3000:3000 \
+docker run -p 3000:21002 \
   -e NODE_ENV=production \
   -e VITE_SUPABASE_URL=https://bsbwwgicxjmjshofxyop.supabase.co \
   -e VITE_SUPABASE_ANON_KEY=sua_anon_key_aqui \
   -e VITE_SUPABASE_PROJECT_ID=bsbwwgicxjmjshofxyop \
   optistrat:test
 
-# Testar em http://localhost:3000
+# Testar em http://localhost:21002
 ```
 
 ## 🌐 Deploy no EasyPanel
@@ -220,7 +220,7 @@ No painel do EasyPanel, adicione as seguintes variáveis:
 
 ```bash
 NODE_ENV=production
-PORT=3000
+PORT=21002
 VITE_SUPABASE_URL=https://bsbwwgicxjmjshofxyop.supabase.co
 VITE_SUPABASE_ANON_KEY=sua_anon_key_aqui
 VITE_SUPABASE_PROJECT_ID=bsbwwgicxjmjshofxyop
@@ -290,8 +290,8 @@ Como esta é uma aplicação SPA sem estado, persistência não é necessária. 
 [builder] Step 5/14 : COPY . .
 [builder] Step 6/14 : RUN npm run build
 [builder] Build successful!
-[runtime] Starting serve on port 3000...
-[runtime] Server running at http://0.0.0.0:3000
+[runtime] Starting serve on port 21002...
+[runtime] Server running at http://0.0.0.0:21002
 ```
 
 ## 🌍 Configuração de Domínios
@@ -392,7 +392,7 @@ CPU/Memory: Dentro dos limites
 Logs → Application Logs
 
 # Logs esperados:
-✅ "Serving dist on port 3000"
+✅ "Serving dist on port 21002"
 ✅ "Server started successfully"
 ❌ Sem erros "ECONNREFUSED" ou "Cannot GET"
 ```
@@ -529,7 +529,7 @@ Causa: Erro fatal no runtime
 Diagnóstico:
 1. EasyPanel → Logs → Application Logs
 2. Procure por stack traces
-3. Verifique se a porta 3000 está exposta
+3. Verifique se a porta 21002 está exposta
 
 Solução:
 - Verifique o CMD no Dockerfile
@@ -542,8 +542,8 @@ Solução:
 Causa: Aplicação não responde no path de health check
 
 Solução:
-1. Verifique se a aplicação está realmente rodando na porta 3000
-2. Teste manualmente: curl http://localhost:3000
+1. Verifique se a aplicação está realmente rodando na porta 21002
+2. Teste manualmente: curl http://localhost:21002
 3. Ajuste o path do health check para "/"
 4. Aumente o timeout do health check
 ```
@@ -593,7 +593,7 @@ Solução DEFINITIVA:
    - https://seu-dominio.com/**
    - https://seu-dominio.com/admin/**
    - https://seu-dominio.com/admin/login
-   - http://localhost:3000/** (para dev)
+   - http://localhost:21002/** (para dev)
 
 3. Salve e aguarde 1-2 minutos para propagar
 

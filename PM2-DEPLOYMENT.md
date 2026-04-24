@@ -12,7 +12,7 @@ O projeto migrou de **Express → Fastify** e agora roda sob **PM2** para gerenc
 
 ```bash
 NODE_ENV=production
-PORT=3000
+PORT=21002
 HOST=0.0.0.0
 DATABASE_URL=postgresql://user:pass@host:5432/optistrat
 DB_SSL=false                    # ou 'true' para SSL
@@ -38,8 +38,8 @@ pm2 startup            # siga a instrução impressa
 # 4. verificar
 pm2 status
 pm2 logs optistrat
-curl http://localhost:3000/health
-curl -I http://localhost:3000/admin/login   # deve retornar 200
+curl http://localhost:21002/health
+curl -I http://localhost:21002/admin/login   # deve retornar 200
 ```
 
 ## Comandos úteis
@@ -59,7 +59,7 @@ O `Dockerfile` já usa `pm2-runtime` como ENTRYPOINT (modo container-native do P
 
 ```bash
 docker build -t optistrat .
-docker run -d --name optistrat -p 3000:3000 \
+docker run -d --name optistrat -p 3000:21002 \
   -e DATABASE_URL=... -e JWT_SECRET=... \
   optistrat
 ```
@@ -79,7 +79,7 @@ E rode `pm2 reload optistrat`. PM2 distribui requests automaticamente.
 
 1. **Confirme que o servidor Node está rodando** (não apenas Nginx servindo HTML estático):
    ```bash
-   curl -i http://seu-servidor:3000/health
+   curl -i http://seu-servidor:21002/health
    # Deve retornar: {"status":"healthy",...}
    ```
 
@@ -96,7 +96,7 @@ E rode `pm2 reload optistrat`. PM2 distribui requests automaticamente.
 4. **Se estiver atrás de Nginx**, garanta o proxy correto:
    ```nginx
    location / {
-     proxy_pass http://127.0.0.1:3000;
+     proxy_pass http://127.0.0.1:21002;
      proxy_set_header Host $host;
      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
      proxy_set_header X-Forwarded-Proto $scheme;

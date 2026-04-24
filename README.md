@@ -122,7 +122,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 VITE_SUPABASE_PROJECT_ID=bsbwwgicxjmjshofxyop
 
 # Server Configuration
-PORT=3000
+PORT=21002
 ```
 
 **⚠️ Importante**: 
@@ -404,7 +404,7 @@ server {
     server_name seu-dominio.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:21002;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
