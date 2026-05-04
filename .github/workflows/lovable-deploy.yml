@@ -36,6 +36,7 @@ jobs:
           # Usamos rsync com excludes para garantir que nenhum arquivo seja perdido.
           rsync -a \
             --exclude='.git' \
+            --exclude='.gitignore' \
             --exclude='node_modules' \
             --exclude='deploy' \
             --exclude='.github/workflows/.cache' \
@@ -47,6 +48,19 @@ jobs:
             echo "ERRO: pasta dist/ nao foi gerada pelo build"
             exit 1
           fi
+
+          # Escreve um .gitignore minimo para deploy/ que NAO ignore dist/.
+          # O .gitignore do projeto raiz exclui dist/ (correto para o repo fonte),
+          # mas a action de deploy usa git para publicar; sem este override, os
+          # assets compilados nunca chegariam ao servidor (404 em /assets/*).
+          cat > deploy/.gitignore << 'EOF'
+          node_modules
+          .env
+          .env.local
+          *.log
+          logs
+          .DS_Store
+          EOF
 
           # Garante que assets estaticos do public/ foram copiados para dist/
           # Vite copia public/* para dist/ automaticamente; validamos para evitar
