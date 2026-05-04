@@ -48,6 +48,19 @@ jobs:
             exit 1
           fi
 
+          # Garante que assets estaticos do public/ foram copiados para dist/
+          # Vite copia public/* para dist/ automaticamente; validamos para evitar
+          # site sem imagens em producao.
+          if [ -d public/lovable-uploads ] && [ ! -d deploy/dist/lovable-uploads ]; then
+            echo "AVISO: dist/lovable-uploads ausente, copiando manualmente do public/"
+            cp -r public/lovable-uploads deploy/dist/lovable-uploads
+          fi
+          for f in robots.txt sitemap.xml placeholder.svg; do
+            if [ -f public/$f ] && [ ! -f deploy/dist/$f ]; then
+              cp public/$f deploy/dist/$f
+            fi
+          done
+
           # Verifica se a build gerou as rotas admin no bundle.
           # Nomes de componentes sao minificados pelo Vite, entao procuramos
           # pelas strings das rotas que sao preservadas como literais.
