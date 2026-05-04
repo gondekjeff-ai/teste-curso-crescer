@@ -171,6 +171,15 @@ export async function registerApiRoutes(app, opts) {
     return rows;
   });
 
+  app.get('/products/:id', async (req, reply) => {
+    const { rows } = await pool.query(
+      'SELECT id, name, description, category, price FROM products WHERE id = $1 AND active = true',
+      [req.params.id]
+    );
+    if (rows.length === 0) return reply.code(404).send({ message: 'Produto não encontrado' });
+    return rows[0];
+  });
+
   app.get('/carousel', async () => {
     const { rows } = await pool.query(
       'SELECT id, image_url, alt_text, display_order FROM carousel_images WHERE active = true ORDER BY display_order'

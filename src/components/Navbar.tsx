@@ -113,7 +113,7 @@ const Navbar = () => {
                         {solutions.map((s) => (
                           <li key={s.id}>
                             <Link
-                              to="/#services"
+                              to={`/solucoes/${s.id}`}
                               className="block p-3 space-y-1 rounded-md hover:bg-accent"
                               onClick={() => setIsMenuOpen(false)}
                             >
