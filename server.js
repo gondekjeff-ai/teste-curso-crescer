@@ -64,6 +64,13 @@ app.setNotFoundHandler((request, reply) => {
   if (request.url.startsWith('/api/')) {
     return reply.code(404).send({ message: 'Endpoint não encontrado' });
   }
+  // Asset-like requests (have a file extension) should NOT fall back to index.html.
+  // Otherwise broken/missing images would silently render the SPA HTML, masking errors.
+  const pathname = request.url.split('?')[0];
+  const lastSegment = pathname.split('/').pop() || '';
+  if (/\.[a-zA-Z0-9]{2,5}$/.test(lastSegment)) {
+    return reply.code(404).send({ error: 'Asset not found', path: pathname });
+  }
   return reply.sendFile('index.html');
 });
 
