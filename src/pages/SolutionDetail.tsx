@@ -6,6 +6,7 @@ import PageLayout from '@/components/PageLayout';
 import SEO from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
+import NotFound from './NotFound';
 
 interface Solution {
   id: string;
@@ -20,6 +21,7 @@ const SolutionDetail = () => {
   const [solution, setSolution] = useState<Solution | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -27,15 +29,22 @@ const SolutionDetail = () => {
     (async () => {
       try {
         const data = await api.get<Solution>(`/products/${id}`);
-        if (active) setSolution(data);
+        if (!data || (data as any).message === 'Not found' || !(data as any).id) {
+          if (active) setNotFound(true);
+        } else if (active) setSolution(data);
       } catch (e: any) {
-        if (active) setError(e?.message || 'Erro ao carregar solução');
+        const msg = e?.message || '';
+        if (/404|not found|não encontrad/i.test(msg)) {
+          if (active) setNotFound(true);
+        } else if (active) setError(msg || 'Erro ao carregar solução');
       } finally {
         if (active) setLoading(false);
       }
     })();
     return () => { active = false; };
   }, [id]);
+
+  if (notFound) return <NotFound />;
 
   return (
     <PageLayout>
