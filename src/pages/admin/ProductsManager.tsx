@@ -32,7 +32,14 @@ const ProductsManager = () => {
   const loadProducts = async () => {
     try {
       const data = await api.get('/admin/products');
-      setProducts(data || []);
+      // Postgres NUMERIC is returned as string by pg driver — normalize to number|null
+      const normalized = (data || []).map((p: any) => ({
+        ...p,
+        price: p.price === null || p.price === undefined || p.price === ''
+          ? null
+          : Number(p.price),
+      }));
+      setProducts(normalized);
     } catch (error) {
       toast({ title: 'Erro', description: 'Não foi possível carregar os produtos', variant: 'destructive' });
     } finally {
@@ -135,7 +142,7 @@ const ProductsManager = () => {
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{product.description}</p>
                 <div className="flex items-center justify-between">
-                  {product.price != null ? (
+                  {product.price != null && !Number.isNaN(product.price) ? (
                     <span className="font-bold text-primary">R$ {product.price.toFixed(2)}</span>
                   ) : (
                     <span className="text-xs text-muted-foreground">Sem preço</span>
