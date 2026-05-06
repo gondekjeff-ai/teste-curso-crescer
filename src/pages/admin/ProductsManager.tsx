@@ -48,7 +48,7 @@ const ProductsManager = () => {
         name: editingProduct.name,
         description: editingProduct.description,
         category: editingProduct.category,
-        price: editingProduct.price,
+        price: editingProduct.price ?? undefined,
         active: editingProduct.active,
       });
       const sanitizedData = sanitizeObject(validatedData);
