@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Menu, X, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import optiStratLogo from "@/assets/optistrat-logo-full.png";
@@ -20,6 +20,8 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [solutions, setSolutions] = useState<SolutionItem[]>([]);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,10 +41,8 @@ const Navbar = () => {
       try {
         const data = await api.get('/products');
         if (!active || !Array.isArray(data)) return;
-        const filtered = data.filter(
-          (p: SolutionItem) => (p.category || '').toLowerCase() === 'solution'
-        );
-        setSolutions(filtered);
+        // Mostra TODOS os produtos ativos como soluções (sem filtrar por categoria)
+        setSolutions(data as SolutionItem[]);
       } catch (err) {
         console.error('Failed to load solutions menu:', err);
         if (active) setSolutions([]);
@@ -55,14 +55,30 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth'
-      });
-    }
+  const goHomeTop = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsMenuOpen(false);
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+      setTimeout(() => window.scrollTo({ top: 0 }), 0);
+    }
+  };
+
+  const goToContact = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsMenuOpen(false);
+    const scroll = () => {
+      const el = document.getElementById('contact');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+    if (location.pathname === '/') {
+      scroll();
+    } else {
+      navigate('/');
+      setTimeout(scroll, 150);
+    }
   };
 
   return (
@@ -87,7 +103,7 @@ const Navbar = () => {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), isScrolled ? "text-foreground hover:text-primary" : "text-gray-100 hover:text-white bg-transparent hover:bg-gray-800")}>
-                    <Link to="/">Início</Link>
+                    <a href="/" onClick={goHomeTop}>Início</a>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 
@@ -143,9 +159,9 @@ const Navbar = () => {
                 
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle())}>
-                    <Link to="/#contact" className={cn("px-4 py-2 rounded-md transition-colors", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
+                    <a href="#contact" onClick={goToContact} className={cn("px-4 py-2 rounded-md transition-colors cursor-pointer", isScrolled ? "bg-primary text-white hover:bg-primary/90" : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm")}>
                       Contatos
-                    </Link>
+                    </a>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
               </NavigationMenuList>
@@ -170,12 +186,9 @@ const Navbar = () => {
       {/* Mobile Navigation Menu - Reduced height and simplified */}
       <div className={cn("md:hidden transition-all duration-300 overflow-hidden w-full", isMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0")}>
         <div className={cn("px-3 pt-2 pb-3 space-y-1 shadow-sm overflow-y-auto max-h-80", isScrolled ? "bg-white" : "bg-gradient-to-r from-primary to-secondary")}>
-          <Link to="/" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-foreground hover:bg-accent" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
-            setIsMenuOpen(false);
-            window.scrollTo(0, 0);
-          }}>
+          <a href="/" className={cn("block px-3 py-1.5 rounded-md text-sm cursor-pointer", isScrolled ? "text-foreground hover:bg-accent" : "text-gray-200 hover:bg-primary/30")} onClick={goHomeTop}>
             Início
-          </Link>
+          </a>
           
           <Link to="/about" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
@@ -184,7 +197,7 @@ const Navbar = () => {
             Sobre Nós
           </Link>
           
-          <Link to="/tech-details" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
+          <Link to="/solucoes" className={cn("block px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-gray-700 hover:bg-gray-50" : "text-gray-200 hover:bg-primary/30")} onClick={() => {
             setIsMenuOpen(false);
             window.scrollTo(0, 0);
           }}>
@@ -205,9 +218,9 @@ const Navbar = () => {
             Carreiras
           </Link>
           
-          <Link to="/#contact" className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm", isScrolled ? "text-white bg-primary hover:bg-primary/90" : "text-white bg-white/10 hover:bg-white/20")} onClick={() => setIsMenuOpen(false)}>
+          <a href="#contact" className={cn("block w-full text-left px-3 py-1.5 rounded-md text-sm cursor-pointer", isScrolled ? "text-white bg-primary hover:bg-primary/90" : "text-white bg-white/10 hover:bg-white/20")} onClick={goToContact}>
             Contatos
-          </Link>
+          </a>
         </div>
       </div>
     </motion.nav>
