@@ -1,4 +1,5 @@
 import { ArrowRight, Code, Server, Cloud, MessageSquare, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import optiStratLogo from "@/assets/optistrat-logo-full.png";
 import carousel1 from "@/assets/carousel-1.jpg";
 import carousel2 from "@/assets/carousel-2.jpg";
@@ -13,6 +14,7 @@ import { useEffect, useRef } from "react";
 
 const Hero = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const plugin = useRef(
     Autoplay({ delay: 4000, stopOnInteraction: false })
   );
@@ -108,12 +110,8 @@ const Hero = () => {
                       className="w-full sm:w-auto min-h-[44px] px-6 sm:px-8 py-3 bg-white text-primary rounded-md hover:bg-primary-foreground transition-all shadow-lg hover:shadow-xl hover:shadow-white/20 flex items-center justify-center group text-sm sm:text-base font-medium"
                       onClick={e => {
                         e.preventDefault();
-                        const servicesSection = document.getElementById('features');
-                        if (servicesSection) {
-                          servicesSection.scrollIntoView({
-                            behavior: 'smooth'
-                          });
-                        }
+                        navigate('/solucoes');
+                        window.scrollTo(0, 0);
                       }}
                     >
                       Nossos Serviços
