@@ -68,7 +68,7 @@ const ProductsManager = () => {
       toast({ title: 'Produto salvo com sucesso' });
       setDialogOpen(false);
       setEditingProduct(null);
-      loadProducts();
+      await loadProducts();
     } catch (error: any) {
       if (error.errors) {
         toast({ title: 'Erro de validação', description: error.errors.map((e: any) => e.message).join(', '), variant: 'destructive' });
@@ -83,7 +83,7 @@ const ProductsManager = () => {
     try {
       await api.del(`/admin/products/${id}`);
       toast({ title: 'Produto excluído' });
-      loadProducts();
+      await loadProducts();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }

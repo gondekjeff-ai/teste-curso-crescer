@@ -30,6 +30,8 @@ import Orcamento from "./pages/Orcamento";
 import Blog from "./pages/Blog";
 import BlogPostDetail from "./pages/BlogPostDetail";
 import SolutionDetail from "./pages/SolutionDetail";
+import Solucoes from "./pages/Solucoes";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/projects/firecat" element={<FireCatProject />} />
@@ -57,6 +60,7 @@ const App = () => {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogPostDetail />} />
             <Route path="/solucoes/:id" element={<SolutionDetail />} />
+            <Route path="/solucoes" element={<Solucoes />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />}>
               <Route index element={<AdminHome />} />
