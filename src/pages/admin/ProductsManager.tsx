@@ -78,7 +78,7 @@ const ProductsManager = () => {
       toast({ title: 'Produto salvo com sucesso' });
       setDialogOpen(false);
       setEditingProduct(null);
-      await loadProducts();
+      await loadProducts(true);
     } catch (error: any) {
       if (error.errors) {
         toast({ title: 'Erro de validação', description: error.errors.map((e: any) => e.message).join(', '), variant: 'destructive' });
