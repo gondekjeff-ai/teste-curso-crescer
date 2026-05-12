@@ -93,7 +93,7 @@ const ProductsManager = () => {
     try {
       await api.del(`/admin/products/${id}`);
       toast({ title: 'Produto excluído' });
-      await loadProducts();
+      await loadProducts(true);
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }
