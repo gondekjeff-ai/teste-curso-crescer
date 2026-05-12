@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Plus, Package } from 'lucide-react';
+import { Pencil, Trash2, Plus, Package, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { productSchema, sanitizeObject } from '@/lib/inputValidation';
 
@@ -23,16 +23,16 @@ interface Product {
 const ProductsManager = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => { loadProducts(); }, []);
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
     try {
       const data = await api.get('/admin/products');
-      // Postgres NUMERIC is returned as string by pg driver — normalize to number|null
       const normalized = (data || []).map((p: any) => ({
         ...p,
         price: p.price === null || p.price === undefined || p.price === ''
@@ -44,8 +44,18 @@ const ProductsManager = () => {
       toast({ title: 'Erro', description: 'Não foi possível carregar os produtos', variant: 'destructive' });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  useEffect(() => {
+    const interval = setInterval(() => loadProducts(true), 5000);
+    return () => clearInterval(interval);
+  }, [loadProducts]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +78,7 @@ const ProductsManager = () => {
       toast({ title: 'Produto salvo com sucesso' });
       setDialogOpen(false);
       setEditingProduct(null);
-      await loadProducts();
+      await loadProducts(true);
     } catch (error: any) {
       if (error.errors) {
         toast({ title: 'Erro de validação', description: error.errors.map((e: any) => e.message).join(', '), variant: 'destructive' });
@@ -83,7 +93,7 @@ const ProductsManager = () => {
     try {
       await api.del(`/admin/products/${id}`);
       toast({ title: 'Produto excluído' });
-      await loadProducts();
+      await loadProducts(true);
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }
@@ -105,9 +115,14 @@ const ProductsManager = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Produtos</h1>
-          <p className="text-sm text-muted-foreground mt-1">{products.length} produtos cadastrados</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">Produtos</h1>
+            <p className="text-sm text-muted-foreground mt-1">{products.length} produtos cadastrados</p>
+          </div>
+          {refreshing && (
+            <RefreshCw className="h-4 w-4 text-muted-foreground animate-spin" />
+          )}
         </div>
         <Button onClick={openNew}>
           <Plus className="h-4 w-4 mr-2" /> Novo Produto
