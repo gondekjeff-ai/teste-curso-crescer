@@ -1,4 +1,5 @@
 import ProjectPageLayout from '@/components/ProjectPageLayout';
+import SEO from '@/components/SEO';
 import { Thermometer, ShieldCheck, Mountain, FileSymlink, Cpu, FlaskConical } from 'lucide-react';
 
 const WorkwearProject = () => {
@@ -9,6 +10,11 @@ const WorkwearProject = () => {
       imageUrl="/lovable-uploads/6b0637e9-4a7b-40d0-b219-c8b7f879f93e.png"
       brandName="European Multinational Textile Producer"
     >
+      <SEO
+        title="Workwear Climate Control — Estudo de caso"
+        description="Vestuário inteligente com regulação térmica para ambientes de trabalho extremos. Caso de R&D em sensores integrados."
+        type="article"
+      />
       <div className="bg-yellow-50 p-4 rounded-lg mb-6 flex items-center">
         <FlaskConical className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0" />
         <p className="text-yellow-700 font-medium text-sm">Ongoing R&D Project — Currently in Prototyping Phase</p>
