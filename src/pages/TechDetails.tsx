@@ -26,6 +26,10 @@ const TechDetails = () => {
   
   return (
     <PageLayout>
+      <SEO
+        title="Detalhes Técnicos — Tecnologias OptiStrat"
+        description="Conheça as tecnologias, arquiteturas e plataformas que sustentam as soluções de gestão de TI da OptiStrat."
+      />
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto">
           <div className="max-w-6xl mx-auto">
