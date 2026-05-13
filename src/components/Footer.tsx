@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import optiStratLogo from "@/assets/optistrat-logo-full.png";
+import optiStratLogo from "@/assets/optistrat-logo-full.webp";
 
 const Footer = () => {
   const [email, setEmail] = useState("");

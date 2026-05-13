@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import optiStratLogo from "@/assets/optistrat-logo-full.png";
+import optiStratLogo from "@/assets/optistrat-logo-full.webp";
 import { api } from "@/lib/api";
 
 interface SolutionItem {
