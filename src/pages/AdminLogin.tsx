@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Lock, Mail } from 'lucide-react';
-import optiStratLogo from '@/assets/optistrat-logo-full.png';
+import optiStratLogo from '@/assets/optistrat-logo-full.webp';
 import { api } from '@/lib/api';
 
 const AdminLogin = () => {
