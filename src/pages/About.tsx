@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { useEffect } from 'react';
 import PageLayout from '@/components/PageLayout';
+import SEO from '@/components/SEO';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -15,6 +16,10 @@ const About = () => {
   
   return (
     <PageLayout>
+      <SEO
+        title="Sobre a OptiStrat — Nossa missão em gestão de TI"
+        description="Conheça a OptiStrat: equipe, missão e valores por trás das soluções de gestão de TI que impulsionam empresas no Brasil."
+      />
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="container mx-auto">
           <div className="max-w-6xl mx-auto">
