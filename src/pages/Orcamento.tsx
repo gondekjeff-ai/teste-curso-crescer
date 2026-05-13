@@ -119,6 +119,10 @@ const Orcamento = () => {
 
   return (
     <PageLayout>
+      <SEO
+        title="Solicitar Orçamento — OptiStrat Gestão de TI"
+        description="Solicite uma proposta personalizada de gestão de TI da OptiStrat: infraestrutura, segurança, suporte e mais."
+      />
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-4xl font-bold mb-4 text-center">
