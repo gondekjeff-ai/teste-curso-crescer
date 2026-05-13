@@ -15,7 +15,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import optiStratIcon from '@/assets/optistrat-logo-icon.png';
+import optiStratIcon from '@/assets/optistrat-logo-icon.webp';
 import { Separator } from '@/components/ui/separator';
 
 const contentItems = [

@@ -1,10 +1,10 @@
 import { ArrowRight, Code, Server, Cloud, MessageSquare, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import optiStratLogo from "@/assets/optistrat-logo-full.png";
-import carousel1 from "@/assets/carousel-1.jpg";
-import carousel2 from "@/assets/carousel-2.jpg";
-import carousel3 from "@/assets/carousel-3.jpg";
-import carousel4 from "@/assets/carousel-4.jpg";
+import optiStratLogo from "@/assets/optistrat-logo-full.webp";
+import carousel1 from "@/assets/carousel-1.webp";
+import carousel2 from "@/assets/carousel-2.webp";
+import carousel3 from "@/assets/carousel-3.webp";
+import carousel4 from "@/assets/carousel-4.webp";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
