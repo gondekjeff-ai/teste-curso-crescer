@@ -1,5 +1,6 @@
 
 import PageLayout from '@/components/PageLayout';
+import SEO from '@/components/SEO';
 import { ArrowLeft, Mail, Linkedin, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from "framer-motion";
@@ -13,6 +14,10 @@ const Careers = () => {
   return (
     <div className="min-h-screen bg-white">
       <PageLayout showContact={false}>
+        <SEO
+          title="Carreiras na OptiStrat — Trabalhe com gestão de TI"
+          description="Junte-se à OptiStrat. Veja oportunidades para profissionais apaixonados por tecnologia e gestão de TI no Brasil."
+        />
         <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
           <div className="container mx-auto">
             <div className="max-w-6xl mx-auto">
