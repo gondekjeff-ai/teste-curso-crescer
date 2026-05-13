@@ -1,5 +1,6 @@
 
 import ProjectPageLayout from '@/components/ProjectPageLayout';
+import SEO from '@/components/SEO';
 import { PawPrint, BadgePercent, HeartPulse, Smartphone, Database, FlaskConical } from 'lucide-react';
 
 const PetProject = () => {
@@ -10,6 +11,11 @@ const PetProject = () => {
       imageUrl="/lovable-uploads/d5ce901e-2ce0-4f2a-bce1-f0ca5d6192df.png"
       brandName="UK Insurance Giant"
     >
+      <SEO
+        title="Dog Activity Counter — Estudo de caso"
+        description="Monitoramento inteligente da atividade canina para saúde e seguros: sensores conectados a dados acionáveis."
+        type="article"
+      />
       <div className="bg-green-50 p-4 rounded-lg mb-6 flex items-center">
         <FlaskConical className="h-5 w-5 text-green-600 mr-2 flex-shrink-0" />
         <p className="text-green-700 font-medium text-sm">Completed Prototype Project</p>
