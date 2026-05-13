@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import PageLayout from '@/components/PageLayout';
+import SEO from '@/components/SEO';
 const DevelopmentProcess = () => {
   const [activeProcess, setActiveProcess] = useState(1);
   const processRef = useRef<HTMLDivElement>(null);
@@ -114,6 +115,10 @@ const DevelopmentProcess = () => {
     description: "Post-launch analytics and feedback loops drive ongoing improvements, updates, and potential new features."
   }];
   return <PageLayout>
+      <SEO
+        title="Processo de Desenvolvimento — OptiStrat"
+        description="Como a OptiStrat conduz projetos de gestão de TI: do diagnóstico à entrega, com foco em qualidade e resultado."
+      />
       <section className="pt-24 pb-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
