@@ -77,6 +77,11 @@ const Hero = () => {
                     src={image} 
                     alt={`IT Services ${index + 1}`}
                     className="w-full h-full object-cover"
+                    width={1600}
+                    height={900}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-black/60"></div>
                 </div>
@@ -97,7 +102,15 @@ const Hero = () => {
               <div className="flex-1 flex flex-col items-center justify-center pb-16">
                 <motion.div className="w-full max-w-4xl text-center" variants={itemVariants}>
                   <motion.div className="mb-4" variants={itemVariants}>
-                    <img src={optiStratLogo} alt="OptiStrat IT Management" className="h-48 md:h-64 lg:h-80 xl:h-96 mx-auto mb-4" />
+                    <img
+                      src={optiStratLogo}
+                      alt="OptiStrat IT Management"
+                      className="h-48 md:h-64 lg:h-80 xl:h-96 mx-auto mb-4"
+                      width={384}
+                      height={384}
+                      fetchPriority="high"
+                      decoding="async"
+                    />
                   </motion.div>
                   <motion.h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold" variants={itemVariants}>
                     Otimize sua Infraestrutura de TI com Soluções Especializadas
