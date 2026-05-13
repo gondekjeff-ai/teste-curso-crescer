@@ -1,9 +1,11 @@
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
 
 # Sitemap location
-Sitemap: https://wrlds.com/sitemap.xml
+Sitemap: https://optistrat.com.br/sitemap.xml
 
 # Optimize crawling
 Crawl-delay: 10
