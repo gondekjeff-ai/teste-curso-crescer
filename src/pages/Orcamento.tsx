@@ -6,6 +6,7 @@ import * as z from "zod";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import PageLayout from "@/components/PageLayout";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
