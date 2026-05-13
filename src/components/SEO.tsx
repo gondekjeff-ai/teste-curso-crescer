@@ -21,7 +21,7 @@ const SEO: React.FC<SEOProps> = ({
   description = 'OptiStrat: Soluções especializadas em gestão de TI que otimizam desempenho, reforçam a segurança e impulsionam o crescimento empresarial.',
   type = 'website',
   name = 'OptiStrat IT Management',
-  imageUrl = '/src/assets/optistrat-logo-full.png',
+  imageUrl = '/og-image.png',
   publishDate,
   modifiedDate,
   author,
@@ -30,8 +30,8 @@ const SEO: React.FC<SEOProps> = ({
   isBlogPost = false
 }) => {
   const location = useLocation();
-  const currentUrl = `https://optistrat.com${location.pathname}`;
-  const absoluteImageUrl = imageUrl.startsWith('http') ? imageUrl : `https://optistrat.com${imageUrl}`;
+  const currentUrl = `https://optistrat.com.br${location.pathname}`;
+  const absoluteImageUrl = imageUrl.startsWith('http') ? imageUrl : `https://optistrat.com.br${imageUrl}`;
 
   // Enhanced keywords for specific posts
   const enhancedKeywords = location.pathname.includes('smart-ppe-revolution') 
@@ -72,13 +72,13 @@ const SEO: React.FC<SEOProps> = ({
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'OptiStrat IT Management',
-    url: 'https://optistrat.com',
-    logo: 'https://optistrat.com/src/assets/optistrat-logo-full.png',
+    url: 'https://optistrat.com.br',
+    logo: 'https://optistrat.com.br/og-image.png',
     description: 'Soluções especializadas em gestão de TI',
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'info@optistrat.com'
+      email: 'info@optistrat.com.br'
     },
     sameAs: [
       'https://www.linkedin.com/company/optistrat',
@@ -106,18 +106,18 @@ const SEO: React.FC<SEOProps> = ({
     author: {
       '@type': 'Organization',
       name: author || 'OptiStrat IT Management',
-      url: 'https://optistrat.com'
+      url: 'https://optistrat.com.br'
     },
     publisher: {
       '@type': 'Organization',
       name: 'OptiStrat IT Management',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://optistrat.com/src/assets/optistrat-logo-full.png',
+        url: 'https://optistrat.com.br/og-image.png',
         width: 512,
         height: 512
       },
-      url: 'https://optistrat.com'
+      url: 'https://optistrat.com.br'
     },
     description: description,
     keywords: enhancedKeywords.join(', '),
@@ -216,7 +216,7 @@ const SEO: React.FC<SEOProps> = ({
       {isBlogPost && category && <meta property="article:section" content={category} />}
       {isBlogPost && publishDate && <meta property="article:published_time" content={publishDate} />}
       {isBlogPost && modifiedDate && <meta property="article:modified_time" content={modifiedDate} />}
-      {isBlogPost && <meta property="article:publisher" content="https://optistrat.com" />}
+      {isBlogPost && <meta property="article:publisher" content="https://optistrat.com.br" />}
       
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

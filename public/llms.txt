@@ -1,0 +1,18 @@
+# OptiStrat
+
+> OptiStrat oferece soluções especializadas em gestão de TI: infraestrutura em nuvem, cibersegurança, gestão de rede e suporte 24/7 para empresas em crescimento.
+
+## Pages
+
+- [Início](/): Visão geral das soluções de gestão de TI da OptiStrat.
+- [Sobre](/about): Quem somos, missão e valores da OptiStrat.
+- [Soluções](/solucoes): Catálogo completo de produtos e serviços ativos.
+- [Orçamento](/orcamento): Solicite uma proposta personalizada.
+- [Blog](/blog): Artigos e notícias sobre tecnologia e gestão de TI.
+- [Carreiras](/careers): Oportunidades de trabalho na OptiStrat.
+- [Detalhes Técnicos](/tech-details): Tecnologias e arquiteturas utilizadas.
+- [Processo de Desenvolvimento](/development-process): Como conduzimos projetos.
+
+## Optional
+
+- [Política de Privacidade](/privacy-policy): Política de privacidade e tratamento de dados.

@@ -24,10 +24,10 @@ const Index = () => {
     <PageLayout>
       <IndexPopup />
       <SEO 
-        title="OptiStrat - Expert IT Management Solutions" 
-        description="OptiStrat delivers comprehensive IT management services including cloud infrastructure, cybersecurity, network management, and 24/7 support for growing businesses."
-        imageUrl="/src/assets/optistrat-logo-full.png"
-        keywords={['IT management', 'cloud infrastructure', 'cybersecurity', 'network management', 'IT support', 'business technology', 'system optimization']}
+        title="OptiStrat — Gestão de TI Especializada para Empresas" 
+        description="Soluções completas de gestão de TI: infraestrutura em nuvem, cibersegurança, gestão de rede e suporte 24/7 para empresas em crescimento."
+        imageUrl="/og-image.png"
+        keywords={['gestão de TI', 'infraestrutura em nuvem', 'cibersegurança', 'gestão de rede', 'suporte de TI', 'tecnologia empresarial']}
       />
       <Hero />
       <ReflectiveQuestions />
