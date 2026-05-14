@@ -601,14 +601,14 @@ export async function registerApiRoutes(app, opts) {
   app.post('/fetch-tech-news', adminGuard, async () => {
     // Load active sources from DB; fall back to defaults if none configured
     const { rows: sources } = await pool.query(
-      'SELECT url FROM news_sources WHERE active = true'
+      'SELECT id, name, url FROM news_sources WHERE active = true'
     );
-    const RSS_FEEDS = sources.length > 0
-      ? sources.map(s => s.url)
+    const feedList = sources.length > 0
+      ? sources
       : [
-          'https://feeds.feedburner.com/tecmundo',
-          'https://olhardigital.com.br/feed/',
-          'https://canaltech.com.br/rss/',
+          { id: null, name: 'TecMundo', url: 'https://feeds.feedburner.com/tecmundo' },
+          { id: null, name: 'Olhar Digital', url: 'https://olhardigital.com.br/feed/' },
+          { id: null, name: 'Canaltech', url: 'https://canaltech.com.br/rss/' },
         ];
     const parseRSS = (xml) => {
       const items = [];
@@ -626,32 +626,62 @@ export async function registerApiRoutes(app, opts) {
       }
       return items;
     };
-    let inserted = 0;
-    for (const feedUrl of RSS_FEEDS) {
+    let totalInserted = 0;
+    const results = [];
+    for (const feed of feedList) {
+      let status = 'success';
+      let error = null;
+      let imported = 0;
       try {
-        const resp = await fetch(feedUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!resp.ok) continue;
-        const xml = await resp.text();
-        const items = parseRSS(xml).slice(0, 10);
-        for (const item of items) {
-          const { rows: existing } = await pool.query('SELECT id FROM news WHERE title = $1', [item.title]);
-          if (existing.length === 0) {
-            await pool.query(
-              'INSERT INTO news (title, content, excerpt, image_url, published) VALUES ($1, $2, $3, $4, true)',
-              [item.title, item.description, item.description, item.link]
-            );
-            inserted++;
+        const resp = await fetch(feed.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (!resp.ok) {
+          status = 'error';
+          error = `HTTP ${resp.status}`;
+        } else {
+          const xml = await resp.text();
+          const items = parseRSS(xml).slice(0, 10);
+          if (items.length === 0) {
+            status = 'empty';
+            error = 'Nenhum item encontrado no feed';
+          }
+          for (const item of items) {
+            const { rows: existing } = await pool.query('SELECT id FROM news WHERE title = $1', [item.title]);
+            if (existing.length === 0) {
+              await pool.query(
+                'INSERT INTO news (title, content, excerpt, image_url, published) VALUES ($1, $2, $3, $4, true)',
+                [item.title, item.description, item.description, item.link]
+              );
+              imported++;
+            }
           }
         }
-      } catch { /* skip failed feeds */ }
+      } catch (err) {
+        status = 'error';
+        error = err.message || 'Falha desconhecida';
+      }
+      totalInserted += imported;
+      if (feed.id) {
+        await pool.query(
+          `UPDATE news_sources
+             SET last_fetched_at = NOW(),
+                 last_status = $1,
+                 last_error = $2,
+                 last_imported_count = $3
+           WHERE id = $4`,
+          [status, error, imported, feed.id]
+        );
+      }
+      results.push({ id: feed.id, name: feed.name, url: feed.url, status, error, imported });
     }
-    return { success: true, message: `${inserted} novas notícias importadas` };
+    return { success: true, message: `${totalInserted} novas notícias importadas`, results };
   });
 
   // News sources CRUD
   app.get('/admin/news-sources', adminGuard, async () => {
     const { rows } = await pool.query(
-      'SELECT id, name, url, active, created_at FROM news_sources ORDER BY created_at DESC'
+      `SELECT id, name, url, active, created_at,
+              last_fetched_at, last_status, last_error, last_imported_count
+         FROM news_sources ORDER BY created_at DESC`
     );
     return rows;
   });
