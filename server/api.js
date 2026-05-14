@@ -599,11 +599,17 @@ export async function registerApiRoutes(app, opts) {
 
   // Tech RSS
   app.post('/fetch-tech-news', adminGuard, async () => {
-    const RSS_FEEDS = [
-      'https://feeds.feedburner.com/tecmundo',
-      'https://olhardigital.com.br/feed/',
-      'https://canaltech.com.br/rss/',
-    ];
+    // Load active sources from DB; fall back to defaults if none configured
+    const { rows: sources } = await pool.query(
+      'SELECT url FROM news_sources WHERE active = true'
+    );
+    const RSS_FEEDS = sources.length > 0
+      ? sources.map(s => s.url)
+      : [
+          'https://feeds.feedburner.com/tecmundo',
+          'https://olhardigital.com.br/feed/',
+          'https://canaltech.com.br/rss/',
+        ];
     const parseRSS = (xml) => {
       const items = [];
       const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -640,5 +646,41 @@ export async function registerApiRoutes(app, opts) {
       } catch { /* skip failed feeds */ }
     }
     return { success: true, message: `${inserted} novas notícias importadas` };
+  });
+
+  // News sources CRUD
+  app.get('/admin/news-sources', adminGuard, async () => {
+    const { rows } = await pool.query(
+      'SELECT id, name, url, active, created_at FROM news_sources ORDER BY created_at DESC'
+    );
+    return rows;
+  });
+  app.post('/admin/news-sources', adminGuard, async (req, reply) => {
+    const { name, url, active = true } = req.body || {};
+    if (!name || !url) return reply.code(400).send({ message: 'Nome e URL são obrigatórios' });
+    try {
+      const { rows } = await pool.query(
+        'INSERT INTO news_sources (name, url, active) VALUES ($1, $2, $3) RETURNING *',
+        [name.trim(), url.trim(), !!active]
+      );
+      return rows[0];
+    } catch (err) {
+      if (err.code === '23505') return reply.code(409).send({ message: 'Esta URL já está cadastrada' });
+      throw err;
+    }
+  });
+  app.put('/admin/news-sources/:id', adminGuard, async (req, reply) => {
+    const { name, url, active } = req.body || {};
+    if (!name || !url) return reply.code(400).send({ message: 'Nome e URL são obrigatórios' });
+    const { rows } = await pool.query(
+      'UPDATE news_sources SET name=$1, url=$2, active=$3 WHERE id=$4 RETURNING *',
+      [name.trim(), url.trim(), !!active, req.params.id]
+    );
+    if (rows.length === 0) return reply.code(404).send({ message: 'Fonte não encontrada' });
+    return rows[0];
+  });
+  app.delete('/admin/news-sources/:id', adminGuard, async (req) => {
+    await pool.query('DELETE FROM news_sources WHERE id = $1', [req.params.id]);
+    return { success: true };
   });
 }
