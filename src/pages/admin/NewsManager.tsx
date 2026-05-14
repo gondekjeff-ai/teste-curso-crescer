@@ -30,6 +30,10 @@ interface NewsSource {
   url: string;
   active: boolean;
   created_at: string;
+  last_fetched_at?: string | null;
+  last_status?: string | null;
+  last_error?: string | null;
+  last_imported_count?: number | null;
 }
 
 const NewsManager = () => {
@@ -101,6 +105,7 @@ const NewsManager = () => {
       const res = await api.post('/fetch-tech-news');
       toast({ title: 'Importação concluída', description: res?.message || 'Notícias atualizadas' });
       loadNews();
+      loadSources();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message || 'Falha ao importar notícias', variant: 'destructive' });
     } finally {
@@ -261,18 +266,40 @@ const NewsManager = () => {
             <div className="space-y-3">
               {sources.map((src) => (
                 <Card key={src.id}>
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <Globe className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <CardContent className="p-4 flex items-start gap-4">
+                    <Globe className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold truncate">{src.name}</h3>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                           src.active ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'
                         }`}>
                           {src.active ? 'Ativo' : 'Inativo'}
                         </span>
+                        {src.last_status && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            src.last_status === 'success'
+                              ? 'bg-green-500/10 text-green-600'
+                              : src.last_status === 'empty'
+                              ? 'bg-yellow-500/10 text-yellow-600'
+                              : 'bg-destructive/10 text-destructive'
+                          }`}>
+                            {src.last_status === 'success' ? 'OK' : src.last_status === 'empty' ? 'Vazio' : 'Erro'}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{src.url}</p>
+                      <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                        <p>
+                          Última importação:{' '}
+                          {src.last_fetched_at
+                            ? `${new Date(src.last_fetched_at).toLocaleString('pt-BR')} — ${src.last_imported_count ?? 0} novo(s)`
+                            : 'nunca'}
+                        </p>
+                        {src.last_error && (
+                          <p className="text-destructive break-words">Erro: {src.last_error}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingSource(src); setSourceDialogOpen(true); }}>

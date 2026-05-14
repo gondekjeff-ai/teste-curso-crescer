@@ -29,6 +29,13 @@ pool.on('connect', () => {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
+    await pool.query(`
+      ALTER TABLE news_sources
+        ADD COLUMN IF NOT EXISTS last_fetched_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS last_status TEXT,
+        ADD COLUMN IF NOT EXISTS last_error TEXT,
+        ADD COLUMN IF NOT EXISTS last_imported_count INTEGER DEFAULT 0;
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
