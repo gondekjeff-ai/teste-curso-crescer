@@ -663,10 +663,12 @@ function parseFeed(xml) {
     const t = block.match(/<title[^>]*>([\s\S]*?)<\/title>/);
     const d = block.match(/<description[^>]*>([\s\S]*?)<\/description>/);
     const l = block.match(/<link[^>]*>([\s\S]*?)<\/link>/);
+    const g = block.match(/<guid[^>]*>([\s\S]*?)<\/guid>/);
     const title = t ? decode(t[1]).trim() : '';
     const description = d ? decode(d[1]).replace(/<[^>]*>/g, '').trim().substring(0, 300) : '';
     const link = l ? decode(l[1]).trim() : '';
-    if (title) items.push({ title, description, link });
+    const guid = g ? decode(g[1]).trim() : '';
+    if (title) items.push({ title, description, link, guid });
   }
   // Atom <entry>
   const entryRegex = /<entry[\s>][\s\S]*?<\/entry>/g;
@@ -674,10 +676,12 @@ function parseFeed(xml) {
     const t = block.match(/<title[^>]*>([\s\S]*?)<\/title>/);
     const s = block.match(/<summary[^>]*>([\s\S]*?)<\/summary>/) || block.match(/<content[^>]*>([\s\S]*?)<\/content>/);
     const l = block.match(/<link[^>]*href="([^"]+)"/);
+    const idTag = block.match(/<id[^>]*>([\s\S]*?)<\/id>/);
     const title = t ? decode(t[1]).trim() : '';
     const description = s ? decode(s[1]).replace(/<[^>]*>/g, '').trim().substring(0, 300) : '';
     const link = l ? l[1].trim() : '';
-    if (title) items.push({ title, description, link });
+    const guid = idTag ? decode(idTag[1]).trim() : '';
+    if (title) items.push({ title, description, link, guid });
   }
   return items;
 }
@@ -712,13 +716,32 @@ export async function runFeedImport(pool, sourceFilter = null) {
           error = 'Nenhum item encontrado no feed';
         }
         for (const item of items) {
-          const { rows: existing } = await pool.query('SELECT id FROM news WHERE title = $1', [item.title]);
+          // Dedupe by stable identifier: prefer guid, fall back to link, then title.
+          const externalId = (item.guid || item.link || '').trim() || null;
+          const { rows: existing } = externalId
+            ? await pool.query(
+                'SELECT id FROM news WHERE external_id = $1 OR (external_id IS NULL AND title = $2) LIMIT 1',
+                [externalId, item.title]
+              )
+            : await pool.query('SELECT id FROM news WHERE title = $1 LIMIT 1', [item.title]);
           if (existing.length === 0) {
             await pool.query(
-              'INSERT INTO news (title, content, excerpt, image_url, published, source_id) VALUES ($1, $2, $3, $4, true, $5)',
-              [item.title, item.description, item.description, item.link, feed.id]
+              `INSERT INTO news (title, content, excerpt, image_url, published, source_id, external_id)
+               VALUES ($1, $2, $3, $4, true, $5, $6)
+               ON CONFLICT (external_id) WHERE external_id IS NOT NULL DO NOTHING`,
+              [item.title, item.description, item.description, item.link, feed.id, externalId]
             );
             imported++;
+          } else if (externalId) {
+            // Refresh title/excerpt and backfill external_id on existing row.
+            await pool.query(
+              `UPDATE news
+                 SET title = $1, excerpt = $2, content = $3,
+                     external_id = COALESCE(external_id, $4),
+                     updated_at = NOW()
+               WHERE id = $5`,
+              [item.title, item.description, item.description, externalId, existing[0].id]
+            );
           }
         }
       }

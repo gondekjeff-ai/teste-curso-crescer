@@ -41,6 +41,14 @@ pool.on('connect', () => {
       ALTER TABLE news
         ADD COLUMN IF NOT EXISTS source_id UUID REFERENCES news_sources(id) ON DELETE SET NULL;
     `);
+    await pool.query(`
+      ALTER TABLE news
+        ADD COLUMN IF NOT EXISTS external_id TEXT;
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS news_external_id_unique
+        ON news (external_id) WHERE external_id IS NOT NULL;
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
