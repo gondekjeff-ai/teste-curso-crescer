@@ -418,6 +418,23 @@ const NewsManager = () => {
               />
               <Label>Ativo</Label>
             </div>
+            <div className="space-y-2">
+              <Label>Importação automática</Label>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={editingSource?.fetch_interval_minutes ?? 0}
+                onChange={(e) => setEditingSource(prev => prev ? { ...prev, fetch_interval_minutes: Number(e.target.value) } : null)}
+              >
+                <option value={0}>Manual (não importar automaticamente)</option>
+                <option value={60}>A cada 1 hora</option>
+                <option value={360}>A cada 6 horas</option>
+                <option value={720}>A cada 12 horas</option>
+                <option value={1440}>A cada 24 horas</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Ao desativar a fonte, suas notícias deixam de aparecer no site automaticamente.
+              </p>
+            </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setSourceDialogOpen(false)}>Cancelar</Button>
               <Button type="submit">Salvar</Button>
