@@ -255,7 +255,7 @@ const NewsManager = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${fetching ? 'animate-spin' : ''}`} />
                 {fetching ? 'Importando...' : 'Importar agora'}
               </Button>
-              <Button onClick={() => { setEditingSource({ id: '', name: '', url: '', active: true, created_at: '' }); setSourceDialogOpen(true); }}>
+              <Button onClick={() => { setEditingSource({ id: '', name: '', url: '', active: true, created_at: '', fetch_interval_minutes: 0 }); setSourceDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" /> Nova Fonte
               </Button>
             </div>
@@ -293,6 +293,13 @@ const NewsManager = () => {
                             {src.last_status === 'success' ? 'OK' : src.last_status === 'empty' ? 'Vazio' : 'Erro'}
                           </span>
                         )}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                          {!src.fetch_interval_minutes
+                            ? 'Manual'
+                            : src.fetch_interval_minutes < 60
+                            ? `A cada ${src.fetch_interval_minutes}min`
+                            : `A cada ${Math.round(src.fetch_interval_minutes / 60)}h`}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{src.url}</p>
                       <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
