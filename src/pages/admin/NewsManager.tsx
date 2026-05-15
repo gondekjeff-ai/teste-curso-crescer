@@ -34,6 +34,7 @@ interface NewsSource {
   last_status?: string | null;
   last_error?: string | null;
   last_imported_count?: number | null;
+  fetch_interval_minutes?: number;
 }
 
 const NewsManager = () => {
@@ -73,7 +74,12 @@ const NewsManager = () => {
     e.preventDefault();
     if (!editingSource) return;
     try {
-      const payload = { name: editingSource.name, url: editingSource.url, active: editingSource.active };
+      const payload = {
+        name: editingSource.name,
+        url: editingSource.url,
+        active: editingSource.active,
+        fetch_interval_minutes: Number(editingSource.fetch_interval_minutes ?? 0),
+      };
       if (editingSource.id) {
         await api.put(`/admin/news-sources/${editingSource.id}`, payload);
       } else {
