@@ -5,7 +5,7 @@ import fastifyCors from '@fastify/cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pool from './server/db.js';
-import { registerApiRoutes } from './server/api.js';
+import { registerApiRoutes, startNewsScheduler } from './server/api.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,6 +91,7 @@ try {
   console.log(`   Health:  http://${HOST}:${PORT}/health`);
   console.log(`   API:     http://${HOST}:${PORT}/api`);
   console.log(`   Admin:   http://${HOST}:${PORT}/admin/login`);
+  startNewsScheduler(pool, app.log);
 } catch (err) {
   app.log.error(err);
   process.exit(1);
