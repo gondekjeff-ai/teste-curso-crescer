@@ -34,6 +34,7 @@ interface NewsSource {
   last_status?: string | null;
   last_error?: string | null;
   last_imported_count?: number | null;
+  fetch_interval_minutes?: number;
 }
 
 const NewsManager = () => {
@@ -73,7 +74,12 @@ const NewsManager = () => {
     e.preventDefault();
     if (!editingSource) return;
     try {
-      const payload = { name: editingSource.name, url: editingSource.url, active: editingSource.active };
+      const payload = {
+        name: editingSource.name,
+        url: editingSource.url,
+        active: editingSource.active,
+        fetch_interval_minutes: Number(editingSource.fetch_interval_minutes ?? 0),
+      };
       if (editingSource.id) {
         await api.put(`/admin/news-sources/${editingSource.id}`, payload);
       } else {
@@ -249,7 +255,7 @@ const NewsManager = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${fetching ? 'animate-spin' : ''}`} />
                 {fetching ? 'Importando...' : 'Importar agora'}
               </Button>
-              <Button onClick={() => { setEditingSource({ id: '', name: '', url: '', active: true, created_at: '' }); setSourceDialogOpen(true); }}>
+              <Button onClick={() => { setEditingSource({ id: '', name: '', url: '', active: true, created_at: '', fetch_interval_minutes: 0 }); setSourceDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" /> Nova Fonte
               </Button>
             </div>
@@ -287,6 +293,13 @@ const NewsManager = () => {
                             {src.last_status === 'success' ? 'OK' : src.last_status === 'empty' ? 'Vazio' : 'Erro'}
                           </span>
                         )}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
+                          {!src.fetch_interval_minutes
+                            ? 'Manual'
+                            : src.fetch_interval_minutes < 60
+                            ? `A cada ${src.fetch_interval_minutes}min`
+                            : `A cada ${Math.round(src.fetch_interval_minutes / 60)}h`}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{src.url}</p>
                       <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
@@ -404,6 +417,23 @@ const NewsManager = () => {
                 onCheckedChange={(checked) => setEditingSource(prev => prev ? { ...prev, active: checked } : null)}
               />
               <Label>Ativo</Label>
+            </div>
+            <div className="space-y-2">
+              <Label>Importação automática</Label>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={editingSource?.fetch_interval_minutes ?? 0}
+                onChange={(e) => setEditingSource(prev => prev ? { ...prev, fetch_interval_minutes: Number(e.target.value) } : null)}
+              >
+                <option value={0}>Manual (não importar automaticamente)</option>
+                <option value={60}>A cada 1 hora</option>
+                <option value={360}>A cada 6 horas</option>
+                <option value={720}>A cada 12 horas</option>
+                <option value={1440}>A cada 24 horas</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Ao desativar a fonte, suas notícias deixam de aparecer no site automaticamente.
+              </p>
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setSourceDialogOpen(false)}>Cancelar</Button>

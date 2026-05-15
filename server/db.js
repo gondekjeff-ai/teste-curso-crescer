@@ -34,7 +34,12 @@ pool.on('connect', () => {
         ADD COLUMN IF NOT EXISTS last_fetched_at TIMESTAMPTZ,
         ADD COLUMN IF NOT EXISTS last_status TEXT,
         ADD COLUMN IF NOT EXISTS last_error TEXT,
-        ADD COLUMN IF NOT EXISTS last_imported_count INTEGER DEFAULT 0;
+        ADD COLUMN IF NOT EXISTS last_imported_count INTEGER DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS fetch_interval_minutes INTEGER NOT NULL DEFAULT 0;
+    `);
+    await pool.query(`
+      ALTER TABLE news
+        ADD COLUMN IF NOT EXISTS source_id UUID REFERENCES news_sources(id) ON DELETE SET NULL;
     `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
