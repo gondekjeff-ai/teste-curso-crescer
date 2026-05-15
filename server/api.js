@@ -599,80 +599,7 @@ export async function registerApiRoutes(app, opts) {
 
   // Tech RSS
   app.post('/fetch-tech-news', adminGuard, async () => {
-    // Load active sources from DB; fall back to defaults if none configured
-    const { rows: sources } = await pool.query(
-      'SELECT id, name, url FROM news_sources WHERE active = true'
-    );
-    const feedList = sources.length > 0
-      ? sources
-      : [
-          { id: null, name: 'TecMundo', url: 'https://feeds.feedburner.com/tecmundo' },
-          { id: null, name: 'Olhar Digital', url: 'https://olhardigital.com.br/feed/' },
-          { id: null, name: 'Canaltech', url: 'https://canaltech.com.br/rss/' },
-        ];
-    const parseRSS = (xml) => {
-      const items = [];
-      const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-      let match;
-      while ((match = itemRegex.exec(xml)) !== null) {
-        const itemXml = match[1];
-        const titleMatch = itemXml.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/);
-        const title = titleMatch ? titleMatch[1].trim() : '';
-        const descMatch = itemXml.match(/<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/description>/s);
-        const description = descMatch ? descMatch[1].trim().replace(/<[^>]*>/g, '').substring(0, 200) : '';
-        const linkMatch = itemXml.match(/<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>/);
-        const link = linkMatch ? linkMatch[1].trim() : '';
-        if (title) items.push({ title, description, link });
-      }
-      return items;
-    };
-    let totalInserted = 0;
-    const results = [];
-    for (const feed of feedList) {
-      let status = 'success';
-      let error = null;
-      let imported = 0;
-      try {
-        const resp = await fetch(feed.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!resp.ok) {
-          status = 'error';
-          error = `HTTP ${resp.status}`;
-        } else {
-          const xml = await resp.text();
-          const items = parseRSS(xml).slice(0, 10);
-          if (items.length === 0) {
-            status = 'empty';
-            error = 'Nenhum item encontrado no feed';
-          }
-          for (const item of items) {
-            const { rows: existing } = await pool.query('SELECT id FROM news WHERE title = $1', [item.title]);
-            if (existing.length === 0) {
-              await pool.query(
-                'INSERT INTO news (title, content, excerpt, image_url, published) VALUES ($1, $2, $3, $4, true)',
-                [item.title, item.description, item.description, item.link]
-              );
-              imported++;
-            }
-          }
-        }
-      } catch (err) {
-        status = 'error';
-        error = err.message || 'Falha desconhecida';
-      }
-      totalInserted += imported;
-      if (feed.id) {
-        await pool.query(
-          `UPDATE news_sources
-             SET last_fetched_at = NOW(),
-                 last_status = $1,
-                 last_error = $2,
-                 last_imported_count = $3
-           WHERE id = $4`,
-          [status, error, imported, feed.id]
-        );
-      }
-      results.push({ id: feed.id, name: feed.name, url: feed.url, status, error, imported });
-    }
+    const { totalInserted, results } = await runFeedImport(pool);
     return { success: true, message: `${totalInserted} novas notícias importadas`, results };
   });
 
@@ -680,18 +607,19 @@ export async function registerApiRoutes(app, opts) {
   app.get('/admin/news-sources', adminGuard, async () => {
     const { rows } = await pool.query(
       `SELECT id, name, url, active, created_at,
-              last_fetched_at, last_status, last_error, last_imported_count
+              last_fetched_at, last_status, last_error, last_imported_count,
+              fetch_interval_minutes
          FROM news_sources ORDER BY created_at DESC`
     );
     return rows;
   });
   app.post('/admin/news-sources', adminGuard, async (req, reply) => {
-    const { name, url, active = true } = req.body || {};
+    const { name, url, active = true, fetch_interval_minutes = 0 } = req.body || {};
     if (!name || !url) return reply.code(400).send({ message: 'Nome e URL são obrigatórios' });
     try {
       const { rows } = await pool.query(
-        'INSERT INTO news_sources (name, url, active) VALUES ($1, $2, $3) RETURNING *',
-        [name.trim(), url.trim(), !!active]
+        'INSERT INTO news_sources (name, url, active, fetch_interval_minutes) VALUES ($1, $2, $3, $4) RETURNING *',
+        [name.trim(), url.trim(), !!active, Math.max(0, parseInt(fetch_interval_minutes) || 0)]
       );
       return rows[0];
     } catch (err) {
@@ -700,17 +628,144 @@ export async function registerApiRoutes(app, opts) {
     }
   });
   app.put('/admin/news-sources/:id', adminGuard, async (req, reply) => {
-    const { name, url, active } = req.body || {};
+    const { name, url, active, fetch_interval_minutes = 0 } = req.body || {};
     if (!name || !url) return reply.code(400).send({ message: 'Nome e URL são obrigatórios' });
     const { rows } = await pool.query(
-      'UPDATE news_sources SET name=$1, url=$2, active=$3 WHERE id=$4 RETURNING *',
-      [name.trim(), url.trim(), !!active, req.params.id]
+      'UPDATE news_sources SET name=$1, url=$2, active=$3, fetch_interval_minutes=$4 WHERE id=$5 RETURNING *',
+      [name.trim(), url.trim(), !!active, Math.max(0, parseInt(fetch_interval_minutes) || 0), req.params.id]
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Fonte não encontrada' });
+    // If source was deactivated, unpublish its news so they disappear from the site.
+    if (!rows[0].active) {
+      await pool.query('UPDATE news SET published = false WHERE source_id = $1', [req.params.id]);
+    }
     return rows[0];
   });
   app.delete('/admin/news-sources/:id', adminGuard, async (req) => {
+    // Unpublish related news before delete (FK is SET NULL, so we'd lose the link otherwise).
+    await pool.query('UPDATE news SET published = false WHERE source_id = $1', [req.params.id]);
     await pool.query('DELETE FROM news_sources WHERE id = $1', [req.params.id]);
     return { success: true };
   });
+}
+
+// =================== Feed import + scheduler ===================
+
+function parseFeed(xml) {
+  const items = [];
+  const decode = (s) => s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  // RSS 2.0 <item>
+  const itemRegex = /<item[\s>][\s\S]*?<\/item>/g;
+  for (const block of xml.match(itemRegex) || []) {
+    const t = block.match(/<title[^>]*>([\s\S]*?)<\/title>/);
+    const d = block.match(/<description[^>]*>([\s\S]*?)<\/description>/);
+    const l = block.match(/<link[^>]*>([\s\S]*?)<\/link>/);
+    const title = t ? decode(t[1]).trim() : '';
+    const description = d ? decode(d[1]).replace(/<[^>]*>/g, '').trim().substring(0, 300) : '';
+    const link = l ? decode(l[1]).trim() : '';
+    if (title) items.push({ title, description, link });
+  }
+  // Atom <entry>
+  const entryRegex = /<entry[\s>][\s\S]*?<\/entry>/g;
+  for (const block of xml.match(entryRegex) || []) {
+    const t = block.match(/<title[^>]*>([\s\S]*?)<\/title>/);
+    const s = block.match(/<summary[^>]*>([\s\S]*?)<\/summary>/) || block.match(/<content[^>]*>([\s\S]*?)<\/content>/);
+    const l = block.match(/<link[^>]*href="([^"]+)"/);
+    const title = t ? decode(t[1]).trim() : '';
+    const description = s ? decode(s[1]).replace(/<[^>]*>/g, '').trim().substring(0, 300) : '';
+    const link = l ? l[1].trim() : '';
+    if (title) items.push({ title, description, link });
+  }
+  return items;
+}
+
+export async function runFeedImport(pool, sourceFilter = null) {
+  const { rows: sources } = sourceFilter
+    ? await pool.query('SELECT id, name, url FROM news_sources WHERE active = true AND id = $1', [sourceFilter])
+    : await pool.query('SELECT id, name, url FROM news_sources WHERE active = true');
+  const feedList = sources.length > 0
+    ? sources
+    : [
+        { id: null, name: 'TecMundo', url: 'https://feeds.feedburner.com/tecmundo' },
+        { id: null, name: 'Olhar Digital', url: 'https://olhardigital.com.br/feed/' },
+        { id: null, name: 'Canaltech', url: 'https://canaltech.com.br/rss/' },
+      ];
+  let totalInserted = 0;
+  const results = [];
+  for (const feed of feedList) {
+    let status = 'success';
+    let error = null;
+    let imported = 0;
+    try {
+      const resp = await fetch(feed.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (!resp.ok) {
+        status = 'error';
+        error = `HTTP ${resp.status}`;
+      } else {
+        const xml = await resp.text();
+        const items = parseFeed(xml).slice(0, 10);
+        if (items.length === 0) {
+          status = 'empty';
+          error = 'Nenhum item encontrado no feed';
+        }
+        for (const item of items) {
+          const { rows: existing } = await pool.query('SELECT id FROM news WHERE title = $1', [item.title]);
+          if (existing.length === 0) {
+            await pool.query(
+              'INSERT INTO news (title, content, excerpt, image_url, published, source_id) VALUES ($1, $2, $3, $4, true, $5)',
+              [item.title, item.description, item.description, item.link, feed.id]
+            );
+            imported++;
+          }
+        }
+      }
+    } catch (err) {
+      status = 'error';
+      error = err.message || 'Falha desconhecida';
+    }
+    totalInserted += imported;
+    if (feed.id) {
+      await pool.query(
+        `UPDATE news_sources
+           SET last_fetched_at = NOW(),
+               last_status = $1,
+               last_error = $2,
+               last_imported_count = $3
+         WHERE id = $4`,
+        [status, error, imported, feed.id]
+      );
+    }
+    results.push({ id: feed.id, name: feed.name, url: feed.url, status, error, imported });
+  }
+  return { totalInserted, results };
+}
+
+/**
+ * Background scheduler — checks every minute for active sources whose
+ * fetch_interval_minutes elapsed since last_fetched_at, and re-imports them.
+ */
+export function startNewsScheduler(pool, log) {
+  const tick = async () => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT id FROM news_sources
+        WHERE active = true
+          AND fetch_interval_minutes > 0
+          AND (last_fetched_at IS NULL
+               OR last_fetched_at < NOW() - (fetch_interval_minutes || ' minutes')::interval)
+      `);
+      for (const r of rows) {
+        try { await runFeedImport(pool, r.id); }
+        catch (e) { log?.error({ err: e.message, sourceId: r.id }, 'scheduler import failed'); }
+      }
+    } catch (err) {
+      log?.error({ err: err.message }, 'news scheduler tick failed');
+    }
+  };
+  // Run shortly after boot, then every 60s.
+  setTimeout(tick, 30_000);
+  setInterval(tick, 60_000);
 }
