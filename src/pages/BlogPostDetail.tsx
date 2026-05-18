@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEO from '@/components/SEO';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowLeft, Calendar, ExternalLink } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,6 +13,7 @@ interface NewsDetail {
   content: string;
   excerpt: string | null;
   image_url: string | null;
+  source_url?: string | null;
   created_at: string;
 }
 
@@ -100,7 +101,28 @@ const BlogPostDetail = () => {
         </div>
         <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
           <div className="max-w-4xl mx-auto prose prose-lg dark:prose-invert">
-            <div className="text-foreground leading-relaxed whitespace-pre-wrap">{post.content}</div>
+            <div className="not-prose mb-8 p-5 rounded-lg border border-border bg-muted/40">
+              <p className="text-sm uppercase tracking-wide text-muted-foreground mb-2">Resumo</p>
+              <p className="text-foreground leading-relaxed">
+                {post.excerpt || post.content}
+              </p>
+            </div>
+            {post.content && post.content !== post.excerpt && (
+              <div className="text-foreground leading-relaxed whitespace-pre-wrap mb-8">{post.content}</div>
+            )}
+            {post.source_url && (
+              <div className="not-prose mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-3 p-5 rounded-lg border border-primary/30 bg-primary/5">
+                <p className="text-sm text-muted-foreground flex-1">
+                  Esta é uma prévia. Leia a notícia completa no site de origem.
+                </p>
+                <a href={post.source_url} target="_blank" rel="noopener noreferrer">
+                  <Button className="group">
+                    Ler na íntegra
+                    <ExternalLink className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </Button>
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </article>
