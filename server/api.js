@@ -657,6 +657,19 @@ function parseFeed(xml) {
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const extractImage = (block, descriptionHtml) => {
+    // Try common feed image locations in order of reliability.
+    let m = block.match(/<media:content[^>]*url="([^"]+)"/i)
+      || block.match(/<media:thumbnail[^>]*url="([^"]+)"/i)
+      || block.match(/<enclosure[^>]*url="([^"]+)"[^>]*type="image/i)
+      || block.match(/<enclosure[^>]*type="image[^"]*"[^>]*url="([^"]+)"/i)
+      || block.match(/<itunes:image[^>]*href="([^"]+)"/i);
+    if (m) return m[1];
+    // Fall back to first <img> in description/content.
+    const imgMatch = (descriptionHtml || '').match(/<img[^>]*src="([^"]+)"/i)
+      || block.match(/<img[^>]*src="([^"]+)"/i);
+    return imgMatch ? imgMatch[1] : null;
+  };
   // RSS 2.0 <item>
   const itemRegex = /<item[\s>][\s\S]*?<\/item>/g;
   for (const block of xml.match(itemRegex) || []) {
@@ -665,10 +678,12 @@ function parseFeed(xml) {
     const l = block.match(/<link[^>]*>([\s\S]*?)<\/link>/);
     const g = block.match(/<guid[^>]*>([\s\S]*?)<\/guid>/);
     const title = t ? decode(t[1]).trim() : '';
-    const description = d ? decode(d[1]).replace(/<[^>]*>/g, '').trim().substring(0, 300) : '';
+    const descriptionRaw = d ? decode(d[1]) : '';
+    const description = descriptionRaw.replace(/<[^>]*>/g, '').trim().substring(0, 500);
     const link = l ? decode(l[1]).trim() : '';
     const guid = g ? decode(g[1]).trim() : '';
-    if (title) items.push({ title, description, link, guid });
+    const image = extractImage(block, descriptionRaw);
+    if (title) items.push({ title, description, link, guid, image });
   }
   // Atom <entry>
   const entryRegex = /<entry[\s>][\s\S]*?<\/entry>/g;
@@ -678,10 +693,12 @@ function parseFeed(xml) {
     const l = block.match(/<link[^>]*href="([^"]+)"/);
     const idTag = block.match(/<id[^>]*>([\s\S]*?)<\/id>/);
     const title = t ? decode(t[1]).trim() : '';
-    const description = s ? decode(s[1]).replace(/<[^>]*>/g, '').trim().substring(0, 300) : '';
+    const descriptionRaw = s ? decode(s[1]) : '';
+    const description = descriptionRaw.replace(/<[^>]*>/g, '').trim().substring(0, 500);
     const link = l ? l[1].trim() : '';
     const guid = idTag ? decode(idTag[1]).trim() : '';
-    if (title) items.push({ title, description, link, guid });
+    const image = extractImage(block, descriptionRaw);
+    if (title) items.push({ title, description, link, guid, image });
   }
   return items;
 }
@@ -726,10 +743,10 @@ export async function runFeedImport(pool, sourceFilter = null) {
             : await pool.query('SELECT id FROM news WHERE title = $1 LIMIT 1', [item.title]);
           if (existing.length === 0) {
             await pool.query(
-              `INSERT INTO news (title, content, excerpt, image_url, published, source_id, external_id)
-               VALUES ($1, $2, $3, $4, true, $5, $6)
+              `INSERT INTO news (title, content, excerpt, image_url, source_url, published, source_id, external_id)
+               VALUES ($1, $2, $3, $4, $5, true, $6, $7)
                ON CONFLICT (external_id) WHERE external_id IS NOT NULL DO NOTHING`,
-              [item.title, item.description, item.description, item.link, feed.id, externalId]
+              [item.title, item.description, item.description, item.image || null, item.link || null, feed.id, externalId]
             );
             imported++;
           } else if (externalId) {
@@ -737,10 +754,12 @@ export async function runFeedImport(pool, sourceFilter = null) {
             await pool.query(
               `UPDATE news
                  SET title = $1, excerpt = $2, content = $3,
+                     image_url = COALESCE($6, image_url),
+                     source_url = COALESCE(source_url, $7),
                      external_id = COALESCE(external_id, $4),
                      updated_at = NOW()
                WHERE id = $5`,
-              [item.title, item.description, item.description, externalId, existing[0].id]
+              [item.title, item.description, item.description, externalId, existing[0].id, item.image || null, item.link || null]
             );
           }
         }
