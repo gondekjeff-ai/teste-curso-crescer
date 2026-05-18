@@ -1,7 +1,7 @@
 import PageLayout from '@/components/PageLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowRight, RefreshCw, Newspaper } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import { api } from '@/lib/api';
@@ -15,6 +15,7 @@ interface NewsItem {
   excerpt: string | null;
   content: string;
   image_url: string | null;
+  source_url?: string | null;
   created_at: string;
 }
 
@@ -53,6 +54,21 @@ const Blog = () => {
 
   const featuredPost = news[0];
   const otherPosts = news.slice(1);
+
+  const NewsImage = ({ src, alt, className }: { src?: string | null; alt: string; className?: string }) => (
+    src ? (
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.parentElement as HTMLElement).classList.add('news-fallback'); }}
+      />
+    ) : (
+      <div className={`${className} flex items-center justify-center bg-gradient-to-br from-primary/15 via-primary/5 to-background`}>
+        <Newspaper className="w-12 h-12 text-primary/60" />
+      </div>
+    )
+  );
 
   return (
     <PageLayout>
@@ -106,10 +122,12 @@ const Blog = () => {
               <Link to={`/blog/${featuredPost.id}`} className="col-span-1 md:col-span-2 lg:col-span-3" onClick={() => window.scrollTo(0, 0)}>
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full">
                   <div className="grid md:grid-cols-2 h-full">
-                    <div className="bg-gray-200 h-64 md:h-full p-8 flex items-center justify-center">
-                      <div className="text-center">
-                        <span className="px-3 py-1 bg-primary/10 rounded-full text-sm font-medium inline-block mb-4">Destaque</span>
-                        <h3 className="text-2xl md:text-3xl font-bold">{featuredPost.title}</h3>
+                    <div className="relative h-64 md:h-full min-h-[16rem] overflow-hidden">
+                      <NewsImage src={featuredPost.image_url} alt={featuredPost.title} className="absolute inset-0 w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                        <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-medium inline-block mb-3 w-fit">Destaque</span>
+                        <h3 className="text-2xl md:text-3xl font-bold text-white drop-shadow">{featuredPost.title}</h3>
                       </div>
                     </div>
                     <CardContent className="p-8">
@@ -127,8 +145,8 @@ const Blog = () => {
               <Link key={post.id} to={`/blog/${post.id}`} onClick={() => window.scrollTo(0, 0)}>
                 <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 h-full">
                   <div className="grid grid-rows-[200px,1fr]">
-                    <div className="bg-gray-200 flex items-center justify-center">
-                      <span className="text-sm font-medium text-muted-foreground">Notícia</span>
+                    <div className="relative overflow-hidden">
+                      <NewsImage src={post.image_url} alt={post.title} className="absolute inset-0 w-full h-full object-cover" />
                     </div>
                     <CardContent className="p-6">
                       <p className="text-muted-foreground text-sm mb-2">{new Date(post.created_at).toLocaleDateString('pt-BR')}</p>

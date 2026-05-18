@@ -49,6 +49,20 @@ pool.on('connect', () => {
       CREATE UNIQUE INDEX IF NOT EXISTS news_external_id_unique
         ON news (external_id) WHERE external_id IS NOT NULL;
     `);
+    await pool.query(`
+      ALTER TABLE news
+        ADD COLUMN IF NOT EXISTS source_url TEXT;
+    `);
+    // Backfill: previously the article link was incorrectly stored in image_url.
+    // Move any non-image URL into source_url and clear image_url.
+    await pool.query(`
+      UPDATE news
+         SET source_url = COALESCE(source_url, image_url),
+             image_url = NULL
+       WHERE image_url IS NOT NULL
+         AND image_url ~* '^https?://'
+         AND image_url !~* '\\.(png|jpe?g|gif|webp|svg|avif)(\\?|$)';
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
