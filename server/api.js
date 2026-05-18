@@ -149,7 +149,7 @@ export async function registerApiRoutes(app, opts) {
   app.get('/news', async (req, reply) => {
     const limit = parseInt(req.query?.limit) || 20;
     const { rows } = await pool.query(
-      'SELECT id, title, content, excerpt, image_url, created_at FROM news WHERE published = true ORDER BY RANDOM() LIMIT $1',
+      'SELECT id, title, content, excerpt, image_url, source_url, created_at FROM news WHERE published = true ORDER BY RANDOM() LIMIT $1',
       [limit]
     );
     return rows;
@@ -157,7 +157,7 @@ export async function registerApiRoutes(app, opts) {
 
   app.get('/news/:id', async (req, reply) => {
     const { rows } = await pool.query(
-      'SELECT id, title, content, excerpt, image_url, created_at FROM news WHERE id = $1 AND published = true',
+      'SELECT id, title, content, excerpt, image_url, source_url, created_at FROM news WHERE id = $1 AND published = true',
       [req.params.id]
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Notícia não encontrada' });
