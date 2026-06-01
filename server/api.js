@@ -222,6 +222,71 @@ export async function registerApiRoutes(app, opts) {
     return { success: true };
   });
 
+  // =================== CAREERS (public submit) ===================
+  // Accepts multipart/form-data with PDF CV (max 5MB).
+  app.post('/careers/apply', async (req, reply) => {
+    try {
+      if (!req.isMultipart()) {
+        return reply.code(400).send({ message: 'Envio inválido' });
+      }
+      const fields = {};
+      let cv = null;
+      const parts = req.parts();
+      for await (const part of parts) {
+        if (part.type === 'file') {
+          if (part.fieldname !== 'cv') {
+            // Drain unknown files
+            await part.toBuffer().catch(() => {});
+            continue;
+          }
+          const buf = await part.toBuffer();
+          if (buf.length > 5 * 1024 * 1024) {
+            return reply.code(400).send({ message: 'O currículo deve ter no máximo 5MB' });
+          }
+          const mime = part.mimetype || '';
+          const isPdf = mime === 'application/pdf' || /\.pdf$/i.test(part.filename || '');
+          if (!isPdf) {
+            return reply.code(400).send({ message: 'O currículo deve estar no formato PDF' });
+          }
+          cv = { filename: part.filename || 'curriculo.pdf', mime: 'application/pdf', buffer: buf };
+        } else {
+          fields[part.fieldname] = typeof part.value === 'string' ? part.value : '';
+        }
+      }
+
+      const full_name = (fields.full_name || '').trim();
+      const city = (fields.city || '').trim();
+      const state = (fields.state || '').trim().toUpperCase().slice(0, 2);
+      const cep = (fields.cep || '').trim();
+      const phone = (fields.phone || '').trim();
+      const email = (fields.email || '').trim().toLowerCase();
+
+      if (!full_name || full_name.length < 3 || full_name.length > 150)
+        return reply.code(400).send({ message: 'Informe seu nome completo' });
+      if (!city || city.length > 100)
+        return reply.code(400).send({ message: 'Informe sua cidade' });
+      if (!/^[A-Z]{2}$/.test(state))
+        return reply.code(400).send({ message: 'UF inválida (use 2 letras, ex: SP)' });
+      if (!/^\d{5}-?\d{3}$/.test(cep))
+        return reply.code(400).send({ message: 'CEP inválido' });
+      if (!/^[\d()+\-\s]{8,20}$/.test(phone))
+        return reply.code(400).send({ message: 'Telefone inválido' });
+      if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email) || email.length > 255)
+        return reply.code(400).send({ message: 'E-mail inválido' });
+      if (!cv) return reply.code(400).send({ message: 'Anexe seu currículo em PDF (até 5MB)' });
+
+      await pool.query(
+        `INSERT INTO career_applications
+           (full_name, city, state, cep, phone, email, cv_filename, cv_mime, cv_data, cv_size_bytes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [full_name, city, state, cep, phone, email, cv.filename, cv.mime, cv.buffer, cv.buffer.length]
+      );
+      return reply.send({ success: true });
+    } catch (err) {
+      return safeError(reply, err, app.log, 500, 'Falha ao enviar candidatura');
+    }
+  });
+
   app.post('/send-contact-email', async (req) => {
     const { name, email, message } = req.body || {};
     const resendKey = process.env.RESEND_API_KEY;
