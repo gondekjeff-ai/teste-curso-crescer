@@ -63,6 +63,28 @@ pool.on('connect', () => {
          AND image_url ~* '^https?://'
          AND image_url !~* '\\.(png|jpe?g|gif|webp|svg|avif)(\\?|$)';
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS career_applications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        full_name TEXT NOT NULL,
+        city TEXT NOT NULL,
+        state TEXT NOT NULL,
+        cep TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        email TEXT NOT NULL,
+        cv_filename TEXT NOT NULL,
+        cv_mime TEXT NOT NULL,
+        cv_data BYTEA NOT NULL,
+        cv_size_bytes INTEGER NOT NULL,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'new',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_career_applications_created
+        ON career_applications (created_at DESC);
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
