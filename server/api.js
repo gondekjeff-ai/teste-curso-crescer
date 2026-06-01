@@ -548,6 +548,51 @@ export async function registerApiRoutes(app, opts) {
     return rows;
   });
 
+  // Career applications (admin CRUD)
+  app.get('/admin/career-applications', adminGuard, async () => {
+    const { rows } = await pool.query(
+      `SELECT id, full_name, city, state, cep, phone, email,
+              cv_filename, cv_mime, cv_size_bytes, notes, status, created_at
+         FROM career_applications
+        ORDER BY created_at DESC`
+    );
+    return rows;
+  });
+  app.put('/admin/career-applications/:id', adminGuard, async (req, reply) => {
+    const { status, notes } = req.body || {};
+    const allowed = ['new', 'reviewing', 'contacted', 'hired', 'rejected'];
+    if (status && !allowed.includes(status))
+      return reply.code(400).send({ message: 'Status inválido' });
+    const { rows } = await pool.query(
+      `UPDATE career_applications
+          SET status = COALESCE($1, status),
+              notes = COALESCE($2, notes)
+        WHERE id = $3
+        RETURNING id, full_name, city, state, cep, phone, email,
+                  cv_filename, cv_mime, cv_size_bytes, notes, status, created_at`,
+      [status || null, notes ?? null, req.params.id]
+    );
+    if (rows.length === 0) return reply.code(404).send({ message: 'Candidatura não encontrada' });
+    return rows[0];
+  });
+  app.delete('/admin/career-applications/:id', adminGuard, async (req) => {
+    await pool.query('DELETE FROM career_applications WHERE id = $1', [req.params.id]);
+    return { success: true };
+  });
+  app.get('/admin/career-applications/:id/cv', adminGuard, async (req, reply) => {
+    const { rows } = await pool.query(
+      'SELECT cv_data, cv_mime, cv_filename FROM career_applications WHERE id = $1',
+      [req.params.id]
+    );
+    if (rows.length === 0) return reply.code(404).send({ message: 'Currículo não encontrado' });
+    const r = rows[0];
+    reply
+      .header('Content-Type', r.cv_mime || 'application/pdf')
+      .header('Content-Disposition', `inline; filename="${r.cv_filename || 'curriculo.pdf'}"`)
+      .header('Cache-Control', 'private, no-store');
+    return reply.send(r.cv_data);
+  });
+
   // Stats
   app.get('/admin/stats', adminGuard, async () => {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
