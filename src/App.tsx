@@ -16,6 +16,7 @@ import MFASettings from "./pages/admin/MFASettings";
 import ProductsManager from "./pages/admin/ProductsManager";
 import NewsManager from "./pages/admin/NewsManager";
 import ContactsManager from "./pages/admin/ContactsManager";
+import CareersManager from "./pages/admin/CareersManager";
 import FireCatProject from "./pages/FireCatProject";
 import SportRetailProject from "./pages/SportRetailProject";
 import WorkwearProject from "./pages/WorkwearProject";
@@ -69,6 +70,7 @@ const App = () => {
               <Route path="products" element={<ProductsManager />} />
               <Route path="news" element={<NewsManager />} />
               <Route path="contacts" element={<ContactsManager />} />
+              <Route path="careers" element={<CareersManager />} />
               <Route path="security" element={<MFASettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
