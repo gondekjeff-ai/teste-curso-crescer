@@ -539,6 +539,40 @@ export async function registerApiRoutes(app, opts) {
     return { success: true };
   });
 
+  // Testimonials (admin CRUD)
+  app.get('/admin/testimonials', adminGuard, async () => {
+    const { rows } = await pool.query(
+      'SELECT * FROM testimonials ORDER BY display_order, created_at DESC'
+    );
+    return rows;
+  });
+  app.post('/admin/testimonials', adminGuard, async (req, reply) => {
+    const { opinion, person_name, company, display_order, active } = req.body || {};
+    if (!opinion || !person_name || !company) {
+      return reply.code(400).send({ message: 'Opinião, nome e empresa são obrigatórios' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO testimonials (opinion, person_name, company, display_order, active)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [opinion, person_name, company, display_order || 0, active !== false]
+    );
+    return rows[0];
+  });
+  app.put('/admin/testimonials/:id', adminGuard, async (req) => {
+    const { opinion, person_name, company, display_order, active } = req.body || {};
+    const { rows } = await pool.query(
+      `UPDATE testimonials
+          SET opinion=$1, person_name=$2, company=$3, display_order=$4, active=$5, updated_at=NOW()
+        WHERE id=$6 RETURNING *`,
+      [opinion, person_name, company, display_order || 0, active !== false, req.params.id]
+    );
+    return rows[0];
+  });
+  app.delete('/admin/testimonials/:id', adminGuard, async (req) => {
+    await pool.query('DELETE FROM testimonials WHERE id = $1', [req.params.id]);
+    return { success: true };
+  });
+
   // Contacts
   app.get('/admin/contacts', adminGuard, async () => {
     const { rows } = await pool.query('SELECT * FROM contacts ORDER BY created_at DESC');
