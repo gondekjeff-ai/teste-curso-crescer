@@ -85,6 +85,22 @@ pool.on('connect', () => {
       CREATE INDEX IF NOT EXISTS idx_career_applications_created
         ON career_applications (created_at DESC);
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS testimonials (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        opinion TEXT NOT NULL,
+        person_name TEXT NOT NULL,
+        company TEXT NOT NULL,
+        display_order INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_testimonials_active_order
+        ON testimonials (active, display_order);
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
