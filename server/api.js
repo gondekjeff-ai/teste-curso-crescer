@@ -194,6 +194,13 @@ export async function registerApiRoutes(app, opts) {
     return rows;
   });
 
+  app.get('/testimonials', async () => {
+    const { rows } = await pool.query(
+      'SELECT id, opinion, person_name, company, display_order FROM testimonials WHERE active = true ORDER BY display_order, created_at DESC'
+    );
+    return rows;
+  });
+
   app.get('/site-content/:section', async (req) => {
     const { rows } = await pool.query(
       'SELECT content FROM site_content WHERE section = $1', [req.params.section]
