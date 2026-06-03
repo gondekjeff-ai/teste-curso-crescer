@@ -1,19 +1,42 @@
 
-import { ArrowLeft, CheckCircle, ArrowRight } from 'lucide-react';
+import { ArrowLeft, CheckCircle, ArrowRight, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from "framer-motion";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import PageLayout from '@/components/PageLayout';
 import SEO from '@/components/SEO';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+
+interface Testimonial {
+  id: string;
+  opinion: string;
+  person_name: string;
+  company: string;
+}
 
 const About = () => {
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  
+
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    fetch('/api/testimonials')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setTestimonials(Array.isArray(data) ? data : []))
+      .catch(() => setTestimonials([]));
+  }, []);
+
   return (
     <PageLayout>
       <SEO
@@ -119,53 +142,57 @@ const About = () => {
                 </div>
               </motion.div>
               
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.6 }}
                 className="mb-16"
               >
-                <h2 className="text-3xl font-bold mb-6 text-foreground">Nossos Serviços</h2>
+                <h2 className="text-3xl font-bold mb-6 text-foreground">
+                  Opinião de Nossos Clientes/Parceiros
+                </h2>
                 <p className="text-muted-foreground mb-8">
-                  Oferecemos uma gama completa de serviços de TI, incluindo consultoria estratégica, 
-                  gestão de infraestrutura em nuvem, cibersegurança, gerenciamento de redes e suporte técnico 24/7.
+                  O que dizem aqueles que confiaram na OptiStrat para transformar a gestão de sua TI.
                 </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[
-                    {
-                      title: "Consultoria de TI",
-                      description: "Planejamento estratégico e avaliação de infraestrutura"
-                    },
-                    {
-                      title: "Cloud Computing",
-                      description: "Migração e gerenciamento de ambientes em nuvem"
-                    },
-                    {
-                      title: "Cibersegurança",
-                      description: "Proteção avançada contra ameaças digitais"
-                    },
-                    {
-                      title: "Gestão de Redes",
-                      description: "Monitoramento e otimização 24/7"
-                    },
-                    {
-                      title: "Backup e Recovery",
-                      description: "Soluções seguras de backup e recuperação de dados"
-                    },
-                    {
-                      title: "Suporte Técnico",
-                      description: "Atendimento especializado a qualquer momento"
-                    }
-                  ].map((service, i) => (
-                    <Card key={i} className="bg-card border border-border">
-                      <CardContent className="p-6">
-                        <h3 className="font-bold text-lg mb-2 text-foreground">{service.title}</h3>
-                        <p className="text-muted-foreground text-sm">{service.description}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+
+                {testimonials.length === 0 ? (
+                  <Card className="bg-card border border-border">
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      <Quote className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                      <p>Em breve, depoimentos de nossos clientes e parceiros.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Carousel
+                    opts={{ align: "start", loop: testimonials.length > 1 }}
+                    className="w-full"
+                  >
+                    <CarouselContent>
+                      {testimonials.map((t) => (
+                        <CarouselItem key={t.id} className="md:basis-1/2 lg:basis-1/2">
+                          <Card className="bg-card border border-border h-full">
+                            <CardContent className="p-8 flex flex-col h-full">
+                              <Quote className="h-8 w-8 text-primary mb-4 flex-shrink-0" />
+                              <p className="text-foreground italic text-base leading-relaxed mb-6 flex-1">
+                                &ldquo;{t.opinion}&rdquo;
+                              </p>
+                              <div className="border-t border-border pt-4">
+                                <p className="font-semibold text-foreground">{t.person_name}</p>
+                                <p className="text-sm text-muted-foreground">{t.company}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {testimonials.length > 1 && (
+                      <>
+                        <CarouselPrevious className="hidden sm:flex" />
+                        <CarouselNext className="hidden sm:flex" />
+                      </>
+                    )}
+                  </Carousel>
+                )}
               </motion.div>
             </div>
             
