@@ -97,6 +97,7 @@ const Footer = () => {
               <li><Link to="/about" className="text-gray-300 hover:text-white transition-colors">Sobre Nós</Link></li>
               <li><Link to="/careers" className="text-gray-300 hover:text-white transition-colors">Carreiras</Link></li>
               <li><Link to="/privacy-policy" className="text-gray-300 hover:text-white transition-colors">Política de Privacidade</Link></li>
+              <li><Link to="/cookie-policy" className="text-gray-300 hover:text-white transition-colors">Política de Cookies</Link></li>
             </ul>
           </div>
           
@@ -135,6 +136,7 @@ const Footer = () => {
           </p>
           <div className="flex space-x-6">
             <Link to="/privacy-policy" className="text-sm text-white/60 hover:text-white transition-colors">Política de Privacidade</Link>
+            <Link to="/cookie-policy" className="text-sm text-white/60 hover:text-white transition-colors">Política de Cookies</Link>
           </div>
         </div>
       </div>
