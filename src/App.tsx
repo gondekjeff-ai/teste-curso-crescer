@@ -35,6 +35,7 @@ import BlogPostDetail from "./pages/BlogPostDetail";
 import SolutionDetail from "./pages/SolutionDetail";
 import Solucoes from "./pages/Solucoes";
 import ScrollToTop from "./components/ScrollToTop";
+import CookieConsentBanner from "./components/CookieConsentBanner";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => {
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieConsentBanner />
         </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
