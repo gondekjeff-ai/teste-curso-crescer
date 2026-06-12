@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useId } from 'react';
 import { Cookie, X, Shield, BarChart3, Megaphone, Sliders } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -75,12 +75,29 @@ function saveConsent(method: ConsentRecord['method'], categories: Categories) {
   window.dispatchEvent(new CustomEvent('cookie-consent-change', { detail: record }));
 }
 
+/* ------------------------------------------------------------------ */
+/*  Focus trap helpers                                                */
+/* ------------------------------------------------------------------ */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getFocusable(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR));
+}
+
 const CookieConsentBanner = () => {
   const [showBanner, setShowBanner] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [hasChoice, setHasChoice] = useState(false);
   const [preferences, setPreferences] = useState<Categories>(defaultCategories);
 
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const floatingBtnRef = useRef<HTMLButtonElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+
+  /* ---- initial load ------------------------------------------------ */
   useEffect(() => {
     const existing = readConsent();
     if (!existing) {
@@ -102,6 +119,92 @@ const CookieConsentBanner = () => {
     return () => window.removeEventListener('open-cookie-preferences', openHandler);
   }, []);
 
+  /* ---- focus management on open/close ------------------------------ */
+  useEffect(() => {
+    if (showPreferences) {
+      lastFocusedRef.current = document.activeElement as HTMLElement;
+      // Wait for render then focus the close button
+      const timer = setTimeout(() => {
+        closeBtnRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showPreferences]);
+
+  const restoreFocus = useCallback(() => {
+    setTimeout(() => {
+      if (lastFocusedRef.current && 'focus' in lastFocusedRef.current) {
+        lastFocusedRef.current.focus();
+      } else if (floatingBtnRef.current) {
+        floatingBtnRef.current.focus();
+      }
+    }, 50);
+  }, []);
+
+  /* ---- Escape key -------------------------------------------------- */
+  useEffect(() => {
+    if (!showPreferences && !showBanner) return;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (showPreferences) {
+          setShowPreferences(false);
+          restoreFocus();
+        } else if (showBanner) {
+          setShowBanner(false);
+          setHasChoice(true);
+          restoreFocus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showPreferences, showBanner, restoreFocus]);
+
+  /* ---- focus trap inside modal ------------------------------------- */
+  useEffect(() => {
+    if (!showPreferences || !modalRef.current) return;
+
+    const container = modalRef.current;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const focusable = getFocusable(container);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showPreferences]);
+
+  /* ---- lock body scroll when modal is open ----------------------- */
+  useEffect(() => {
+    if (showPreferences) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [showPreferences]);
+
   const acceptAll = useCallback(() => {
     const categories: Categories = { necessary: true, analytics: true, marketing: true };
     saveConsent('accept_all', categories);
@@ -109,7 +212,8 @@ const CookieConsentBanner = () => {
     setHasChoice(true);
     setShowBanner(false);
     setShowPreferences(false);
-  }, []);
+    restoreFocus();
+  }, [restoreFocus]);
 
   const rejectAll = useCallback(() => {
     const categories: Categories = { necessary: true, analytics: false, marketing: false };
@@ -118,32 +222,44 @@ const CookieConsentBanner = () => {
     setHasChoice(true);
     setShowBanner(false);
     setShowPreferences(false);
-  }, []);
+    restoreFocus();
+  }, [restoreFocus]);
 
   const savePrefs = useCallback(() => {
     saveConsent('custom', preferences);
     setHasChoice(true);
     setShowBanner(false);
     setShowPreferences(false);
-  }, [preferences]);
+    restoreFocus();
+  }, [preferences, restoreFocus]);
+
+  const closeModal = useCallback(() => {
+    setShowPreferences(false);
+    restoreFocus();
+  }, [restoreFocus]);
 
   return (
     <>
       {/* Botão flutuante para reabrir preferências a qualquer momento */}
       {hasChoice && !showPreferences && !showBanner && (
         <button
+          ref={floatingBtnRef}
           type="button"
           aria-label="Gerenciar preferências de cookies"
-          onClick={() => setShowPreferences(true)}
-          className="fixed bottom-4 left-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-1 ring-border transition hover:scale-105 hover:bg-primary/90"
+          onClick={() => {
+            lastFocusedRef.current = document.activeElement as HTMLElement;
+            setShowPreferences(true);
+          }}
+          className="fixed bottom-4 left-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-1 ring-border transition hover:scale-105 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <Cookie className="h-5 w-5" />
+          <Cookie className="h-5 w-5" aria-hidden="true" />
         </button>
       )}
 
       {/* Banner inicial */}
       {showBanner && !showPreferences && (
         <div
+          ref={bannerRef}
           role="dialog"
           aria-live="polite"
           aria-label="Aviso de cookies"
@@ -151,7 +267,10 @@ const CookieConsentBanner = () => {
         >
           <div className="mx-auto flex max-w-6xl flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
             <div className="flex flex-1 items-start gap-3">
-              <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary sm:flex">
+              <div
+                className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary sm:flex"
+                aria-hidden="true"
+              >
                 <Cookie className="h-5 w-5" />
               </div>
               <div>
@@ -164,11 +283,11 @@ const CookieConsentBanner = () => {
                   <strong>LGPD (Lei nº 13.709/2018)</strong> e pelo{' '}
                   <strong>Marco Civil da Internet (Lei nº 12.965/2014)</strong>. Você pode aceitar,
                   recusar os não essenciais ou configurar suas preferências. Consulte nossa{' '}
-                  <Link to="/cookie-policy" className="font-medium text-primary underline-offset-2 hover:underline">
+                  <Link to="/cookie-policy" className="font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm">
                     Política de Cookies
                   </Link>{' '}
                   e a{' '}
-                  <Link to="/privacy-policy" className="font-medium text-primary underline-offset-2 hover:underline">
+                  <Link to="/privacy-policy" className="font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm">
                     Política de Privacidade
                   </Link>
                   .
@@ -176,8 +295,15 @@ const CookieConsentBanner = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 lg:flex-nowrap lg:justify-end">
-              <Button variant="outline" size="sm" onClick={() => setShowPreferences(true)}>
-                <Sliders className="mr-2 h-4 w-4" /> Configurar
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  lastFocusedRef.current = document.activeElement as HTMLElement;
+                  setShowPreferences(true);
+                }}
+              >
+                <Sliders className="mr-2 h-4 w-4" aria-hidden="true" /> Configurar
               </Button>
               <Button variant="outline" size="sm" onClick={rejectAll}>
                 Recusar
@@ -197,17 +323,34 @@ const CookieConsentBanner = () => {
           aria-modal="true"
           aria-label="Preferências de cookies"
           className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-0 backdrop-blur sm:items-center sm:p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeModal();
+            }
+          }}
         >
-          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-border bg-card text-card-foreground shadow-2xl sm:rounded-2xl">
+          <div
+            ref={modalRef}
+            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-border bg-card text-card-foreground shadow-2xl sm:rounded-2xl"
+          >
             <div className="flex items-start justify-between border-b border-border p-5">
               <div>
-                <h2 className="text-lg font-semibold">Preferências de cookies</h2>
+                <h2 id="cookie-modal-title" className="text-lg font-semibold">
+                  Preferências de cookies
+                </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Versão da política: {CONSENT_VERSION}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setShowPreferences(false)} aria-label="Fechar">
-                <X className="h-4 w-4" />
+              <Button
+                ref={closeBtnRef}
+                variant="ghost"
+                size="icon"
+                onClick={closeModal}
+                aria-label="Fechar preferências de cookies"
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
 
@@ -220,21 +363,21 @@ const CookieConsentBanner = () => {
               </p>
 
               <CategoryRow
-                icon={<Shield className="h-4 w-4" />}
+                icon={<Shield className="h-4 w-4" aria-hidden="true" />}
                 title="Necessários"
                 description="Indispensáveis para a operação do site, autenticação, segurança e preservação de suas escolhas. Base legal: legítimo interesse e execução de contrato (art. 7º, IX e V, LGPD)."
                 checked
                 disabled
               />
               <CategoryRow
-                icon={<BarChart3 className="h-4 w-4" />}
+                icon={<BarChart3 className="h-4 w-4" aria-hidden="true" />}
                 title="Analíticos"
                 description="Permitem mensurar audiência, performance e melhorar a experiência (ex.: Google Analytics). Somente ativados mediante seu consentimento expresso."
                 checked={preferences.analytics}
                 onChange={(v) => setPreferences((p) => ({ ...p, analytics: v }))}
               />
               <CategoryRow
-                icon={<Megaphone className="h-4 w-4" />}
+                icon={<Megaphone className="h-4 w-4" aria-hidden="true" />}
                 title="Marketing"
                 description="Utilizados para personalizar anúncios e mensurar campanhas em parceiros (ex.: Google Ads, Meta, LinkedIn). Ativados apenas após consentimento."
                 checked={preferences.marketing}
@@ -262,6 +405,9 @@ const CookieConsentBanner = () => {
   );
 };
 
+/* ------------------------------------------------------------------ */
+/*  CategoryRow                                                       */
+/* ------------------------------------------------------------------ */
 interface CategoryRowProps {
   icon: React.ReactNode;
   title: string;
@@ -271,25 +417,39 @@ interface CategoryRowProps {
   onChange?: (v: boolean) => void;
 }
 
-const CategoryRow = ({ icon, title, description, checked, disabled, onChange }: CategoryRowProps) => (
-  <div className="flex items-start justify-between gap-4 rounded-lg border border-border bg-background/50 p-4">
-    <div className="flex flex-1 items-start gap-3">
-      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        {icon}
+const CategoryRow = ({ icon, title, description, checked, disabled, onChange }: CategoryRowProps) => {
+  const baseId = useId();
+  const titleId = `${baseId}-title`;
+  const descId = `${baseId}-desc`;
+
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-lg border border-border bg-background/50 p-4">
+      <div className="flex flex-1 items-start gap-3">
+        <div
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+          aria-hidden="true"
+        >
+          {icon}
+        </div>
+        <div>
+          <h3 id={titleId} className="text-sm font-semibold text-foreground">
+            {title}
+          </h3>
+          <p id={descId} className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        </div>
       </div>
-      <div>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
-      </div>
+      <Switch
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={(v) => onChange?.(Boolean(v))}
+        aria-labelledby={titleId}
+        aria-describedby={descId}
+      />
     </div>
-    <Switch
-      checked={checked}
-      disabled={disabled}
-      onCheckedChange={(v) => onChange?.(Boolean(v))}
-      aria-label={title}
-    />
-  </div>
-);
+  );
+};
 
 // Helper exportável para reabrir o banner a partir de qualquer página (ex.: Política de Cookies)
 export function openCookiePreferences() {
