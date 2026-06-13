@@ -6,6 +6,18 @@ const corsHeaders = {
 // Simple in-memory rate limiting (no DB dependency)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
+// SECURITY: limits are hardcoded server-side per endpoint. Any client-supplied
+// maxAttempts/windowMinutes are ignored so callers cannot disable rate limiting.
+const LIMITS: Record<string, { maxAttempts: number; windowMs: number }> = {
+  login:    { maxAttempts: 5,  windowMs: 15 * 60_000 },
+  signup:   { maxAttempts: 5,  windowMs: 60 * 60_000 },
+  contact:  { maxAttempts: 5,  windowMs: 60_000 },
+  order:    { maxAttempts: 5,  windowMs: 60_000 },
+  chatbot:  { maxAttempts: 30, windowMs: 60_000 },
+  mfa:      { maxAttempts: 5,  windowMs: 15 * 60_000 },
+};
+const DEFAULT_LIMIT = { maxAttempts: 10, windowMs: 60_000 };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -20,18 +32,19 @@ Deno.serve(async (req) => {
                     req.headers.get("x-real-ip") || 
                     "unknown";
 
-    const { endpoint, maxAttempts = 5, windowMinutes = 15 } = await req.json();
-
-    if (!endpoint) {
+    const body = await req.json().catch(() => ({}));
+    const endpoint = typeof body?.endpoint === "string" ? body.endpoint : "";
+    if (!endpoint || endpoint.length > 64) {
       return new Response(
-        JSON.stringify({ error: "Endpoint is required" }),
+        JSON.stringify({ error: "Valid endpoint is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
+    const { maxAttempts, windowMs } = LIMITS[endpoint] ?? DEFAULT_LIMIT;
+
     const key = `${clientIP}:${endpoint}`;
     const now = Date.now();
-    const windowMs = windowMinutes * 60 * 1000;
     const record = rateLimitStore.get(key);
 
     if (!record || now > record.resetTime) {
@@ -58,8 +71,8 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error('Rate limit check error:', error);
     return new Response(
-      JSON.stringify({ allowed: true, remaining: 0 }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      JSON.stringify({ allowed: false, remaining: 0, error: "rate_limit_error" }),
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 });
