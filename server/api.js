@@ -483,9 +483,15 @@ export async function registerApiRoutes(app, opts) {
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Arquivo não encontrado' });
     const media = rows[0];
+    // SECURITY: never serve SVG (or unknown types) inline — they could contain
+    // active content that executes in the browser context.
+    const mime = media.mime_type || 'application/octet-stream';
+    const isSvg = /svg/i.test(mime);
+    const safeFilename = String(media.filename || 'file').replace(/[\r\n"\\]/g, '_');
     reply
-      .header('Content-Type', media.mime_type)
-      .header('Content-Disposition', `inline; filename="${media.filename}"`)
+      .header('Content-Type', isSvg ? 'application/octet-stream' : mime)
+      .header('X-Content-Type-Options', 'nosniff')
+      .header('Content-Disposition', `${isSvg ? 'attachment' : 'inline'}; filename="${safeFilename}"`)
       .header('Cache-Control', 'public, max-age=604800');
     return reply.send(media.data);
   });
