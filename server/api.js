@@ -237,6 +237,13 @@ export async function registerApiRoutes(app, opts) {
     return rows;
   });
 
+  app.get('/social-links', async () => {
+    const { rows } = await pool.query(
+      'SELECT id, platform, url, label, display_order FROM social_links WHERE active = true ORDER BY display_order, created_at DESC'
+    );
+    return rows;
+  });
+
   app.get('/site-content/:section', async (req) => {
     const { rows } = await pool.query(
       'SELECT content FROM site_content WHERE section = $1', [req.params.section]
