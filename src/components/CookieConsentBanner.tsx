@@ -97,6 +97,11 @@ const CookieConsentBanner = () => {
   const floatingBtnRef = useRef<HTMLButtonElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
+  const bannerTitleId = useId();
+  const bannerDescId = useId();
+  const modalTitleId = useId();
+  const modalDescId = useId();
+
   /* ---- initial load ------------------------------------------------ */
   useEffect(() => {
     const existing = readConsent();
@@ -262,8 +267,11 @@ const CookieConsentBanner = () => {
           ref={bannerRef}
           role="dialog"
           aria-live="polite"
-          aria-label="Aviso de cookies"
+          aria-modal="false"
+          aria-labelledby={bannerTitleId}
+          aria-describedby={bannerDescId}
           className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 p-4 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:p-6"
+          data-testid="cookie-banner"
         >
           <div className="mx-auto flex max-w-6xl flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
             <div className="flex flex-1 items-start gap-3">
@@ -274,10 +282,10 @@ const CookieConsentBanner = () => {
                 <Cookie className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="mb-1 text-base font-semibold text-foreground sm:text-lg">
+                <h2 id={bannerTitleId} className="mb-1 text-base font-semibold text-foreground sm:text-lg">
                   Utilizamos cookies neste site
                 </h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                <p id={bannerDescId} className="text-sm leading-relaxed text-muted-foreground">
                   Utilizamos cookies e tecnologias similares para garantir o funcionamento do site,
                   analisar o desempenho e personalizar conteúdo, conforme previsto pela{' '}
                   <strong>LGPD (Lei nº 13.709/2018)</strong> e pelo{' '}
@@ -321,8 +329,10 @@ const CookieConsentBanner = () => {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Preferências de cookies"
+          aria-labelledby={modalTitleId}
+          aria-describedby={modalDescId}
           className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-0 backdrop-blur sm:items-center sm:p-4"
+          data-testid="cookie-preferences-modal"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               closeModal();
@@ -335,7 +345,7 @@ const CookieConsentBanner = () => {
           >
             <div className="flex items-start justify-between border-b border-border p-5">
               <div>
-                <h2 id="cookie-modal-title" className="text-lg font-semibold">
+                <h2 id={modalTitleId} className="text-lg font-semibold">
                   Preferências de cookies
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -355,7 +365,7 @@ const CookieConsentBanner = () => {
             </div>
 
             <div className="flex-1 space-y-4 overflow-y-auto p-5">
-              <p className="text-sm text-muted-foreground">
+              <p id={modalDescId} className="text-sm text-muted-foreground">
                 Escolha quais categorias de cookies deseja autorizar. Os cookies necessários não
                 podem ser desativados, pois são essenciais ao funcionamento do site. Seu
                 consentimento é registrado com data, hora e versão da política para fins de
