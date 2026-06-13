@@ -5,6 +5,7 @@ import BlogPreview from '@/components/BlogPreview';
 import ReflectiveQuestions from '@/components/ReflectiveQuestions';
 import ChatBot from '@/components/ChatBot';
 import MiniContactForm from '@/components/MiniContactForm';
+import SocialLinks from '@/components/SocialLinks';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
 import { IndexPopup } from '@/components/IndexPopup';
@@ -36,6 +37,7 @@ const Index = () => {
       <div id="contact" className="bg-gradient-to-b from-background to-secondary py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <MiniContactForm />
+          <SocialLinks />
         </div>
       </div>
       <Footer />
