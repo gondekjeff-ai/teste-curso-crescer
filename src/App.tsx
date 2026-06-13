@@ -18,6 +18,7 @@ import NewsManager from "./pages/admin/NewsManager";
 import ContactsManager from "./pages/admin/ContactsManager";
 import CareersManager from "./pages/admin/CareersManager";
 import TestimonialsManager from "./pages/admin/TestimonialsManager";
+import SocialLinksManager from "./pages/admin/SocialLinksManager";
 import FireCatProject from "./pages/FireCatProject";
 import SportRetailProject from "./pages/SportRetailProject";
 import WorkwearProject from "./pages/WorkwearProject";
@@ -76,6 +77,7 @@ const App = () => {
               <Route path="contacts" element={<ContactsManager />} />
               <Route path="careers" element={<CareersManager />} />
               <Route path="testimonials" element={<TestimonialsManager />} />
+              <Route path="social-links" element={<SocialLinksManager />} />
               <Route path="security" element={<MFASettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
