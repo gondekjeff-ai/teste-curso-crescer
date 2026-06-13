@@ -3,6 +3,24 @@ import jwt from 'jsonwebtoken';
 import multipart from '@fastify/multipart';
 import { authHook, JWT_SECRET } from './auth.js';
 
+/** Escape user input before embedding in HTML email bodies. */
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Strip CRLF from email header values (subject) to prevent header injection. */
+function sanitizeHeader(value, max = 200) {
+  return String(value ?? '').replace(/[\r\n]+/g, ' ').slice(0, max);
+}
+
+/** Basic email format check. */
+const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
 /**
  * Generic error wrapper: logs full error server-side, returns generic message to client.
  */
@@ -125,12 +143,30 @@ export async function registerApiRoutes(app, opts) {
 
   app.post('/setup', async (req, reply) => {
     try {
+      // SECURITY: require a pre-shared SETUP_TOKEN to prevent any internet caller
+      // from registering themselves as admin during the initial deployment window
+      // or after an accidental users-table truncation.
+      const SETUP_TOKEN = process.env.SETUP_TOKEN;
+      if (!SETUP_TOKEN || SETUP_TOKEN.length < 16) {
+        return reply.code(503).send({ message: 'Setup desabilitado. Configure SETUP_TOKEN no ambiente.' });
+      }
+      const provided = req.body?.setupToken || req.headers['x-setup-token'];
+      if (provided !== SETUP_TOKEN) {
+        return reply.code(403).send({ message: 'Token de setup inválido' });
+      }
+
       const { rows } = await pool.query('SELECT COUNT(*) as count FROM users');
       if (parseInt(rows[0].count) > 0) {
         return reply.code(400).send({ message: 'Setup já realizado. Usuários já existem.' });
       }
       const { email, password } = req.body || {};
       if (!email || !password) return reply.code(400).send({ message: 'Email e senha obrigatórios' });
+      if (!EMAIL_RE.test(email) || email.length > 255) {
+        return reply.code(400).send({ message: 'Email inválido' });
+      }
+      if (typeof password !== 'string' || password.length < 12 || password.length > 200) {
+        return reply.code(400).send({ message: 'Senha deve ter entre 12 e 200 caracteres' });
+      }
       const hash = await bcrypt.hash(password, 12);
       const { rows: [user] } = await pool.query(
         'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
@@ -209,13 +245,32 @@ export async function registerApiRoutes(app, opts) {
   });
 
   app.post('/contacts', async (req) => {
-    const { name, email, message } = req.body || {};
+    const name = String(req.body?.name ?? '').trim();
+    const email = String(req.body?.email ?? '').trim().toLowerCase();
+    const message = String(req.body?.message ?? '').trim();
+    if (!name || name.length > 100) return { success: false, message: 'Nome inválido' };
+    if (!EMAIL_RE.test(email) || email.length > 255) return { success: false, message: 'Email inválido' };
+    if (!message || message.length > 5000) return { success: false, message: 'Mensagem inválida' };
     await pool.query('INSERT INTO contacts (name, email, message) VALUES ($1, $2, $3)', [name, email, message]);
     return { success: true };
   });
 
   app.post('/orders', async (req) => {
-    const { name, email, services, implementation_deadline } = req.body || {};
+    const name = String(req.body?.name ?? '').trim();
+    const email = String(req.body?.email ?? '').trim().toLowerCase();
+    const servicesRaw = req.body?.services;
+    const implementation_deadline = String(req.body?.implementation_deadline ?? '').trim().slice(0, 200);
+    if (!name || name.length > 100) return { success: false, message: 'Nome inválido' };
+    if (!EMAIL_RE.test(email) || email.length > 255) return { success: false, message: 'Email inválido' };
+    let services = servicesRaw;
+    if (Array.isArray(services)) {
+      if (services.length > 20) return { success: false, message: 'Muitos serviços selecionados' };
+      services = services.map((s) => String(s).slice(0, 200));
+    } else if (typeof services === 'string') {
+      services = services.slice(0, 4000);
+    } else {
+      services = '';
+    }
     await pool.query(
       'INSERT INTO orders (name, email, services, implementation_deadline) VALUES ($1, $2, $3, $4)',
       [name, email, services, implementation_deadline]
@@ -224,7 +279,12 @@ export async function registerApiRoutes(app, opts) {
   });
 
   app.post('/page-views', async (req) => {
-    const { page_path } = req.body || {};
+    let page_path = String(req.body?.page_path ?? '').trim();
+    if (!page_path.startsWith('/') || page_path.length > 500) {
+      return { success: false };
+    }
+    // Strip CR/LF and control chars
+    page_path = page_path.replace(/[\r\n\t]/g, '');
     await pool.query('INSERT INTO page_views (page_path) VALUES ($1)', [page_path]);
     return { success: true };
   });
@@ -295,7 +355,9 @@ export async function registerApiRoutes(app, opts) {
   });
 
   app.post('/send-contact-email', async (req) => {
-    const { name, email, message } = req.body || {};
+    const name = String(req.body?.name ?? '').slice(0, 100);
+    const email = String(req.body?.email ?? '').slice(0, 255);
+    const message = String(req.body?.message ?? '').slice(0, 5000);
     const resendKey = process.env.RESEND_API_KEY;
     if (!resendKey) return { success: true };
     try {
@@ -305,8 +367,8 @@ export async function registerApiRoutes(app, opts) {
         body: JSON.stringify({
           from: 'OptiStrat <noreply@optistrat.com.br>',
           to: ['comercial@optistrat.com.br'],
-          subject: `Novo contato: ${name}`,
-          html: `<h2>Novo Contato</h2><p><strong>Nome:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Mensagem:</strong> ${message}</p>`,
+          subject: sanitizeHeader(`Novo contato: ${name}`),
+          html: `<h2>Novo Contato</h2><p><strong>Nome:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><p><strong>Mensagem:</strong> ${escapeHtml(message).replace(/\n/g, '<br>')}</p>`,
         }),
       });
     } catch (e) { app.log.error({ err: e }, 'send-contact-email'); }
@@ -314,19 +376,24 @@ export async function registerApiRoutes(app, opts) {
   });
 
   app.post('/send-order-email', async (req) => {
-    const { name, email, services, implementation_deadline } = req.body || {};
+    const name = String(req.body?.name ?? '').slice(0, 100);
+    const email = String(req.body?.email ?? '').slice(0, 255);
+    const services = req.body?.services;
+    const implementation_deadline = String(req.body?.implementation_deadline ?? '').slice(0, 200);
     const resendKey = process.env.RESEND_API_KEY;
     if (!resendKey) return { success: true };
     try {
-      const servicesList = Array.isArray(services) ? services.join(', ') : services;
+      const servicesList = Array.isArray(services)
+        ? services.map((s) => String(s)).join(', ')
+        : String(services ?? '');
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendKey}` },
         body: JSON.stringify({
           from: 'OptiStrat <noreply@optistrat.com.br>',
           to: ['comercial@optistrat.com.br'],
-          subject: `Novo Orçamento: ${name}`,
-          html: `<h2>Novo Orçamento</h2><p><strong>Nome:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p><strong>Serviços:</strong> ${servicesList}</p><p><strong>Prazo:</strong> ${implementation_deadline}</p>`,
+          subject: sanitizeHeader(`Novo Orçamento: ${name}`),
+          html: `<h2>Novo Orçamento</h2><p><strong>Nome:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><p><strong>Serviços:</strong> ${escapeHtml(servicesList)}</p><p><strong>Prazo:</strong> ${escapeHtml(implementation_deadline)}</p>`,
         }),
       });
     } catch (e) { app.log.error({ err: e }, 'send-order-email'); }
@@ -416,9 +483,15 @@ export async function registerApiRoutes(app, opts) {
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Arquivo não encontrado' });
     const media = rows[0];
+    // SECURITY: never serve SVG (or unknown types) inline — they could contain
+    // active content that executes in the browser context.
+    const mime = media.mime_type || 'application/octet-stream';
+    const isSvg = /svg/i.test(mime);
+    const safeFilename = String(media.filename || 'file').replace(/[\r\n"\\]/g, '_');
     reply
-      .header('Content-Type', media.mime_type)
-      .header('Content-Disposition', `inline; filename="${media.filename}"`)
+      .header('Content-Type', isSvg ? 'application/octet-stream' : mime)
+      .header('X-Content-Type-Options', 'nosniff')
+      .header('Content-Disposition', `${isSvg ? 'attachment' : 'inline'}; filename="${safeFilename}"`)
       .header('Cache-Control', 'public, max-age=604800');
     return reply.send(media.data);
   });
@@ -692,7 +765,9 @@ export async function registerApiRoutes(app, opts) {
     try {
       const data = await req.file();
       if (!data) return reply.code(400).send({ message: 'Nenhum arquivo enviado' });
-      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'video/mp4', 'video/webm'];
+      // SECURITY: SVG is intentionally excluded — it can contain inline <script>
+      // that would execute when served with image/svg+xml inline disposition.
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
       if (!allowed.includes(data.mimetype)) {
         return reply.code(400).send({ message: 'Tipo de arquivo não permitido' });
       }
