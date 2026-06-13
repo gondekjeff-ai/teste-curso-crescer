@@ -237,6 +237,13 @@ export async function registerApiRoutes(app, opts) {
     return rows;
   });
 
+  app.get('/social-links', async () => {
+    const { rows } = await pool.query(
+      'SELECT id, platform, url, label, display_order FROM social_links WHERE active = true ORDER BY display_order, created_at DESC'
+    );
+    return rows;
+  });
+
   app.get('/site-content/:section', async (req) => {
     const { rows } = await pool.query(
       'SELECT content FROM site_content WHERE section = $1', [req.params.section]
@@ -643,6 +650,68 @@ export async function registerApiRoutes(app, opts) {
   });
   app.delete('/admin/testimonials/:id', adminGuard, async (req) => {
     await pool.query('DELETE FROM testimonials WHERE id = $1', [req.params.id]);
+    return { success: true };
+  });
+
+  // Social Links (admin CRUD)
+  const ALLOWED_PLATFORMS = new Set([
+    'linkedin','instagram','facebook','x','twitter','tiktok','youtube','whatsapp',
+    'telegram','discord','github','kawai','pinterest','threads','reddit','twitch',
+    'spotify','snapchat','medium','behance','dribbble'
+  ]);
+  const normalizeUrl = (u) => {
+    const s = String(u ?? '').trim();
+    if (!s) return '';
+    if (!/^https?:\/\//i.test(s)) return `https://${s}`;
+    return s;
+  };
+  app.get('/admin/social-links', adminGuard, async () => {
+    const { rows } = await pool.query(
+      'SELECT * FROM social_links ORDER BY display_order, created_at DESC'
+    );
+    return rows;
+  });
+  app.post('/admin/social-links', adminGuard, async (req, reply) => {
+    const platform = String(req.body?.platform ?? '').trim().toLowerCase();
+    const url = normalizeUrl(req.body?.url);
+    const label = req.body?.label ? String(req.body.label).trim().slice(0, 80) : null;
+    const display_order = Number.isFinite(+req.body?.display_order) ? +req.body.display_order : 0;
+    const active = req.body?.active !== false;
+    if (!ALLOWED_PLATFORMS.has(platform)) {
+      return reply.code(400).send({ message: 'Plataforma não suportada' });
+    }
+    if (!url || url.length > 500 || !/^https?:\/\/[^\s]+$/i.test(url)) {
+      return reply.code(400).send({ message: 'URL inválida' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO social_links (platform, url, label, display_order, active)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [platform, url, label, display_order, active]
+    );
+    return rows[0];
+  });
+  app.put('/admin/social-links/:id', adminGuard, async (req, reply) => {
+    const platform = String(req.body?.platform ?? '').trim().toLowerCase();
+    const url = normalizeUrl(req.body?.url);
+    const label = req.body?.label ? String(req.body.label).trim().slice(0, 80) : null;
+    const display_order = Number.isFinite(+req.body?.display_order) ? +req.body.display_order : 0;
+    const active = req.body?.active !== false;
+    if (!ALLOWED_PLATFORMS.has(platform)) {
+      return reply.code(400).send({ message: 'Plataforma não suportada' });
+    }
+    if (!url || url.length > 500 || !/^https?:\/\/[^\s]+$/i.test(url)) {
+      return reply.code(400).send({ message: 'URL inválida' });
+    }
+    const { rows } = await pool.query(
+      `UPDATE social_links
+          SET platform=$1, url=$2, label=$3, display_order=$4, active=$5, updated_at=NOW()
+        WHERE id=$6 RETURNING *`,
+      [platform, url, label, display_order, active, req.params.id]
+    );
+    return rows[0];
+  });
+  app.delete('/admin/social-links/:id', adminGuard, async (req) => {
+    await pool.query('DELETE FROM social_links WHERE id = $1', [req.params.id]);
     return { success: true };
   });
 
