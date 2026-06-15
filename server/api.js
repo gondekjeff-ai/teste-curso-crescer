@@ -511,6 +511,52 @@ export async function registerApiRoutes(app, opts) {
     const { rows } = await pool.query('SELECT * FROM news ORDER BY created_at DESC');
     return rows;
   });
+
+  // News health-check — verifies DB connectivity and that the news table is readable.
+  app.get('/admin/news/health', adminGuard, async (req, reply) => {
+    try {
+      const r = await pool.query('SELECT COUNT(*)::int AS total FROM news');
+      return {
+        ok: true,
+        total: r.rows[0].total,
+        checked_at: new Date().toISOString(),
+        message: 'Recurso de notícias operacional',
+      };
+    } catch (err) {
+      return reply.code(503).send({
+        ok: false,
+        message: 'Recurso de notícias indisponível',
+        error: err.message,
+      });
+    }
+  });
+
+  // News retention settings (singleton row).
+  app.get('/admin/news/settings', adminGuard, async () => {
+    const { rows } = await pool.query(
+      'SELECT retention_days, updated_at FROM news_settings WHERE id = 1'
+    );
+    return rows[0] || { retention_days: 0, updated_at: null };
+  });
+  app.put('/admin/news/settings', adminGuard, async (req, reply) => {
+    const days = Number(req.body?.retention_days);
+    if (!Number.isFinite(days) || days < 0 || days > 3650) {
+      return reply.code(400).send({ message: 'retention_days deve estar entre 0 e 3650' });
+    }
+    await pool.query(
+      `INSERT INTO news_settings (id, retention_days, updated_at)
+       VALUES (1, $1, NOW())
+       ON CONFLICT (id) DO UPDATE SET retention_days = EXCLUDED.retention_days, updated_at = NOW()`,
+      [Math.floor(days)]
+    );
+    const pruned = await pruneOldNews(pool);
+    return { success: true, retention_days: Math.floor(days), pruned };
+  });
+  app.post('/admin/news/cleanup', adminGuard, async () => {
+    const pruned = await pruneOldNews(pool);
+    return { success: true, pruned };
+  });
+
   app.post('/admin/news', adminGuard, async (req) => {
     const { title, content, excerpt, image_url, published } = req.body || {};
     const { rows } = await pool.query(
