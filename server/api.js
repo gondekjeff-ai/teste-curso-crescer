@@ -1180,6 +1180,8 @@ export function startNewsScheduler(pool, log) {
         try { await runFeedImport(pool, r.id); }
         catch (e) { log?.error({ err: e.message, sourceId: r.id }, 'scheduler import failed'); }
       }
+      try { await pruneOldNews(pool); }
+      catch (e) { log?.error({ err: e.message }, 'news retention prune failed'); }
     } catch (err) {
       log?.error({ err: err.message }, 'news scheduler tick failed');
     }
@@ -1187,4 +1189,21 @@ export function startNewsScheduler(pool, log) {
   // Run shortly after boot, then every 60s.
   setTimeout(tick, 30_000);
   setInterval(tick, 60_000);
+}
+
+/**
+ * Delete news older than the configured retention window (in days).
+ * retention_days = 0 disables pruning.
+ */
+export async function pruneOldNews(pool) {
+  const { rows } = await pool.query(
+    'SELECT retention_days FROM news_settings WHERE id = 1'
+  );
+  const days = rows[0]?.retention_days || 0;
+  if (!days || days <= 0) return 0;
+  const res = await pool.query(
+    `DELETE FROM news WHERE created_at < NOW() - ($1 || ' days')::interval`,
+    [days]
+  );
+  return res.rowCount || 0;
 }
