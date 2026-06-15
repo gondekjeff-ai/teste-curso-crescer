@@ -117,6 +117,19 @@ pool.on('connect', () => {
       CREATE INDEX IF NOT EXISTS idx_social_links_active_order
         ON social_links (active, display_order);
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS news_settings (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        retention_days INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT news_settings_singleton CHECK (id = 1)
+      );
+    `);
+    await pool.query(`
+      INSERT INTO news_settings (id, retention_days)
+      VALUES (1, 0)
+      ON CONFLICT (id) DO NOTHING;
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
