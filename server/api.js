@@ -653,12 +653,38 @@ export async function registerApiRoutes(app, opts) {
     return { success: true };
   });
 
-  // Social Links (admin CRUD)
-  const ALLOWED_PLATFORMS = new Set([
-    'linkedin','instagram','facebook','x','twitter','tiktok','youtube','whatsapp',
-    'telegram','discord','github','kawai','pinterest','threads','reddit','twitch',
-    'spotify','snapchat','medium','behance','dribbble'
-  ]);
+  // Social Links (admin CRUD) — allowlist + domínios esperados por plataforma.
+  const PLATFORM_DOMAINS = {
+    linkedin:  ['linkedin.com'],
+    instagram: ['instagram.com'],
+    facebook:  ['facebook.com', 'fb.com'],
+    x:         ['x.com', 'twitter.com'],
+    twitter:   ['x.com', 'twitter.com'],
+    tiktok:    ['tiktok.com'],
+    youtube:   ['youtube.com', 'youtu.be'],
+    whatsapp:  ['wa.me', 'whatsapp.com', 'api.whatsapp.com'],
+    telegram:  ['t.me', 'telegram.me'],
+    discord:   ['discord.gg', 'discord.com'],
+    github:    ['github.com'],
+    kawai:     ['kawai.com', 'kakao.com', 'kakaotalk.com'],
+    pinterest: ['pinterest.com', 'pin.it'],
+    threads:   ['threads.net', 'threads.com'],
+    reddit:    ['reddit.com'],
+    twitch:    ['twitch.tv'],
+    spotify:   ['spotify.com', 'open.spotify.com'],
+    snapchat:  ['snapchat.com'],
+    medium:    ['medium.com'],
+    behance:   ['behance.net'],
+    dribbble:  ['dribbble.com'],
+  };
+  const ALLOWED_PLATFORMS = new Set(Object.keys(PLATFORM_DOMAINS));
+  const hostMatchesPlatform = (urlStr, platform) => {
+    try {
+      const host = new URL(urlStr).hostname.toLowerCase().replace(/^www\./, '');
+      const allowed = PLATFORM_DOMAINS[platform] || [];
+      return allowed.some((d) => host === d || host.endsWith(`.${d}`));
+    } catch { return false; }
+  };
   const normalizeUrl = (u) => {
     const s = String(u ?? '').trim();
     if (!s) return '';
@@ -683,6 +709,11 @@ export async function registerApiRoutes(app, opts) {
     if (!url || url.length > 500 || !/^https?:\/\/[^\s]+$/i.test(url)) {
       return reply.code(400).send({ message: 'URL inválida' });
     }
+    if (!hostMatchesPlatform(url, platform)) {
+      return reply.code(400).send({
+        message: `Domínio da URL não corresponde à plataforma "${platform}". Esperado: ${PLATFORM_DOMAINS[platform].join(', ')}`,
+      });
+    }
     const { rows } = await pool.query(
       `INSERT INTO social_links (platform, url, label, display_order, active)
        VALUES ($1,$2,$3,$4,$5) RETURNING *`,
@@ -701,6 +732,11 @@ export async function registerApiRoutes(app, opts) {
     }
     if (!url || url.length > 500 || !/^https?:\/\/[^\s]+$/i.test(url)) {
       return reply.code(400).send({ message: 'URL inválida' });
+    }
+    if (!hostMatchesPlatform(url, platform)) {
+      return reply.code(400).send({
+        message: `Domínio da URL não corresponde à plataforma "${platform}". Esperado: ${PLATFORM_DOMAINS[platform].join(', ')}`,
+      });
     }
     const { rows } = await pool.query(
       `UPDATE social_links
