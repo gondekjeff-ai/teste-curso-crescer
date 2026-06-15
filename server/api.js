@@ -185,7 +185,7 @@ export async function registerApiRoutes(app, opts) {
   app.get('/news', async (req, reply) => {
     const limit = parseInt(req.query?.limit) || 20;
     const { rows } = await pool.query(
-      'SELECT id, title, content, excerpt, image_url, source_url, created_at FROM news WHERE published = true ORDER BY RANDOM() LIMIT $1',
+      'SELECT id, title, content, excerpt, image_url, source_url, created_at FROM news WHERE published = true ORDER BY created_at DESC LIMIT $1',
       [limit]
     );
     return rows;
