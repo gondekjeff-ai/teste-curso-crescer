@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { newsSchema, sanitizeObject } from '@/lib/inputValidation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Rss, RefreshCw, Globe } from 'lucide-react';
+import { Rss, RefreshCw, Globe, CheckCircle2, AlertTriangle, Loader2, Trash } from 'lucide-react';
 
 interface News {
   id: string;
@@ -46,9 +46,78 @@ const NewsManager = () => {
   const [editingSource, setEditingSource] = useState<NewsSource | null>(null);
   const [sourceDialogOpen, setSourceDialogOpen] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [health, setHealth] = useState<{ ok: boolean; message: string; total?: number } | null>(null);
+  const [checkingHealth, setCheckingHealth] = useState(true);
+  const [retentionDays, setRetentionDays] = useState<number>(0);
+  const [savingRetention, setSavingRetention] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => { loadNews(); loadSources(); }, []);
+  useEffect(() => { (async () => {
+    const ok = await checkHealth();
+    if (ok) { loadNews(); loadSources(); loadSettings(); }
+    else { setLoading(false); }
+  })(); }, []);
+
+  const checkHealth = async () => {
+    setCheckingHealth(true);
+    try {
+      const data = await api.get('/admin/news/health');
+      setHealth({ ok: !!data?.ok, message: data?.message || 'OK', total: data?.total });
+      return !!data?.ok;
+    } catch (err: any) {
+      setHealth({ ok: false, message: err?.message || 'Recurso de notícias indisponível' });
+      return false;
+    } finally {
+      setCheckingHealth(false);
+    }
+  };
+
+  const loadSettings = async () => {
+    try {
+      const s = await api.get('/admin/news/settings');
+      setRetentionDays(Number(s?.retention_days ?? 0));
+    } catch { /* ignore */ }
+  };
+
+  const saveRetention = async () => {
+    setSavingRetention(true);
+    try {
+      const res = await api.put('/admin/news/settings', { retention_days: Number(retentionDays) || 0 });
+      toast({
+        title: 'Configuração salva',
+        description: res?.pruned
+          ? `${res.pruned} notícia(s) antigas removidas`
+          : 'Tempo de retenção atualizado',
+      });
+      loadNews();
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Falha ao salvar', variant: 'destructive' });
+    } finally {
+      setSavingRetention(false);
+    }
+  };
+
+  const runCleanupNow = async () => {
+    try {
+      const res = await api.post('/admin/news/cleanup');
+      toast({ title: 'Limpeza concluída', description: `${res?.pruned || 0} notícia(s) removidas` });
+      loadNews();
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Falha na limpeza', variant: 'destructive' });
+    }
+  };
+
+  const guardCrud = (): boolean => {
+    if (!health?.ok) {
+      toast({
+        title: 'Recurso indisponível',
+        description: 'Verifique o status do recurso de notícias antes de continuar.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    return true;
+  };
 
   const loadNews = async () => {
     try {
@@ -122,6 +191,7 @@ const NewsManager = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingNews) return;
+    if (!guardCrud()) return;
 
     try {
       const validatedData = newsSchema.parse({
@@ -153,6 +223,7 @@ const NewsManager = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!guardCrud()) return;
     if (!confirm('Excluir esta notícia?')) return;
     try {
       await api.del(`/admin/news/${id}`);
@@ -164,6 +235,7 @@ const NewsManager = () => {
   };
 
   const openNew = () => {
+    if (!guardCrud()) return;
     setEditingNews({ id: '', title: '', content: '', excerpt: '', image_url: '', published: false, created_at: '' });
     setDialogOpen(true);
   };
@@ -182,6 +254,55 @@ const NewsManager = () => {
         <h1 className="text-2xl font-bold">Notícias / Blog</h1>
         <p className="text-sm text-muted-foreground mt-1">Gerencie artigos e fontes de notícias (RSS)</p>
       </div>
+
+      {/* Health validator + retention settings */}
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-sm">
+              {checkingHealth ? (
+                <><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /><span className="text-muted-foreground">Verificando recurso de notícias…</span></>
+              ) : health?.ok ? (
+                <><CheckCircle2 className="h-4 w-4 text-green-600" /><span className="text-green-600 font-medium">Recurso operacional</span><span className="text-muted-foreground">— {health.total ?? 0} notícia(s) no banco</span></>
+              ) : (
+                <><AlertTriangle className="h-4 w-4 text-destructive" /><span className="text-destructive font-medium">Recurso indisponível</span><span className="text-muted-foreground truncate max-w-xs">{health?.message}</span></>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={checkHealth} disabled={checkingHealth}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${checkingHealth ? 'animate-spin' : ''}`} />
+              Revalidar
+            </Button>
+          </div>
+
+          <div className="border-t pt-4 flex flex-col sm:flex-row sm:items-end gap-3">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="retention">Tempo limite de armazenamento (dias)</Label>
+              <Input
+                id="retention"
+                type="number"
+                min={0}
+                max={3650}
+                value={retentionDays}
+                onChange={(e) => setRetentionDays(Number(e.target.value))}
+                disabled={!health?.ok}
+              />
+              <p className="text-xs text-muted-foreground">
+                Notícias mais antigas que este valor são excluídas automaticamente. Use 0 para desativar.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={saveRetention} disabled={!health?.ok || savingRetention}>
+                {savingRetention ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Salvar
+              </Button>
+              <Button variant="outline" onClick={runCleanupNow} disabled={!health?.ok || !retentionDays}>
+                <Trash className="h-4 w-4 mr-2" />
+                Limpar agora
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="articles" className="w-full">
         <TabsList>
