@@ -130,13 +130,12 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="pt-8 flex flex-col md:flex-row justify-between items-center border-t border-white/20">
           <p className="text-white/60 text-sm mb-4 md:mb-0">
             © {new Date().getFullYear()} OptiStrat Gestão de TI. Todos os direitos reservados.
           </p>
           <div className="flex space-x-6">
             <Link to="/privacy-policy" className="text-sm text-white/60 hover:text-white transition-colors">Política de Privacidade</Link>
-            <Link to="/cookie-policy" className="text-sm text-white/60 hover:text-white transition-colors">Política de Cookies</Link>
           </div>
         </div>
       </div>
