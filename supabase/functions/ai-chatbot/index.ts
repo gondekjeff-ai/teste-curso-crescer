@@ -51,10 +51,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { message } = await req.json();
-
-    if (!message) {
-      throw new Error('Message is required');
+    const body = await req.json();
+    const message = typeof body?.message === 'string' ? body.message.trim() : '';
+    if (!message || message.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'Mensagem inválida (máx 2000 caracteres)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (!groqApiKey) {

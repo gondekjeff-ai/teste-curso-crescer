@@ -67,14 +67,19 @@ const MFASettings = () => {
   };
 
   const disableMFA = async () => {
+    const code = window.prompt('Digite o código de 6 dígitos do seu aplicativo autenticador para desativar o 2FA:');
+    if (!code || code.trim().length !== 6) {
+      toast({ title: 'Código obrigatório', description: 'Informe o código de 6 dígitos para desativar o 2FA', variant: 'destructive' });
+      return;
+    }
     setIsProcessing(true);
     try {
-      await api.post('/admin/mfa/disable');
+      await api.post('/admin/mfa/disable', { code: code.trim() });
       setMfaEnabled(false);
       setQrCodeUrl('');
       toast({ title: 'Sucesso', description: 'Autenticação de dois fatores desativada' });
-    } catch {
-      toast({ title: 'Erro', description: 'Não foi possível desativar o 2FA', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: 'Erro', description: e?.message || 'Código MFA inválido ou não foi possível desativar o 2FA', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
