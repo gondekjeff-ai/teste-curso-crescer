@@ -183,7 +183,7 @@ export async function registerApiRoutes(app, opts) {
   // =================== PUBLIC ===================
 
   app.get('/news', async (req, reply) => {
-    const limit = parseInt(req.query?.limit) || 20;
+    const limit = Math.min(Math.max(1, parseInt(req.query?.limit) || 20), 100);
     const { rows } = await pool.query(
       'SELECT id, title, content, excerpt, image_url, source_url, created_at FROM news WHERE published = true ORDER BY created_at DESC LIMIT $1',
       [limit]
@@ -409,7 +409,10 @@ export async function registerApiRoutes(app, opts) {
 
   // Streaming chatbot (Fastify supports raw stream via reply.raw)
   app.post('/chatbot', async (req, reply) => {
-    const { message } = req.body || {};
+    const message = String(req.body?.message ?? '').trim();
+    if (!message || message.length > 2000) {
+      return reply.code(400).send({ message: 'Mensagem inválida (máx 2000 caracteres)' });
+    }
     try {
       await pool.query('INSERT INTO chatbot_interactions (user_message) VALUES ($1)', [message]);
     } catch (e) { app.log.error({ err: e }, 'chatbot insert'); }
@@ -851,9 +854,10 @@ export async function registerApiRoutes(app, opts) {
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Currículo não encontrado' });
     const r = rows[0];
+    const safeCvFilename = String(r.cv_filename || 'curriculo.pdf').replace(/[\r\n"\\]/g, '_');
     reply
       .header('Content-Type', r.cv_mime || 'application/pdf')
-      .header('Content-Disposition', `inline; filename="${r.cv_filename || 'curriculo.pdf'}"`)
+      .header('Content-Disposition', `inline; filename="${safeCvFilename}"`)
       .header('Cache-Control', 'private, no-store');
     return reply.send(r.cv_data);
   });
@@ -969,7 +973,19 @@ export async function registerApiRoutes(app, opts) {
     await pool.query('UPDATE profiles SET mfa_enabled = true WHERE user_id = $1', [req.user.id]);
     return { valid: true };
   });
-  app.post('/admin/mfa/disable', { preHandler: authHook }, async (req) => {
+  app.post('/admin/mfa/disable', { preHandler: authHook }, async (req, reply) => {
+    const { code } = req.body || {};
+    if (!code || typeof code !== 'string') {
+      return reply.code(400).send({ message: 'Código MFA obrigatório' });
+    }
+    const { rows } = await pool.query('SELECT mfa_secret, mfa_enabled FROM profiles WHERE user_id = $1', [req.user.id]);
+    if (!rows[0]?.mfa_secret || !rows[0]?.mfa_enabled) {
+      return reply.code(400).send({ message: 'MFA não está ativo' });
+    }
+    const { authenticator } = await import('otplib');
+    if (!authenticator.check(code, rows[0].mfa_secret)) {
+      return reply.code(401).send({ message: 'Código MFA inválido' });
+    }
     await pool.query('UPDATE profiles SET mfa_enabled = false, mfa_secret = NULL WHERE user_id = $1', [req.user.id]);
     return { success: true };
   });
@@ -1123,7 +1139,7 @@ export async function runFeedImport(pool, sourceFilter = null) {
               `INSERT INTO news (title, content, excerpt, image_url, source_url, published, source_id, external_id)
                VALUES ($1, $2, $3, $4, $5, true, $6, $7)
                ON CONFLICT (external_id) WHERE external_id IS NOT NULL DO NOTHING`,
-              [item.title, item.description, item.description, item.image || null, item.link || null, feed.id, externalId]
+              [item.title, item.description, item.description, item.image || null, (/^https?:\/\//i.test(item.link || '') ? item.link : null), feed.id, externalId]
             );
             imported++;
           } else if (externalId) {
@@ -1136,7 +1152,7 @@ export async function runFeedImport(pool, sourceFilter = null) {
                      external_id = COALESCE(external_id, $4),
                      updated_at = NOW()
                WHERE id = $5`,
-              [item.title, item.description, item.description, externalId, existing[0].id, item.image || null, item.link || null]
+              [item.title, item.description, item.description, externalId, existing[0].id, item.image || null, (/^https?:\/\//i.test(item.link || '') ? item.link : null)]
             );
           }
         }
