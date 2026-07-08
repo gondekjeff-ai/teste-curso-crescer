@@ -865,7 +865,9 @@ export async function registerApiRoutes(app, opts) {
   // Stats
   app.get('/admin/stats', adminGuard, async () => {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const [carousel, contacts, pageViews, chatbot, products, news, orders, pvData] = await Promise.all([
+    const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const [carousel, contacts, pageViews, chatbot, products, news, orders, pvData,
+           viewsSeries, chatSeries, contactsSeries, contactsRecent, viewsPrev, chatPrev, contactsPrev] = await Promise.all([
       pool.query("SELECT COUNT(*) as count FROM carousel_images WHERE active = true"),
       pool.query("SELECT COUNT(*) as count FROM contacts"),
       pool.query("SELECT COUNT(*) as count FROM page_views WHERE created_at >= $1", [since]),
@@ -874,6 +876,19 @@ export async function registerApiRoutes(app, opts) {
       pool.query("SELECT COUNT(*) as count FROM news"),
       pool.query("SELECT COUNT(*) as count FROM orders"),
       pool.query("SELECT page_path FROM page_views WHERE created_at >= $1", [since]),
+      pool.query(`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day, COUNT(*)::int as count
+                  FROM page_views WHERE created_at >= $1 GROUP BY 1 ORDER BY 1`, [since]),
+      pool.query(`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day, COUNT(*)::int as count
+                  FROM chatbot_interactions WHERE created_at >= $1 GROUP BY 1 ORDER BY 1`, [since]),
+      pool.query(`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day, COUNT(*)::int as count
+                  FROM contacts WHERE created_at >= $1 GROUP BY 1 ORDER BY 1`, [since]),
+      pool.query(`SELECT id, name, email, subject, created_at FROM contacts ORDER BY created_at DESC LIMIT 5`),
+      pool.query("SELECT COUNT(*)::int as count FROM page_views WHERE created_at >= $1 AND created_at < $2",
+                 [new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), since]),
+      pool.query("SELECT COUNT(*)::int as count FROM chatbot_interactions WHERE created_at >= $1 AND created_at < $2",
+                 [new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), since]),
+      pool.query("SELECT COUNT(*)::int as count FROM contacts WHERE created_at >= $1 AND created_at < $2",
+                 [new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), since]),
     ]);
     const pageCounts = {};
     pvData.rows.forEach(v => { pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1; });
@@ -881,6 +896,19 @@ export async function registerApiRoutes(app, opts) {
       .map(([page_path, views]) => ({ page_path, views }))
       .sort((a, b) => b.views - a.views)
       .slice(0, 5);
+
+    // Fill missing days for continuous series (last 30 days)
+    const fillSeries = (rows) => {
+      const map = new Map(rows.map(r => [r.day, r.count]));
+      const out = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+        const key = d.toISOString().slice(0, 10);
+        out.push({ day: key, count: map.get(key) || 0 });
+      }
+      return out;
+    };
+
     return {
       carouselImages: parseInt(carousel.rows[0].count),
       contacts: parseInt(contacts.rows[0].count),
@@ -890,6 +918,18 @@ export async function registerApiRoutes(app, opts) {
       news: parseInt(news.rows[0].count),
       orders: parseInt(orders.rows[0].count),
       topPages,
+      series: {
+        views: fillSeries(viewsSeries.rows),
+        chatbot: fillSeries(chatSeries.rows),
+        contacts: fillSeries(contactsSeries.rows),
+      },
+      previous: {
+        pageViews: viewsPrev.rows[0].count,
+        chatbotInteractions: chatPrev.rows[0].count,
+        contacts: contactsPrev.rows[0].count,
+      },
+      recentContacts: contactsRecent.rows,
+      generatedAt: new Date().toISOString(),
     };
   });
 
