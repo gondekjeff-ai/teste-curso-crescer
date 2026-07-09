@@ -17,7 +17,7 @@ import { ptBR } from 'date-fns/locale';
 
 interface SeriesPoint { day: string; count: number; }
 interface TopPage { page_path: string; views: number; }
-interface RecentContact { id: string | number; name: string; email: string; subject?: string; created_at: string; }
+interface RecentContact { id: string | number; name: string; email: string; subject?: string; message?: string; created_at: string; }
 interface Stats {
   carouselImages: number; contacts: number; pageViews: number;
   chatbotInteractions: number; products: number; news: number; orders?: number;
@@ -438,7 +438,9 @@ const AdminHome = () => {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{c.email}</p>
-                      {c.subject && <p className="text-xs mt-0.5 truncate">{c.subject}</p>}
+                      {(c.subject || c.message) && (
+                        <p className="text-xs mt-0.5 truncate">{c.subject || c.message}</p>
+                      )}
                     </div>
                   </div>
                 ))}

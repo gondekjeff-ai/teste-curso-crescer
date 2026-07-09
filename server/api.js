@@ -882,7 +882,7 @@ export async function registerApiRoutes(app, opts) {
                   FROM chatbot_interactions WHERE created_at >= $1 GROUP BY 1 ORDER BY 1`, [since]),
       pool.query(`SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') as day, COUNT(*)::int as count
                   FROM contacts WHERE created_at >= $1 GROUP BY 1 ORDER BY 1`, [since]),
-      pool.query(`SELECT id, name, email, subject, created_at FROM contacts ORDER BY created_at DESC LIMIT 5`),
+      pool.query(`SELECT id, name, email, message, created_at FROM contacts ORDER BY created_at DESC LIMIT 5`),
       pool.query("SELECT COUNT(*)::int as count FROM page_views WHERE created_at >= $1 AND created_at < $2",
                  [new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), since]),
       pool.query("SELECT COUNT(*)::int as count FROM chatbot_interactions WHERE created_at >= $1 AND created_at < $2",
