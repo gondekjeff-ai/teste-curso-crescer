@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +8,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { sanitizeInput } from '@/lib/inputValidation';
 
 interface CarouselImage {
@@ -24,6 +28,8 @@ const CarouselManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newAltText, setNewAltText] = useState('');
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const debounceTimers = useRef<Record<string, number>>({});
   const { toast } = useToast();
 
   useEffect(() => { loadImages(); }, []);
@@ -61,25 +67,51 @@ const CarouselManager = () => {
     }
   };
 
-  const updateImage = async (id: string, updates: Partial<CarouselImage>) => {
+  const persistUpdate = async (id: string, updates: Partial<CarouselImage>) => {
     try {
-      if (updates.alt_text) updates.alt_text = sanitizeInput(updates.alt_text);
-      await api.put(`/admin/carousel/${id}`, updates);
-      toast({ title: 'Atualizado' });
-      loadImages();
+      const payload = { ...updates };
+      if (typeof payload.alt_text === 'string') payload.alt_text = sanitizeInput(payload.alt_text);
+      await api.put(`/admin/carousel/${id}`, payload);
     } catch (error: any) {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+      loadImages();
     }
   };
 
-  const deleteImage = async (id: string) => {
-    if (!confirm('Excluir esta imagem do carrossel?')) return;
+  // Optimistic local update + debounced server persistence (avoids re-render flicker while typing)
+  const updateImage = (id: string, updates: Partial<CarouselImage>, debounceMs = 400) => {
+    setImages(prev => prev.map(img => (img.id === id ? { ...img, ...updates } : img)));
+    const key = `${id}:${Object.keys(updates).join(',')}`;
+    if (debounceTimers.current[key]) window.clearTimeout(debounceTimers.current[key]);
+    debounceTimers.current[key] = window.setTimeout(() => {
+      persistUpdate(id, updates);
+      delete debounceTimers.current[key];
+    }, debounceMs);
+  };
+
+  const toggleActive = async (id: string, next: boolean) => {
+    setImages(prev => prev.map(img => (img.id === id ? { ...img, active: next } : img)));
+    try {
+      await api.put(`/admin/carousel/${id}`, { active: next });
+      toast({ title: next ? 'Imagem ativada' : 'Imagem desativada' });
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      loadImages();
+    }
+  };
+
+  const confirmDelete = async () => {
+    const id = pendingDelete;
+    if (!id) return;
+    setPendingDelete(null);
+    const snapshot = images;
+    setImages(prev => prev.filter(img => img.id !== id));
     try {
       await api.del(`/admin/carousel/${id}`);
       toast({ title: 'Imagem excluída' });
-      loadImages();
     } catch (error: any) {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+      setImages(snapshot);
     }
   };
 
@@ -127,7 +159,7 @@ const CarouselManager = () => {
                     size="icon"
                     variant={image.active ? 'default' : 'secondary'}
                     className="h-7 w-7"
-                    onClick={() => updateImage(image.id, { active: !image.active })}
+                    onClick={() => toggleActive(image.id, !image.active)}
                     title={image.active ? 'Desativar' : 'Ativar'}
                   >
                     {image.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
@@ -136,7 +168,8 @@ const CarouselManager = () => {
                     size="icon"
                     variant="destructive"
                     className="h-7 w-7"
-                    onClick={() => deleteImage(image.id)}
+                    onClick={() => setPendingDelete(image.id)}
+                    title="Excluir"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -193,6 +226,23 @@ const CarouselManager = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir imagem do carrossel?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A imagem será removida do site imediatamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

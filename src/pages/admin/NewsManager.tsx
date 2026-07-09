@@ -9,6 +9,10 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, Plus, Newspaper } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { newsSchema, sanitizeObject } from '@/lib/inputValidation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -50,6 +54,8 @@ const NewsManager = () => {
   const [checkingHealth, setCheckingHealth] = useState(true);
   const [retentionDays, setRetentionDays] = useState<number>(0);
   const [savingRetention, setSavingRetention] = useState(false);
+  const [pendingDeleteNews, setPendingDeleteNews] = useState<string | null>(null);
+  const [pendingDeleteSource, setPendingDeleteSource] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => { (async () => {
@@ -163,14 +169,20 @@ const NewsManager = () => {
     }
   };
 
-  const handleDeleteSource = async (id: string) => {
-    if (!confirm('Excluir esta fonte de notícias?')) return;
+  const handleDeleteSource = (id: string) => setPendingDeleteSource(id);
+
+  const confirmDeleteSource = async () => {
+    const id = pendingDeleteSource;
+    if (!id) return;
+    setPendingDeleteSource(null);
+    const snapshot = sources;
+    setSources(prev => prev.filter(s => s.id !== id));
     try {
       await api.del(`/admin/news-sources/${id}`);
       toast({ title: 'Fonte excluída' });
-      loadSources();
     } catch (error: any) {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+      setSources(snapshot);
     }
   };
 
@@ -222,15 +234,23 @@ const NewsManager = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!guardCrud()) return;
-    if (!confirm('Excluir esta notícia?')) return;
+    setPendingDeleteNews(id);
+  };
+
+  const confirmDeleteNews = async () => {
+    const id = pendingDeleteNews;
+    if (!id) return;
+    setPendingDeleteNews(null);
+    const snapshot = news;
+    setNews(prev => prev.filter(n => n.id !== id));
     try {
       await api.del(`/admin/news/${id}`);
       toast({ title: 'Notícia excluída' });
-      loadNews();
     } catch (error: any) {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+      setNews(snapshot);
     }
   };
 
@@ -563,6 +583,38 @@ const NewsManager = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!pendingDeleteNews} onOpenChange={(o) => !o && setPendingDeleteNews(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir notícia?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteNews} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!pendingDeleteSource} onOpenChange={(o) => !o && setPendingDeleteSource(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir fonte RSS?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A fonte será removida. Notícias já importadas não serão apagadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteSource} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
