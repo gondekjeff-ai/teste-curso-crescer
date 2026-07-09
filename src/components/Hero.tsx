@@ -10,7 +10,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { api } from "@/lib/api";
 
 const Hero = () => {
   const isMobile = useIsMobile();
@@ -18,8 +19,30 @@ const Hero = () => {
   const plugin = useRef(
     Autoplay({ delay: 4000, stopOnInteraction: false })
   );
-  
-  const carouselImages = [carousel1, carousel2, carousel3, carousel4];
+
+  const fallbackImages = [carousel1, carousel2, carousel3, carousel4];
+  const [carouselImages, setCarouselImages] = useState<{ src: string; alt: string }[]>(
+    fallbackImages.map((src, i) => ({ src, alt: `IT Services ${i + 1}` }))
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await api.get<Array<{ image_url: string; alt_text?: string }>>('/carousel');
+        if (cancelled) return;
+        if (Array.isArray(rows) && rows.length > 0) {
+          const mapped = rows
+            .filter((r) => r && typeof r.image_url === 'string' && r.image_url.length > 0)
+            .map((r, i) => ({ src: r.image_url, alt: r.alt_text || `IT Services ${i + 1}` }));
+          if (mapped.length > 0) setCarouselImages(mapped);
+        }
+      } catch {
+        // silent — keeps static fallback so the page never goes blank
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
   
   const containerVariants = {
     hidden: {
@@ -74,14 +97,20 @@ const Hero = () => {
               <CarouselItem key={index} className="h-full">
                 <div className="relative w-full h-full">
                   <img 
-                    src={image} 
-                    alt={`IT Services ${index + 1}`}
+                    src={image.src}
+                    alt={image.alt}
                     className="w-full h-full object-cover"
                     width={1600}
                     height={900}
                     loading={index === 0 ? "eager" : "lazy"}
                     fetchPriority={index === 0 ? "high" : "low"}
                     decoding="async"
+                    onError={(e) => {
+                      // Fallback if a DB image URL fails to load
+                      const fb = fallbackImages[index % fallbackImages.length];
+                      const img = e.currentTarget;
+                      if (img.src !== fb) img.src = fb;
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/60"></div>
                 </div>
