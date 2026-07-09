@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Image, FileText, Package, Newspaper, Eye, MessageSquare, Users,
-  TrendingUp, TrendingDown, RefreshCw, ArrowUpRight, Activity, ShoppingBag, Mail, Circle,
+  TrendingUp, TrendingDown, RefreshCw, ArrowUpRight, Activity, ShoppingBag, Mail, Circle, AlertTriangle,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Link } from 'react-router-dom';
@@ -54,16 +54,42 @@ const AdminHome = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [live, setLive] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
   const loadStats = async (silent = false) => {
     try {
       if (!silent) setRefreshing(true);
       const data = await api.get<Stats>('/admin/stats');
-      setStats(data);
+      // Defensive normalization to avoid render crashes if server omits a field
+      const normalized: Stats = {
+        carouselImages: data?.carouselImages ?? 0,
+        contacts: data?.contacts ?? 0,
+        pageViews: data?.pageViews ?? 0,
+        chatbotInteractions: data?.chatbotInteractions ?? 0,
+        products: data?.products ?? 0,
+        news: data?.news ?? 0,
+        orders: data?.orders ?? 0,
+        topPages: Array.isArray(data?.topPages) ? data.topPages : [],
+        series: {
+          views: Array.isArray(data?.series?.views) ? data.series.views : [],
+          chatbot: Array.isArray(data?.series?.chatbot) ? data.series.chatbot : [],
+          contacts: Array.isArray(data?.series?.contacts) ? data.series.contacts : [],
+        },
+        previous: {
+          pageViews: Number(data?.previous?.pageViews ?? 0),
+          chatbotInteractions: Number(data?.previous?.chatbotInteractions ?? 0),
+          contacts: Number(data?.previous?.contacts ?? 0),
+        },
+        recentContacts: Array.isArray(data?.recentContacts) ? data.recentContacts : [],
+        generatedAt: data?.generatedAt ?? new Date().toISOString(),
+      };
+      setStats(normalized);
+      setError(null);
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
+      setError(error instanceof Error ? error.message : 'Falha ao carregar estatísticas');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -80,13 +106,36 @@ const AdminHome = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); };
   }, [live]);
 
-  if (loading || !stats) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent"></div>
           <span className="text-sm text-muted-foreground">Carregando painel...</span>
         </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              Não foi possível carregar o painel
+            </CardTitle>
+            <CardDescription className="text-xs break-words">
+              {error || 'O servidor não respondeu com dados válidos.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button size="sm" onClick={() => { setLoading(true); loadStats(); }}>
+              <RefreshCw className="h-3.5 w-3.5 mr-2" /> Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
