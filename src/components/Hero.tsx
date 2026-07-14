@@ -24,6 +24,7 @@ const Hero = () => {
   const [carouselImages, setCarouselImages] = useState<{ src: string; alt: string }[]>(
     fallbackImages.map((src, i) => ({ src, alt: `IT Services ${i + 1}` }))
   );
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +40,8 @@ const Hero = () => {
         }
       } catch {
         // silent — keeps static fallback so the page never goes blank
+      } finally {
+        if (!cancelled) setDataLoaded(true);
       }
     })();
     return () => { cancelled = true; };
@@ -85,6 +88,7 @@ const Hero = () => {
       {/* Carousel Container with Content */}
       <div className="relative w-full h-[80vh] sm:h-[85vh] md:h-[700px] lg:h-[800px] xl:h-[850px] overflow-hidden">
         <Carousel
+          key={`carousel-${dataLoaded ? 'db' : 'fallback'}-${carouselImages.length}`}
           plugins={[plugin.current]}
           className="w-full h-full"
           opts={{
