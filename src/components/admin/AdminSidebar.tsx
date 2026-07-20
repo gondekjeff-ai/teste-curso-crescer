@@ -1,6 +1,6 @@
 import {
   Home, Image, FileText, Shield, Package, Newspaper,
-  LayoutDashboard, ChevronLeft, Settings, Mail, Briefcase, Quote, Share2
+  LayoutDashboard, ChevronLeft, Settings, Mail, Briefcase, Quote, Share2, Link2
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -25,6 +25,7 @@ const contentItems = [
   { title: 'Produtos', url: '/admin/products', icon: Package },
   { title: 'Depoimentos', url: '/admin/testimonials', icon: Quote },
   { title: 'Redes Sociais', url: '/admin/social-links', icon: Share2 },
+  { title: 'Redirecionamentos', url: '/admin/redirects', icon: Link2 },
 ];
 
 const systemItems = [
