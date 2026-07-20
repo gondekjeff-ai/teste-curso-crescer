@@ -11,7 +11,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Pencil, Plus, X, ExternalLink } from 'lucide-react';
+import { Trash2, Pencil, Plus, X, ExternalLink, Eye, AlertTriangle, RefreshCw } from 'lucide-react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
 
 interface Redirect {
   id: string;
@@ -33,6 +36,9 @@ export default function RedirectsManager() {
   const [dest, setDest] = useState('');
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewStatus, setPreviewStatus] = useState<'loading' | 'ok' | 'blocked'>('loading');
+  const [previewKey, setPreviewKey] = useState(0);
 
   const load = async () => {
     setLoading(true);
@@ -103,6 +109,21 @@ export default function RedirectsManager() {
     }
   };
 
+  const openPreview = (url?: string) => {
+    const target = (url ?? dest).trim();
+    if (!/^https?:\/\//i.test(target)) {
+      toast({
+        title: 'URL de destino inválida',
+        description: 'Informe uma URL http:// ou https:// antes de pré-visualizar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setPreviewUrl(target);
+    setPreviewStatus('loading');
+    setPreviewKey((k) => k + 1);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -166,6 +187,9 @@ export default function RedirectsManager() {
               {editingId ? <Pencil className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
               {saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Cadastrar'}
             </Button>
+            <Button type="button" variant="outline" onClick={() => openPreview()} className="ml-2">
+              <Eye className="h-4 w-4 mr-1" /> Pré-visualizar
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -201,6 +225,14 @@ export default function RedirectsManager() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openPreview(r.destination_url)}
+                      title="Pré-visualizar destino"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => startEdit(r)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -231,6 +263,70 @@ export default function RedirectsManager() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!previewUrl} onOpenChange={(o) => { if (!o) setPreviewUrl(null); }}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="p-4 border-b border-border flex-shrink-0">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-base">Pré-visualização do destino</DialogTitle>
+                <DialogDescription className="text-xs truncate font-mono mt-1">
+                  {previewUrl}
+                </DialogDescription>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setPreviewStatus('loading'); setPreviewKey((k) => k + 1); }}
+                >
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" /> Recarregar
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <a href={previewUrl ?? '#'} target="_blank" rel="noreferrer noopener">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1" /> Abrir em nova aba
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="relative flex-1 bg-muted/30">
+            {previewStatus === 'loading' && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+              </div>
+            )}
+            {previewStatus === 'blocked' && (
+              <div className="absolute inset-x-0 top-0 z-10 bg-yellow-500/10 border-b border-yellow-500/40 text-xs px-4 py-2 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                <span>
+                  O destino demorou para responder ou pode bloquear exibição em iframe
+                  (X-Frame-Options / CSP). Se ficar em branco, use "Abrir em nova aba" para confirmar.
+                </span>
+              </div>
+            )}
+            {previewUrl && (
+              <iframe
+                key={previewKey}
+                src={previewUrl}
+                title="Pré-visualização"
+                className="w-full h-full border-0"
+                onLoad={() => setPreviewStatus('ok')}
+                allow="fullscreen; clipboard-read; clipboard-write; geolocation; camera; microphone; autoplay"
+                referrerPolicy="no-referrer-when-downgrade"
+                ref={(el) => {
+                  if (!el) return;
+                  // If onLoad doesn't fire within 6s, flag as possibly blocked.
+                  window.setTimeout(() => {
+                    setPreviewStatus((s) => (s === 'loading' ? 'blocked' : s));
+                  }, 6000);
+                }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
