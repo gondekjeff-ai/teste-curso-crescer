@@ -1,6 +1,6 @@
 
 import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Home, ArrowLeft, Search } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import SEO from "@/components/SEO";
@@ -8,13 +8,67 @@ import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
+  const [checking, setChecking] = useState(true);
+  const [maskedUrl, setMaskedUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
+    let cancelled = false;
+    setChecking(true);
+    setMaskedUrl(null);
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/redirects/lookup?path=${encodeURIComponent(location.pathname)}`
+        );
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          if (data?.destination_url) {
+            setMaskedUrl(data.destination_url);
+            return;
+          }
+        }
+      } catch {
+        // Ignore — fall back to 404 UI.
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!checking && !maskedUrl) {
+      console.error(
+        "404 Error: User attempted to access non-existent route:",
+        location.pathname
+      );
+    }
+  }, [checking, maskedUrl, location.pathname]);
+
+  if (checking) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (maskedUrl) {
+    // URL Masking: render destination in a full-viewport iframe while
+    // the browser address bar keeps the original mask URL.
+    return (
+      <>
+        <SEO title="OptiStrat" description="OptiStrat" />
+        <iframe
+          src={maskedUrl}
+          title="Conteúdo"
+          className="fixed inset-0 w-screen h-screen border-0"
+          allow="fullscreen; clipboard-read; clipboard-write; geolocation; camera; microphone; autoplay"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </>
+    );
+  }
 
   return (
     <PageLayout>

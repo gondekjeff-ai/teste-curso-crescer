@@ -130,6 +130,20 @@ pool.on('connect', () => {
       VALUES (1, 0)
       ON CONFLICT (id) DO NOTHING;
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS url_redirects (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        mask_path TEXT NOT NULL UNIQUE,
+        destination_url TEXT NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_url_redirects_mask
+        ON url_redirects (mask_path) WHERE active = true;
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
