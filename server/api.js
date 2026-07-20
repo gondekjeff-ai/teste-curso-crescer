@@ -1080,6 +1080,102 @@ export async function registerApiRoutes(app, opts) {
     await pool.query('DELETE FROM news_sources WHERE id = $1', [req.params.id]);
     return { success: true };
   });
+
+  // =================== URL Redirects (URL Masking) ===================
+  // Normalize a mask path: always starts with "/", no trailing slash (except root),
+  // no query/hash. This is what we compare against incoming SPA navigations.
+  const normalizeMaskPath = (raw) => {
+    if (!raw || typeof raw !== 'string') return null;
+    let s = raw.trim();
+    if (!s) return null;
+    // Accept full URLs and strip protocol + host.
+    try {
+      if (/^https?:\/\//i.test(s)) {
+        const u = new URL(s);
+        s = u.pathname + (u.search || '');
+      }
+    } catch { /* fall through */ }
+    // Strip query/hash for the stored mask (matching is path-only).
+    s = s.split('#')[0].split('?')[0];
+    if (!s.startsWith('/')) s = '/' + s;
+    if (s.length > 1 && s.endsWith('/')) s = s.replace(/\/+$/, '');
+    if (s.length > 2048) return null;
+    return s.toLowerCase();
+  };
+  const validateDestination = (raw) => {
+    if (!raw || typeof raw !== 'string') return null;
+    const s = raw.trim();
+    if (!/^https?:\/\//i.test(s)) return null;
+    if (s.length > 4096) return null;
+    try { new URL(s); } catch { return null; }
+    return s;
+  };
+
+  // Public lookup — used by the SPA fallback to decide whether to iframe-mask.
+  app.get('/redirects/lookup', async (req, reply) => {
+    const mask = normalizeMaskPath(req.query?.path);
+    if (!mask) return reply.code(400).send({ message: 'path inválido' });
+    const { rows } = await pool.query(
+      'SELECT destination_url FROM url_redirects WHERE mask_path = $1 AND active = true LIMIT 1',
+      [mask]
+    );
+    if (rows.length === 0) return reply.code(404).send({ message: 'not found' });
+    return { destination_url: rows[0].destination_url };
+  });
+
+  app.get('/admin/redirects', adminGuard, async () => {
+    const { rows } = await pool.query(
+      'SELECT id, mask_path, destination_url, active, created_at, updated_at FROM url_redirects ORDER BY created_at DESC'
+    );
+    return rows;
+  });
+  app.post('/admin/redirects', adminGuard, async (req, reply) => {
+    const mask = normalizeMaskPath(req.body?.mask_path);
+    const dest = validateDestination(req.body?.destination_url);
+    if (!mask) return reply.code(400).send({ message: 'URL Máscara inválida (ex: /hotspot/demo)' });
+    if (mask === '/') return reply.code(400).send({ message: 'A URL Máscara não pode ser a raiz "/"' });
+    if (mask.startsWith('/api/') || mask.startsWith('/admin')) {
+      return reply.code(400).send({ message: 'Máscara não pode começar com /api ou /admin' });
+    }
+    if (!dest) return reply.code(400).send({ message: 'URL de destino inválida (use http:// ou https://)' });
+    const active = req.body?.active === false ? false : true;
+    try {
+      const { rows } = await pool.query(
+        'INSERT INTO url_redirects (mask_path, destination_url, active) VALUES ($1, $2, $3) RETURNING *',
+        [mask, dest, active]
+      );
+      return rows[0];
+    } catch (err) {
+      if (err.code === '23505') return reply.code(409).send({ message: 'Esta URL Máscara já está cadastrada' });
+      throw err;
+    }
+  });
+  app.put('/admin/redirects/:id', adminGuard, async (req, reply) => {
+    const mask = normalizeMaskPath(req.body?.mask_path);
+    const dest = validateDestination(req.body?.destination_url);
+    if (!mask) return reply.code(400).send({ message: 'URL Máscara inválida' });
+    if (mask === '/') return reply.code(400).send({ message: 'A URL Máscara não pode ser a raiz "/"' });
+    if (mask.startsWith('/api/') || mask.startsWith('/admin')) {
+      return reply.code(400).send({ message: 'Máscara não pode começar com /api ou /admin' });
+    }
+    if (!dest) return reply.code(400).send({ message: 'URL de destino inválida' });
+    const active = req.body?.active === false ? false : true;
+    try {
+      const { rows } = await pool.query(
+        'UPDATE url_redirects SET mask_path=$1, destination_url=$2, active=$3, updated_at=NOW() WHERE id=$4 RETURNING *',
+        [mask, dest, active, req.params.id]
+      );
+      if (rows.length === 0) return reply.code(404).send({ message: 'Redirecionamento não encontrado' });
+      return rows[0];
+    } catch (err) {
+      if (err.code === '23505') return reply.code(409).send({ message: 'Esta URL Máscara já está cadastrada' });
+      throw err;
+    }
+  });
+  app.delete('/admin/redirects/:id', adminGuard, async (req) => {
+    await pool.query('DELETE FROM url_redirects WHERE id = $1', [req.params.id]);
+    return { success: true };
+  });
 }
 
 // =================== Feed import + scheduler ===================
