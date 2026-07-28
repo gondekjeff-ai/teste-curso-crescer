@@ -137,18 +137,15 @@ const Navbar = () => {
                         </li>
                       </ul>
                     ) : (
-                      <ul className="grid gap-3 p-4 w-[400px] bg-background">
+                      <ul className="grid p-2 w-[280px] bg-background">
                         {solutions.map((s) => (
                           <li key={s.id}>
                             <Link
                               to={`/solucoes/${s.id}`}
-                              className="block p-3 space-y-1 rounded-md hover:bg-accent"
+                              className="block px-3 py-2 rounded-md hover:bg-accent font-medium"
                               onClick={() => setIsMenuOpen(false)}
                             >
-                              <div className="font-medium">{s.name}</div>
-                              {s.description && (
-                                <p className="text-sm text-muted-foreground">{s.description}</p>
-                              )}
+                              {s.name}
                             </Link>
                           </li>
                         ))}
