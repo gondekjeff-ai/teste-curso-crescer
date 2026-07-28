@@ -209,7 +209,7 @@ export async function registerApiRoutes(app, opts) {
 
   app.get('/products/:id', async (req, reply) => {
     const { rows } = await pool.query(
-      'SELECT id, name, description, category, price FROM products WHERE id = $1 AND active = true',
+      'SELECT id, name, description, category, price, ai_content, ai_generated_at FROM products WHERE id = $1 AND active = true',
       [req.params.id]
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Produto não encontrado' });
