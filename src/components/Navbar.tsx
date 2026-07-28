@@ -37,7 +37,7 @@ const Navbar = () => {
 
   useEffect(() => {
     let active = true;
-    (async () => {
+    const load = async () => {
       try {
         const data = await api.get('/products');
         if (!active || !Array.isArray(data)) return;
@@ -47,9 +47,21 @@ const Navbar = () => {
         console.error('Failed to load solutions menu:', err);
         if (active) setSolutions([]);
       }
-    })();
-    return () => { active = false; };
-  }, []);
+    };
+    load();
+    // Atualização imediata após alterações no painel administrativo
+    const onUpdated = () => load();
+    window.addEventListener('products:updated', onUpdated);
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    const interval = setInterval(load, 30000);
+    return () => {
+      active = false;
+      window.removeEventListener('products:updated', onUpdated);
+      window.removeEventListener('focus', onFocus);
+      clearInterval(interval);
+    };
+  }, [location.pathname]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
