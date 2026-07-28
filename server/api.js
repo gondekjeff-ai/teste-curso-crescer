@@ -209,7 +209,7 @@ export async function registerApiRoutes(app, opts) {
 
   app.get('/products/:id', async (req, reply) => {
     const { rows } = await pool.query(
-      'SELECT id, name, description, category, price FROM products WHERE id = $1 AND active = true',
+      'SELECT id, name, description, category, price, ai_content, ai_generated_at FROM products WHERE id = $1 AND active = true',
       [req.params.id]
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Produto não encontrado' });
@@ -596,14 +596,122 @@ export async function registerApiRoutes(app, opts) {
   });
   app.put('/admin/products/:id', adminGuard, async (req) => {
     const { name, description, category, price, active } = req.body || {};
+    const prev = await pool.query('SELECT description FROM products WHERE id = $1', [req.params.id]);
+    const descChanged = prev.rows[0] && prev.rows[0].description !== description;
     const { rows } = await pool.query(
-      'UPDATE products SET name=$1, description=$2, category=$3, price=$4, active=$5, updated_at=NOW() WHERE id=$6 RETURNING *',
+      `UPDATE products SET name=$1, description=$2, category=$3, price=$4, active=$5, updated_at=NOW()
+       ${descChanged ? ', ai_content = NULL, ai_generated_at = NULL' : ''}
+       WHERE id=$6 RETURNING *`,
       [name, description, category, price, active, req.params.id]
     );
     return rows[0];
   });
   app.delete('/admin/products/:id', adminGuard, async (req) => {
     await pool.query('DELETE FROM products WHERE id = $1', [req.params.id]);
+    return { success: true };
+  });
+
+  // Geração de página do produto por IA (fiel à descrição cadastrada)
+  app.post('/admin/products/:id/ai-page', adminGuard, async (req, reply) => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) return reply.code(500).send({ message: 'LOVABLE_API_KEY não configurada no servidor' });
+
+    const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [req.params.id]);
+    const product = rows[0];
+    if (!product) return reply.code(404).send({ message: 'Produto não encontrado' });
+    if (!product.description || product.description.trim().length < 10) {
+      return reply.code(400).send({ message: 'Cadastre uma descrição do produto antes de gerar a página.' });
+    }
+
+    const systemPrompt = [
+      'Você é um redator técnico. Elabore uma página de produto em português do Brasil.',
+      'REGRA IMUTÁVEL: use EXCLUSIVAMENTE as informações contidas na descrição cadastrada.',
+      'É PROIBIDO inventar, inferir ou acrescentar qualquer fato, número, prazo, preço, marca, cliente, certificação ou funcionalidade que não esteja explicitamente na descrição.',
+      'Você pode apenas reorganizar, estruturar e melhorar a redação do que já foi informado.',
+      'Se a descrição não trouxer informação para uma seção, omita a seção.',
+      'Responda SOMENTE com JSON válido no formato:',
+      '{"headline":string,"intro":string,"sections":[{"title":string,"body":string}],"bullets":[string],"image_prompts":[string]}',
+      'Os image_prompts descrevem imagens ilustrativas e abstratas relacionadas ao tema da descrição, sem texto embutido e sem representar dados inexistentes.',
+    ].join(' ');
+
+    const userPrompt = `Nome do produto: ${product.name}\nCategoria: ${product.category || 'não informada'}\nDescrição cadastrada (única fonte de verdade):\n"""\n${product.description}\n"""`;
+
+    let content;
+    try {
+      const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': apiKey },
+        body: JSON.stringify({
+          model: 'google/gemini-3.6-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          response_format: { type: 'json_object' },
+        }),
+      });
+      if (res.status === 429) return reply.code(429).send({ message: 'Limite de requisições de IA atingido. Tente novamente em instantes.' });
+      if (res.status === 402) return reply.code(402).send({ message: 'Créditos de IA esgotados. Adicione créditos ao workspace.' });
+      if (!res.ok) {
+        const t = await res.text();
+        app.log.error({ t }, 'ai-page error');
+        return reply.code(502).send({ message: 'Falha ao gerar conteúdo com a IA.' });
+      }
+      const data = await res.json();
+      content = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+    } catch (e) {
+      app.log.error({ err: e }, 'ai-page');
+      return reply.code(502).send({ message: 'Falha ao gerar conteúdo com a IA.' });
+    }
+
+    // Gera imagens sugestivas e armazena no banco (BYTEA) para servir via /api/media/:id
+    const images = [];
+    const prompts = Array.isArray(content.image_prompts) ? content.image_prompts.slice(0, 2) : [];
+    for (const p of prompts) {
+      try {
+        const imgRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': apiKey },
+          body: JSON.stringify({
+            model: 'google/gemini-3.1-flash-image',
+            messages: [{ role: 'user', content: `Imagem ilustrativa, profissional, sem nenhum texto: ${p}` }],
+            modalities: ['image', 'text'],
+          }),
+        });
+        if (!imgRes.ok) continue;
+        const imgData = await imgRes.json();
+        const url = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        if (!url || !url.startsWith('data:')) continue;
+        const base64 = url.split(',')[1];
+        const mime = url.substring(5, url.indexOf(';'));
+        const buf = Buffer.from(base64, 'base64');
+        const ins = await pool.query(
+          'INSERT INTO media (filename, mime_type, data, folder, size_bytes) VALUES ($1,$2,$3,$4,$5) RETURNING id',
+          [`produto-${product.id}-${Date.now()}.png`, mime, buf, 'produtos-ia', buf.length]
+        );
+        images.push({ url: `/api/media/${ins.rows[0].id}`, alt: String(p).slice(0, 180) });
+      } catch (e) {
+        app.log.error({ err: e }, 'ai-page image');
+      }
+    }
+
+    const aiContent = {
+      headline: content.headline || product.name,
+      intro: content.intro || '',
+      sections: Array.isArray(content.sections) ? content.sections : [],
+      bullets: Array.isArray(content.bullets) ? content.bullets : [],
+      images,
+    };
+
+    const saved = await pool.query(
+      'UPDATE products SET ai_content = $1, ai_generated_at = NOW(), updated_at = NOW() WHERE id = $2 RETURNING ai_content, ai_generated_at',
+      [JSON.stringify(aiContent), product.id]
+    );
+    return saved.rows[0];
+  });
+
+  app.delete('/admin/products/:id/ai-page', adminGuard, async (req) => {
+    await pool.query('UPDATE products SET ai_content = NULL, ai_generated_at = NULL WHERE id = $1', [req.params.id]);
     return { success: true };
   });
 

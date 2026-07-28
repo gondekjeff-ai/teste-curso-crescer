@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Plus, Package, RefreshCw } from 'lucide-react';
+import { Pencil, Trash2, Plus, Package, RefreshCw, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { productSchema, sanitizeObject } from '@/lib/inputValidation';
 
@@ -18,7 +18,24 @@ interface Product {
   category: string;
   price: number | null;
   active: boolean;
+  ai_content?: any;
+  ai_generated_at?: string | null;
 }
+
+const brl = (v: number) =>
+  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+/** Máscara de moeda: usuário digita apenas dígitos, formata como R$ 0,00 */
+const formatCurrencyInput = (raw: string) => {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  return brl(Number(digits) / 100);
+};
+const parseCurrencyInput = (raw: string): number | null => {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  return Number(digits) / 100;
+};
 
 const ProductsManager = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -26,6 +43,8 @@ const ProductsManager = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [priceInput, setPriceInput] = useState('');
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadProducts = useCallback(async (silent = false) => {
@@ -79,6 +98,7 @@ const ProductsManager = () => {
       setDialogOpen(false);
       setEditingProduct(null);
       await loadProducts(true);
+      window.dispatchEvent(new CustomEvent('products:updated'));
     } catch (error: any) {
       if (error.errors) {
         toast({ title: 'Erro de validação', description: error.errors.map((e: any) => e.message).join(', '), variant: 'destructive' });
@@ -94,6 +114,50 @@ const ProductsManager = () => {
       await api.del(`/admin/products/${id}`);
       toast({ title: 'Produto excluído' });
       await loadProducts(true);
+      window.dispatchEvent(new CustomEvent('products:updated'));
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  /** Ativa/desativa apenas o produto selecionado, sem tocar nos demais */
+  const handleToggleActive = async (product: Product, active: boolean) => {
+    setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, active } : p)));
+    try {
+      await api.put(`/admin/products/${product.id}`, {
+        name: product.name,
+        description: product.description,
+        category: product.category,
+        price: product.price,
+        active,
+      });
+      toast({ title: active ? 'Produto ativado' : 'Produto desativado' });
+      await loadProducts(true);
+      window.dispatchEvent(new CustomEvent('products:updated'));
+    } catch (error: any) {
+      setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, active: !active } : p)));
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleGenerateAiPage = async (product: Product) => {
+    setGeneratingId(product.id);
+    try {
+      await api.post(`/admin/products/${product.id}/ai-page`, {});
+      toast({ title: 'Página gerada pela IA', description: 'Conteúdo baseado exclusivamente na descrição cadastrada.' });
+      await loadProducts(true);
+    } catch (error: any) {
+      toast({ title: 'Erro ao gerar página', description: error.message, variant: 'destructive' });
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
+  const handleClearAiPage = async (product: Product) => {
+    try {
+      await api.del(`/admin/products/${product.id}/ai-page`);
+      toast({ title: 'Conteúdo de IA removido' });
+      await loadProducts(true);
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }
@@ -101,6 +165,13 @@ const ProductsManager = () => {
 
   const openNew = () => {
     setEditingProduct({ id: '', name: '', description: '', category: '', price: null, active: true });
+    setPriceInput('');
+    setDialogOpen(true);
+  };
+
+  const openEdit = (product: Product) => {
+    setEditingProduct(product);
+    setPriceInput(product.price != null ? brl(product.price) : '');
     setDialogOpen(true);
   };
 
@@ -147,7 +218,7 @@ const ProductsManager = () => {
                     <span className="text-xs text-muted-foreground">{product.category}</span>
                   </div>
                   <div className="flex gap-1 ml-2">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingProduct(product); setDialogOpen(true); }}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(product)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(product.id)}>
@@ -158,15 +229,39 @@ const ProductsManager = () => {
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{product.description}</p>
                 <div className="flex items-center justify-between">
                   {product.price != null && !Number.isNaN(product.price) ? (
-                    <span className="font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+                    <span className="font-bold text-primary">{brl(product.price)}</span>
                   ) : (
                     <span className="text-xs text-muted-foreground">Sem preço</span>
                   )}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                    product.active ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {product.active ? 'Ativo' : 'Inativo'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">
+                      {product.active ? 'No menu' : 'Fora do menu'}
+                    </span>
+                    <Switch
+                      checked={product.active}
+                      onCheckedChange={(c) => handleToggleActive(product, c)}
+                      aria-label={product.active ? 'Desativar produto' : 'Ativar produto'}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 border-t pt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    disabled={generatingId === product.id}
+                    onClick={() => handleGenerateAiPage(product)}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-2" />
+                    {generatingId === product.id
+                      ? 'Gerando...'
+                      : product.ai_content ? 'Regerar página IA' : 'Gerar página IA'}
+                  </Button>
+                  {product.ai_content && (
+                    <Button variant="ghost" size="sm" onClick={() => handleClearAiPage(product)}>
+                      Limpar
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -189,8 +284,18 @@ const ProductsManager = () => {
               <Input value={editingProduct?.category || ''} onChange={(e) => setEditingProduct(p => p ? { ...p, category: e.target.value } : null)} required />
             </div>
             <div className="space-y-2">
-              <Label>Preço</Label>
-              <Input type="number" step="0.01" value={editingProduct?.price ?? ''} onChange={(e) => setEditingProduct(p => p ? { ...p, price: e.target.value ? parseFloat(e.target.value) : null } : null)} />
+              <Label>Valor (R$)</Label>
+              <Input
+                inputMode="numeric"
+                placeholder="R$ 0,00"
+                value={priceInput}
+                onChange={(e) => {
+                  setPriceInput(formatCurrencyInput(e.target.value));
+                  const value = parseCurrencyInput(e.target.value);
+                  setEditingProduct(p => (p ? { ...p, price: value } : null));
+                }}
+              />
+              <p className="text-xs text-muted-foreground">Formato em Real brasileiro. Deixe vazio para não exibir preço.</p>
             </div>
             <div className="space-y-2">
               <Label>Descrição *</Label>

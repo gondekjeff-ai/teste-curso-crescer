@@ -14,6 +14,13 @@ interface Solution {
   description: string | null;
   category: string | null;
   price?: number | string | null;
+  ai_content?: {
+    headline?: string;
+    intro?: string;
+    sections?: { title: string; body: string }[];
+    bullets?: string[];
+    images?: { url: string; alt: string }[];
+  } | null;
 }
 
 const SolutionDetail = () => {
@@ -97,13 +104,66 @@ const SolutionDetail = () => {
                 </div>
               </div>
 
-              <Card className="mb-8">
-                <CardContent className="py-8">
-                  <p className="text-base md:text-lg leading-relaxed text-foreground whitespace-pre-line">
-                    {solution.description || 'Sem descrição disponível.'}
-                  </p>
-                </CardContent>
-              </Card>
+              {solution.ai_content ? (
+                <div className="space-y-8 mb-8">
+                  {solution.ai_content.headline && (
+                    <h2 className="text-2xl md:text-3xl font-semibold text-foreground">
+                      {solution.ai_content.headline}
+                    </h2>
+                  )}
+                  {solution.ai_content.images?.[0] && (
+                    <img
+                      src={solution.ai_content.images[0].url}
+                      alt={solution.ai_content.images[0].alt}
+                      loading="lazy"
+                      className="w-full rounded-xl border border-border object-cover max-h-80"
+                    />
+                  )}
+                  {solution.ai_content.intro && (
+                    <p className="text-base md:text-lg leading-relaxed text-foreground whitespace-pre-line">
+                      {solution.ai_content.intro}
+                    </p>
+                  )}
+                  {solution.ai_content.sections?.map((s, i) => (
+                    <Card key={i}>
+                      <CardContent className="py-6">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">{s.title}</h3>
+                        <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{s.body}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {solution.ai_content.bullets && solution.ai_content.bullets.length > 0 && (
+                    <Card>
+                      <CardContent className="py-6">
+                        <ul className="space-y-2">
+                          {solution.ai_content.bullets.map((b, i) => (
+                            <li key={i} className="flex gap-2 text-foreground">
+                              <span className="text-primary">•</span>
+                              <span>{b}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {solution.ai_content.images?.[1] && (
+                    <img
+                      src={solution.ai_content.images[1].url}
+                      alt={solution.ai_content.images[1].alt}
+                      loading="lazy"
+                      className="w-full rounded-xl border border-border object-cover max-h-80"
+                    />
+                  )}
+                </div>
+              ) : (
+                <Card className="mb-8">
+                  <CardContent className="py-8">
+                    <p className="text-base md:text-lg leading-relaxed text-foreground whitespace-pre-line">
+                      {solution.description || 'Sem descrição disponível.'}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               <div className="text-center">
                 <Link
