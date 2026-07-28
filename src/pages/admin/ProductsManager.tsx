@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Plus, Package, RefreshCw } from 'lucide-react';
+import { Pencil, Trash2, Plus, Package, RefreshCw, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { productSchema, sanitizeObject } from '@/lib/inputValidation';
 
