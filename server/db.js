@@ -144,6 +144,11 @@ pool.on('connect', () => {
       CREATE INDEX IF NOT EXISTS idx_url_redirects_mask
         ON url_redirects (mask_path) WHERE active = true;
     `);
+    await pool.query(`
+      ALTER TABLE products
+        ADD COLUMN IF NOT EXISTS ai_content JSONB,
+        ADD COLUMN IF NOT EXISTS ai_generated_at TIMESTAMPTZ;
+    `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);
   }
