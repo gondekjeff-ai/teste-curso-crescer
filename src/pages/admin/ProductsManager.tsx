@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, Plus, Package, RefreshCw, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { notifyProductsUpdated } from '@/lib/productsSync';
 import { productSchema, sanitizeObject } from '@/lib/inputValidation';
 
 interface Product {
@@ -98,7 +99,7 @@ const ProductsManager = () => {
       setDialogOpen(false);
       setEditingProduct(null);
       await loadProducts(true);
-      window.dispatchEvent(new CustomEvent('products:updated'));
+      notifyProductsUpdated();
     } catch (error: any) {
       if (error.errors) {
         toast({ title: 'Erro de validação', description: error.errors.map((e: any) => e.message).join(', '), variant: 'destructive' });
@@ -114,7 +115,7 @@ const ProductsManager = () => {
       await api.del(`/admin/products/${id}`);
       toast({ title: 'Produto excluído' });
       await loadProducts(true);
-      window.dispatchEvent(new CustomEvent('products:updated'));
+      notifyProductsUpdated();
     } catch (error: any) {
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }
@@ -133,7 +134,7 @@ const ProductsManager = () => {
       });
       toast({ title: active ? 'Produto ativado' : 'Produto desativado' });
       await loadProducts(true);
-      window.dispatchEvent(new CustomEvent('products:updated'));
+      notifyProductsUpdated();
     } catch (error: any) {
       setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, active: !active } : p)));
       toast({ title: 'Erro', description: error.message, variant: 'destructive' });
