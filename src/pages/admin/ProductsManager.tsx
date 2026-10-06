@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, Plus, Package, RefreshCw, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { notifyProductsUpdated } from '@/lib/productsSync';
+import { ImageUpload } from '@/components/admin/ImageUpload';
 import { productSchema, sanitizeObject } from '@/lib/inputValidation';
 
 interface Product {
@@ -20,6 +21,9 @@ interface Product {
   price: number | null;
   active: boolean;
   ai_content?: any;
+  cover_image_url?: string | null;
+  gallery?: { url: string; caption: string }[];
+  highlights?: string | null;
   ai_generated_at?: string | null;
 }
 
@@ -88,7 +92,12 @@ const ProductsManager = () => {
         price: editingProduct.price ?? undefined,
         active: editingProduct.active,
       });
-      const sanitizedData = sanitizeObject(validatedData);
+      const sanitizedData = {
+        ...sanitizeObject(validatedData),
+        cover_image_url: editingProduct.cover_image_url || null,
+        gallery: (editingProduct.gallery || []).filter(g => g.url),
+        highlights: editingProduct.highlights || '',
+      };
 
       if (editingProduct.id) {
         await api.put(`/admin/products/${editingProduct.id}`, sanitizedData);
@@ -165,13 +174,13 @@ const ProductsManager = () => {
   };
 
   const openNew = () => {
-    setEditingProduct({ id: '', name: '', description: '', category: '', price: null, active: true });
+    setEditingProduct({ id: '', name: '', description: '', category: '', price: null, active: true, cover_image_url: null, gallery: [], highlights: '' });
     setPriceInput('');
     setDialogOpen(true);
   };
 
   const openEdit = (product: Product) => {
-    setEditingProduct(product);
+    setEditingProduct({ ...product, gallery: Array.isArray(product.gallery) ? product.gallery : [] });
     setPriceInput(product.price != null ? brl(product.price) : '');
     setDialogOpen(true);
   };
@@ -301,6 +310,64 @@ const ProductsManager = () => {
             <div className="space-y-2">
               <Label>Descrição *</Label>
               <Textarea value={editingProduct?.description || ''} onChange={(e) => setEditingProduct(p => p ? { ...p, description: e.target.value } : null)} rows={4} required />
+            </div>
+            <div className="space-y-2">
+              <Label>Destaques da solução</Label>
+              <Textarea
+                value={editingProduct?.highlights || ''}
+                onChange={(e) => setEditingProduct(p => p ? { ...p, highlights: e.target.value } : null)}
+                rows={4}
+                placeholder={"Um destaque por linha\nEx.: Implantação em até 30 dias"}
+              />
+              <p className="text-xs text-muted-foreground">Cada linha vira um card de destaque na página.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Imagem de capa</Label>
+              <ImageUpload
+                folder="products"
+                currentUrl={editingProduct?.cover_image_url}
+                onUpload={(url) => setEditingProduct(p => p ? { ...p, cover_image_url: url } : null)}
+                onRemove={() => setEditingProduct(p => p ? { ...p, cover_image_url: null } : null)}
+              />
+              <p className="text-xs text-muted-foreground">Recomendado: imagem horizontal. O site ajusta o tamanho automaticamente.</p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Galeria de imagens</Label>
+                <Button
+                  type="button" variant="outline" size="sm"
+                  disabled={(editingProduct?.gallery?.length || 0) >= 12}
+                  onClick={() => setEditingProduct(p => p ? { ...p, gallery: [...(p.gallery || []), { url: '', caption: '' }] } : null)}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                </Button>
+              </div>
+              {(editingProduct?.gallery || []).map((g, i) => (
+                <div key={i} className="rounded-md border border-border p-3 space-y-2">
+                  <ImageUpload
+                    folder="products"
+                    currentUrl={g.url || null}
+                    onUpload={(url) => setEditingProduct(p => p ? { ...p, gallery: (p.gallery || []).map((x, j) => j === i ? { ...x, url } : x) } : null)}
+                    onRemove={() => setEditingProduct(p => p ? { ...p, gallery: (p.gallery || []).map((x, j) => j === i ? { ...x, url: '' } : x) } : null)}
+                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Legenda (opcional)"
+                      maxLength={200}
+                      value={g.caption}
+                      onChange={(e) => setEditingProduct(p => p ? { ...p, gallery: (p.gallery || []).map((x, j) => j === i ? { ...x, caption: e.target.value } : x) } : null)}
+                    />
+                    <Button
+                      type="button" variant="ghost" size="icon" className="text-destructive"
+                      onClick={() => setEditingProduct(p => p ? { ...p, gallery: (p.gallery || []).filter((_, j) => j !== i) } : null)}
+                      aria-label="Remover imagem"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">Até 12 imagens, exibidas em grade com tamanho padronizado.</p>
             </div>
             <div className="flex items-center space-x-2">
               <Switch checked={editingProduct?.active || false} onCheckedChange={(c) => setEditingProduct(p => p ? { ...p, active: c } : null)} />
