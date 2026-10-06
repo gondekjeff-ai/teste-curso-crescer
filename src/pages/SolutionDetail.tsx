@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Package } from 'lucide-react';
+import { ArrowLeft, Package, CheckCircle2, Search, Settings2, Rocket, LifeBuoy } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import SEO from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +14,9 @@ interface Solution {
   description: string | null;
   category: string | null;
   price?: number | string | null;
+  cover_image_url?: string | null;
+  gallery?: { url: string; caption?: string }[] | null;
+  highlights?: string | null;
   ai_content?: {
     headline?: string;
     intro?: string;
@@ -22,6 +25,13 @@ interface Solution {
     images?: { url: string; alt: string }[];
   } | null;
 }
+
+const STEPS = [
+  { icon: Search, title: 'Diagnóstico', text: 'Entendemos o cenário e os objetivos do seu negócio.' },
+  { icon: Settings2, title: 'Planejamento', text: 'Desenhamos a implantação adequada à sua realidade.' },
+  { icon: Rocket, title: 'Implantação', text: 'Executamos com acompanhamento próximo da nossa equipe.' },
+  { icon: LifeBuoy, title: 'Suporte', text: 'Seguimos ao seu lado com suporte e evolução contínua.' },
+];
 
 const SolutionDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +62,9 @@ const SolutionDetail = () => {
   }, [id]);
 
   if (notFound) return <NotFound />;
+
+  const highlights = (solution?.highlights || '').split('\n').map((h) => h.trim()).filter(Boolean);
+  const gallery = Array.isArray(solution?.gallery) ? solution!.gallery!.filter((g) => g?.url) : [];
 
   return (
     <PageLayout>
@@ -93,7 +106,7 @@ const SolutionDetail = () => {
                   <Package className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+                  <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2 text-balance">
                     {solution.name}
                   </h1>
                   {solution.category && (
@@ -103,6 +116,17 @@ const SolutionDetail = () => {
                   )}
                 </div>
               </div>
+
+              {solution.cover_image_url && (
+                <div className="mb-10 overflow-hidden rounded-2xl border border-border aspect-[16/9] bg-muted">
+                  <img
+                    src={solution.cover_image_url}
+                    alt={solution.name}
+                    fetchPriority="high"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              )}
 
               {solution.ai_content ? (
                 <div className="space-y-8 mb-8">
@@ -156,19 +180,73 @@ const SolutionDetail = () => {
                   )}
                 </div>
               ) : (
-                <Card className="mb-8">
-                  <CardContent className="py-8">
-                    <p className="text-base md:text-lg leading-relaxed text-foreground whitespace-pre-line">
-                      {solution.description || 'Sem descrição disponível.'}
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="mb-10 max-w-3xl space-y-4">
+                  <h2 className="text-2xl font-semibold text-foreground">Sobre a solução</h2>
+                  {(solution.description || 'Sem descrição disponível.')
+                    .split(/\n\s*\n|\n/)
+                    .filter((t) => t.trim())
+                    .map((para, i) => (
+                      <p key={i} className="text-base md:text-lg leading-8 text-muted-foreground text-pretty">
+                        {para.trim()}
+                      </p>
+                    ))}
+                </div>
               )}
 
-              <div className="text-center">
+              {highlights.length > 0 && (
+                <section className="mb-12">
+                  <h2 className="text-2xl font-semibold text-foreground mb-6">Destaques</h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {highlights.map((h, i) => (
+                      <div key={i} className="flex gap-3 rounded-xl border border-border bg-card p-5">
+                        <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
+                        <p className="text-foreground leading-relaxed">{h}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {gallery.length > 0 && (
+                <section className="mb-12">
+                  <h2 className="text-2xl font-semibold text-foreground mb-6">Galeria</h2>
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {gallery.map((g, i) => (
+                      <figure key={i} className="overflow-hidden rounded-xl border border-border bg-card">
+                        <div className="aspect-[4/3] bg-muted">
+                          <img src={g.url} alt={g.caption || `${solution.name} – imagem ${i + 1}`} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+                        </div>
+                        {g.caption && (
+                          <figcaption className="px-4 py-3 text-sm text-muted-foreground">{g.caption}</figcaption>
+                        )}
+                      </figure>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section className="mb-12">
+                <h2 className="text-2xl font-semibold text-foreground mb-6">Como trabalhamos</h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {STEPS.map((step, i) => (
+                    <div key={i} className="rounded-xl border border-border bg-card p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <step.icon className="h-5 w-5 text-primary" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Etapa {i + 1}</span>
+                      </div>
+                      <h3 className="font-semibold text-foreground mb-1">{step.title}</h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <div className="rounded-2xl bg-gradient-to-r from-primary to-secondary p-8 md:p-10 text-center">
+                <h2 className="text-2xl font-semibold text-primary-foreground mb-2">Quer levar {solution.name} para sua empresa?</h2>
+                <p className="text-primary-foreground/80 mb-6">Fale com nossa equipe e receba uma proposta sob medida.</p>
                 <Link
                   to="/orcamento"
-                  className="inline-flex items-center px-6 py-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center px-6 py-3 rounded-md bg-background text-foreground hover:bg-background/90 transition-colors font-medium"
                 >
                   Solicitar orçamento
                 </Link>
