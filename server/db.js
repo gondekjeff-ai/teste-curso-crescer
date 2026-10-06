@@ -147,7 +147,10 @@ pool.on('connect', () => {
     await pool.query(`
       ALTER TABLE products
         ADD COLUMN IF NOT EXISTS ai_content JSONB,
-        ADD COLUMN IF NOT EXISTS ai_generated_at TIMESTAMPTZ;
+        ADD COLUMN IF NOT EXISTS ai_generated_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS cover_image_url TEXT,
+        ADD COLUMN IF NOT EXISTS gallery JSONB NOT NULL DEFAULT '[]'::jsonb,
+        ADD COLUMN IF NOT EXISTS highlights TEXT;
     `);
   } catch (err) {
     console.error('Failed to ensure news_sources table:', err.message);

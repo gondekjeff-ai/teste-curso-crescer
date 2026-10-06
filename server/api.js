@@ -209,7 +209,7 @@ export async function registerApiRoutes(app, opts) {
 
   app.get('/products/:id', async (req, reply) => {
     const { rows } = await pool.query(
-      'SELECT id, name, description, category, price, ai_content, ai_generated_at FROM products WHERE id = $1 AND active = true',
+      'SELECT id, name, description, category, price, ai_content, ai_generated_at, cover_image_url, gallery, highlights FROM products WHERE id = $1 AND active = true',
       [req.params.id]
     );
     if (rows.length === 0) return reply.code(404).send({ message: 'Produto não encontrado' });
@@ -586,23 +586,38 @@ export async function registerApiRoutes(app, opts) {
     const { rows } = await pool.query('SELECT * FROM products ORDER BY name');
     return rows;
   });
+  const normProductExtras = (body) => {
+    const safeUrl = (u) => (typeof u === 'string' && /^(https?:\/\/|\/)/i.test(u.trim()) && u.length <= 2000) ? u.trim() : null;
+    const cover = safeUrl(body.cover_image_url);
+    const gallery = Array.isArray(body.gallery)
+      ? body.gallery.slice(0, 12).map(g => ({ url: safeUrl(g && g.url), caption: String((g && g.caption) || '').slice(0, 200) })).filter(g => g.url)
+      : [];
+    const highlights = typeof body.highlights === 'string' ? body.highlights.slice(0, 3000) : null;
+    return { cover, gallery: JSON.stringify(gallery), highlights };
+  };
   app.post('/admin/products', adminGuard, async (req) => {
     const { name, description, category, price, active } = req.body || {};
+    const x = normProductExtras(req.body || {});
     const { rows } = await pool.query(
-      'INSERT INTO products (name, description, category, price, active) VALUES ($1,$2,$3,$4,$5) RETURNING *',
-      [name, description || null, category || null, price || null, active !== false]
+      'INSERT INTO products (name, description, category, price, active, cover_image_url, gallery, highlights) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8) RETURNING *',
+      [name, description || null, category || null, price || null, active !== false, x.cover, x.gallery, x.highlights]
     );
     return rows[0];
   });
   app.put('/admin/products/:id', adminGuard, async (req) => {
     const { name, description, category, price, active } = req.body || {};
+    const hasExtras = req.body && ('gallery' in req.body || 'cover_image_url' in req.body || 'highlights' in req.body);
+    const x = normProductExtras(req.body || {});
     const prev = await pool.query('SELECT description FROM products WHERE id = $1', [req.params.id]);
     const descChanged = prev.rows[0] && prev.rows[0].description !== description;
     const { rows } = await pool.query(
       `UPDATE products SET name=$1, description=$2, category=$3, price=$4, active=$5, updated_at=NOW()
+       ${hasExtras ? ', cover_image_url=$7, gallery=$8::jsonb, highlights=$9' : ''}
        ${descChanged ? ', ai_content = NULL, ai_generated_at = NULL' : ''}
        WHERE id=$6 RETURNING *`,
-      [name, description, category, price, active, req.params.id]
+      hasExtras
+        ? [name, description, category, price, active, req.params.id, x.cover, x.gallery, x.highlights]
+        : [name, description, category, price, active, req.params.id]
     );
     return rows[0];
   });
