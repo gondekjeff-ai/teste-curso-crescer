@@ -8,6 +8,7 @@ import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMe
 import { ThemeToggle } from "@/components/ThemeToggle";
 import optiStratLogo from "@/assets/optistrat-logo-full.webp";
 import { api } from "@/lib/api";
+import { subscribeProductsUpdated } from "@/lib/productsSync";
 
 interface SolutionItem {
   id: string;
@@ -39,7 +40,7 @@ const Navbar = () => {
     let active = true;
     const load = async () => {
       try {
-        const data = await api.get('/products');
+        const data = await api.get(`/products?t=${Date.now()}`);
         if (!active || !Array.isArray(data)) return;
         // Mostra TODOS os produtos ativos como soluções (sem filtrar por categoria)
         setSolutions(data as SolutionItem[]);
@@ -50,14 +51,13 @@ const Navbar = () => {
     };
     load();
     // Atualização imediata após alterações no painel administrativo
-    const onUpdated = () => load();
-    window.addEventListener('products:updated', onUpdated);
+    const unsubscribe = subscribeProductsUpdated(() => load());
     const onFocus = () => load();
     window.addEventListener('focus', onFocus);
     const interval = setInterval(load, 30000);
     return () => {
       active = false;
-      window.removeEventListener('products:updated', onUpdated);
+      unsubscribe();
       window.removeEventListener('focus', onFocus);
       clearInterval(interval);
     };
