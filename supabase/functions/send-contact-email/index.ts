@@ -104,24 +104,12 @@ Deno.serve(async (req) => {
         subject: "Nova Inscrição Newsletter",
         html: `<h2>Nova Inscrição Newsletter</h2><p><strong>Email:</strong> ${sanitizedEmail}</p><p><strong>Nome:</strong> ${sanitizedName}</p><p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>`,
       });
-      await sendEmail({
-        from: "OptiStrat <noreply@resend.dev>",
-        to: [sanitizedEmail],
-        subject: "Bem-vindo à Newsletter OptiStrat",
-        html: `<h2>Obrigado por se inscrever!</h2><p>Olá ${sanitizedName},</p><p>Obrigado por se inscrever na nossa newsletter.</p><p>Atenciosamente,<br>Equipe OptiStrat</p>`,
-      });
     } else {
       await sendEmail({
         from: "OptiStrat Contato <noreply@resend.dev>",
         to: ["comercial@optistrat.com.br"],
         subject: `Nova Mensagem de Contato de ${sanitizedName}`,
         html: `<h2>Nova Mensagem de Contato</h2><p><strong>Nome:</strong> ${sanitizedName}</p><p><strong>Email:</strong> ${sanitizedEmail}</p><p><strong>Mensagem:</strong></p><p>${sanitizedMessage.replace(/\n/g, '<br>')}</p><p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>`,
-      });
-      await sendEmail({
-        from: "OptiStrat <noreply@resend.dev>",
-        to: [sanitizedEmail],
-        subject: "Recebemos sua mensagem",
-        html: `<h2>Obrigado por entrar em contato!</h2><p>Olá ${sanitizedName},</p><p>Recebemos sua mensagem e entraremos em contato o mais breve possível.</p><p>Atenciosamente,<br>Equipe OptiStrat</p>`,
       });
     }
 
