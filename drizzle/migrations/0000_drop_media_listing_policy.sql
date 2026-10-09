@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Public can read individual media objects" ON storage.objects;
