@@ -1,0 +1,1 @@
+- Keep package-lock.json in sync with package.json (resolved URLs on registry.npmjs.org) — the GitHub deploy runs `npm install` on Node 22.1.0 and fails on stale locks or peer conflicts (e.g. vitest must stay compatible with vite 5).
